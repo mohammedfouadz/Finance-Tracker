@@ -18,11 +18,11 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Transactions", href: "/transactions", icon: Receipt },
-  { label: "Budget", href: "/budget", icon: PiggyBank },
-  { label: "Goals", href: "/goals", icon: Target },
-  { label: "Reports", href: "/reports", icon: LineChart },
-  { label: "AI Coach", href: "/ai-coach", icon: Bot },
+  { label: "Income", href: "/income", icon: Wallet },
+  { label: "Expenses", href: "/expenses", icon: Receipt },
+  { label: "Investments", href: "/investments", icon: LineChart },
+  { label: "Bank Savings", href: "/savings", icon: PiggyBank },
+  { label: "Settings", href: "/settings", icon: Target },
 ];
 
 export function Sidebar() {
@@ -30,28 +30,31 @@ export function Sidebar() {
   const { logout, user } = useAuth();
 
   return (
-    <aside className="hidden lg:flex h-screen w-64 flex-col fixed left-0 top-0 border-r bg-card/50 backdrop-blur-xl z-50">
-      <div className="p-6">
-        <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+    <aside className="hidden lg:flex h-screen w-72 flex-col fixed left-0 top-0 border-r bg-white z-50">
+      <div className="p-8 flex items-center gap-3">
+        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+          <LineChart className="w-5 h-5" />
+        </div>
+        <h1 className="text-2xl font-bold text-[#1a1a1a]">
           FinTrack
         </h1>
       </div>
 
-      <nav className="flex-1 px-4 space-y-2">
+      <nav className="flex-1 px-6 space-y-1">
         {NAV_ITEMS.map((item) => {
           const isActive = location === item.href;
           return (
             <Link key={item.href} href={item.href}>
               <div
                 className={cn(
-                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer group",
+                  "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer group",
                   isActive 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
-                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                    ? "bg-primary text-white shadow-lg shadow-primary/30" 
+                    : "text-[#666666] hover:bg-[#f8f9fa] hover:text-[#1a1a1a]"
                 )}
               >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary")} />
-                <span className="font-medium">{item.label}</span>
+                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-[#999999] group-hover:text-primary")} />
+                <span className="font-semibold text-[15px]">{item.label}</span>
               </div>
             </Link>
           );

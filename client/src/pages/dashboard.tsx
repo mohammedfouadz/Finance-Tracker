@@ -52,71 +52,68 @@ export default function Dashboard() {
 
   const stats = [
     { 
-      label: "Total Balance", 
-      value: balance, 
-      type: "neutral",
-      icon: Wallet,
-      color: "text-primary",
-      bg: "bg-primary/10"
-    },
-    { 
       label: "Total Income", 
       value: totalIncome, 
       type: "income",
-      icon: ArrowUp,
-      color: "text-success",
-      bg: "bg-success/10"
+      icon: Wallet,
+      color: "text-primary",
+      bg: "bg-primary/5"
     },
     { 
       label: "Total Expenses", 
       value: totalExpense, 
       type: "expense",
-      icon: ArrowDown,
-      color: "text-destructive",
-      bg: "bg-destructive/10"
+      icon: Receipt,
+      color: "text-black",
+      bg: "bg-secondary/50"
+    },
+    { 
+      label: "Net Cashflow", 
+      value: balance, 
+      type: "neutral",
+      icon: LineChart,
+      color: "text-[#e11d48]",
+      bg: "bg-red-50"
     },
     { 
       label: "Savings Rate", 
       value: savingsRate, 
       type: "percentage",
       icon: PiggyBank,
-      color: "text-accent",
-      bg: "bg-accent/10"
+      color: "text-success",
+      bg: "bg-green-50"
     },
   ];
 
   return (
     <Layout>
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground mt-1">
-            Welcome back, {user?.firstName}. Here's your financial overview.
-          </p>
-        </div>
-        <TransactionDialog />
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold tracking-tight text-[#1a1a1a]">Dashboard</h2>
+        <p className="text-[#666666] mt-1">
+          Welcome back! Here's your financial overview for 2026.
+        </p>
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {stats.map((stat, i) => (
-          <Card key={i} className="border-none shadow-md hover:shadow-lg transition-all duration-300">
+          <Card key={i} className="border-none shadow-sm rounded-2xl bg-white">
             <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-xl ${stat.bg}`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[#666666] mb-2">{stat.label}</p>
+                  <h3 className={cn(
+                    "text-2xl font-bold tracking-tight",
+                    stat.label === "Net Cashflow" && stat.value < 0 ? "text-[#e11d48]" : "text-[#1a1a1a]"
+                  )}>
+                    {stat.type === "percentage" 
+                      ? `${stat.value.toFixed(1)}%` 
+                      : `${stat.value < 0 ? '-' : ''}$${Math.abs(stat.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
+                  </h3>
                 </div>
-                <button className="text-muted-foreground hover:text-foreground">
-                  <MoreHorizontal className="w-5 h-5" />
-                </button>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground mb-1">{stat.label}</p>
-                <h3 className="text-2xl font-bold font-mono">
-                  {stat.type === "percentage" 
-                    ? `${stat.value.toFixed(1)}%` 
-                    : `$${Math.abs(stat.value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-                </h3>
+                <div className={cn("p-4 rounded-xl", stat.bg)}>
+                  <stat.icon className={cn("w-6 h-6", stat.color)} />
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -124,43 +121,27 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Section */}
-      <DashboardCharts />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <Card className="lg:col-span-2 border-none shadow-sm rounded-3xl bg-white p-4">
+          <CardHeader className="px-6 pt-6">
+            <CardTitle className="text-xl font-bold">Financial Overview</CardTitle>
+            <p className="text-sm text-muted-foreground font-normal">Income vs Expenses over time</p>
+          </CardHeader>
+          <CardContent>
+            <DashboardCharts type="bar" />
+          </CardContent>
+        </Card>
 
-      {/* Recent Transactions */}
-      <Card className="border-none shadow-lg">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Transactions</CardTitle>
-          <a href="/transactions" className="text-sm text-primary hover:underline font-medium">View All</a>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {transactions?.slice(0, 5).map((t) => {
-              const category = categories?.find(c => c.id === t.categoryId);
-              const isIncome = category?.type === 'income';
-              
-              return (
-                <div key={t.id} className="flex items-center justify-between p-4 rounded-xl bg-secondary/30 hover:bg-secondary/60 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${isIncome ? 'bg-success/10 text-success' : 'bg-destructive/10 text-destructive'}`}>
-                      {isIncome ? <ArrowUp className="w-5 h-5" /> : <ArrowDown className="w-5 h-5" />}
-                    </div>
-                    <div>
-                      <p className="font-semibold text-sm md:text-base">{t.description}</p>
-                      <p className="text-xs text-muted-foreground">{category?.name} • {format(new Date(t.date), 'MMM d, yyyy')}</p>
-                    </div>
-                  </div>
-                  <span className={`font-mono font-bold ${isIncome ? 'text-success' : 'text-foreground'}`}>
-                    {isIncome ? '+' : '-'}${Number(t.amount).toLocaleString()}
-                  </span>
-                </div>
-              );
-            })}
-            {(!transactions || transactions.length === 0) && (
-              <p className="text-center text-muted-foreground py-8">No transactions found.</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        <Card className="border-none shadow-sm rounded-3xl bg-white p-4">
+          <CardHeader className="px-6 pt-6">
+            <CardTitle className="text-xl font-bold">Cashflow Breakdown</CardTitle>
+            <p className="text-sm text-muted-foreground font-normal">Where your money goes</p>
+          </CardHeader>
+          <CardContent>
+            <DashboardCharts type="list" />
+          </CardContent>
+        </Card>
+      </div>
     </Layout>
   );
 }

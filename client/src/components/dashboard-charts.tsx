@@ -1,22 +1,19 @@
 import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Legend, PieChart, Pie, Cell
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactions, useCategories } from "@/hooks/use-finance";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useMemo } from "react";
+import { Progress } from "@/components/ui/progress";
+import { formatCurrency } from "@/lib/utils";
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
-
-export function DashboardCharts() {
+export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
   const { data: transactions } = useTransactions();
   const { data: categories } = useCategories();
 
   const monthlyData = useMemo(() => {
     if (!transactions || !categories) return [];
     
-    // Group by month (last 6 months)
     const data = [];
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(new Date(), i);
@@ -30,17 +27,11 @@ export function DashboardCharts() {
       });
 
       const income = monthTrans
-        .filter(t => {
-          const cat = categories.find(c => c.id === t.categoryId);
-          return cat?.type === 'income';
-        })
+        .filter(t => categories.find(c => c.id === t.categoryId)?.type === 'income')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
       const expense = monthTrans
-        .filter(t => {
-          const cat = categories.find(c => c.id === t.categoryId);
-          return cat?.type === 'expense';
-        })
+        .filter(t => categories.find(c => c.id === t.categoryId)?.type === 'expense')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
       data.push({ name: monthLabel, Income: income, Expense: expense });
@@ -48,71 +39,89 @@ export function DashboardCharts() {
     return data;
   }, [transactions, categories]);
 
-  const categoryData = useMemo(() => {
+  const breakdownData = useMemo(() => {
     if (!transactions || !categories) return [];
     
-    const expenseCategories = categories.filter(c => c.type === 'expense');
-    return expenseCategories.map(cat => {
-      const total = transactions
+    const filteredCats = categories.filter(c => ['investment', 'savings', 'expense'].includes(c.type));
+    const totalIncome = transactions
+      .filter(t => categories.find(c => c.id === t.categoryId)?.type === 'income')
+      .reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const data = filteredCats.map(cat => {
+      const amount = transactions
         .filter(t => t.categoryId === cat.id)
         .reduce((sum, t) => sum + Number(t.amount), 0);
-      return { name: cat.name, value: total };
-    }).filter(d => d.value > 0);
+      return { 
+        name: cat.name, 
+        amount, 
+        percent: totalIncome > 0 ? (amount / totalIncome) * 100 : 0,
+        color: cat.type === 'investment' ? '#10b981' : cat.type === 'savings' ? '#2563eb' : '#e11d48'
+      };
+    }).filter(d => d.amount > 0);
+
+    const totalSpent = data.reduce((sum, d) => sum + d.amount, 0);
+    const net = totalIncome - totalSpent;
+
+    return { items: data, net };
   }, [transactions, categories]);
 
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-      <Card className="card-hover border-none shadow-lg">
-        <CardHeader>
-          <CardTitle>Income vs Expense</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                />
-                <Legend />
-                <Bar dataKey="Income" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="Expense" fill="#ef4444" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+  if (type === "list") {
+    return (
+      <div className="space-y-8 pt-4">
+        {breakdownData.items.map((item, i) => (
+          <div key={i} className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-[#666666] font-medium">{item.name}</span>
+              <span className="font-bold text-[#1a1a1a]">{formatCurrency(item.amount)}</span>
+            </div>
+            <div className="h-2 w-full bg-[#f1f5f9] rounded-full overflow-hidden">
+              <div 
+                className="h-full transition-all duration-500" 
+                style={{ width: `${item.percent}%`, backgroundColor: item.color }} 
+              />
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        ))}
+        <div className="pt-4 border-t border-dashed flex justify-between items-center">
+          <span className="font-bold text-[#1a1a1a]">Remaining (Net)</span>
+          <span className={cn("font-bold", breakdownData.net < 0 ? "text-[#e11d48]" : "text-success")}>
+            {formatCurrency(breakdownData.net)}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
-      <Card className="card-hover border-none shadow-lg">
-        <CardHeader>
-          <CardTitle>Expense Breakdown</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={100}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+  return (
+    <div className="h-[350px] w-full pt-4">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={monthlyData} barGap={8}>
+          <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="3 3" />
+          <XAxis 
+            dataKey="name" 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#999999', fontSize: 12 }}
+            dy={10}
+          />
+          <YAxis 
+            axisLine={false} 
+            tickLine={false} 
+            tick={{ fill: '#999999', fontSize: 12 }}
+            tickFormatter={(val) => `$${val}`}
+          />
+          <Tooltip 
+            cursor={{ fill: '#f8f9fa' }}
+            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+          />
+          <Bar dataKey="Income" fill="#2563eb" radius={[4, 4, 0, 0]} barSize={12} />
+          <Bar dataKey="Expense" fill="#e11d48" radius={[4, 4, 0, 0]} barSize={12} />
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
+}
+
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
 }

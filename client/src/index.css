@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    /* Fresh, modern financial palette */
+    /* Fresh, modern financial palette - Matched to reference image */
     --background: 210 40% 98%;
     --foreground: 222 47% 11%;
 
@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary Blue - Trust & Stability */
+    /* Primary Blue - #2563eb */
     --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
@@ -28,23 +28,23 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    /* Accent - Purple for Goals/AI */
+    /* Accent - Purple */
     --accent: 262 83% 58%;
     --accent-foreground: 210 40% 98%;
 
-    /* Destructive - Red for Expenses */
-    --destructive: 0 84.2% 60.2%;
+    /* Destructive - Red #e11d48 */
+    --destructive: 346 77% 49%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Success - Green for Income */
-    --success: 142 71% 45%;
+    /* Success - Green #10b981 */
+    --success: 161 94% 30%;
     --success-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 221 83% 53%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     --font-sans: 'Inter', sans-serif;
     --font-mono: 'Roboto Mono', monospace;
