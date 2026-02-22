@@ -2,11 +2,12 @@ import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useTransactions, useCategories } from "@/hooks/use-finance";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/lib/currency";
 import { PiggyBank, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function BudgetPage() {
+  const { formatAmount } = useCurrency();
   const { data: categories, isLoading: isCatLoading } = useCategories();
   const { data: transactions, isLoading: isTransLoading } = useTransactions();
 
@@ -56,15 +57,15 @@ export default function BudgetPage() {
               </CardHeader>
               <CardContent>
                 <div className="flex justify-between mb-2 text-sm">
-                  <span className="text-muted-foreground">Spent: {formatCurrency(spent)}</span>
-                  <span className="font-medium">{limit > 0 ? formatCurrency(limit) : 'No limit'}</span>
+                  <span className="text-muted-foreground">Spent: {formatAmount(spent)}</span>
+                  <span className="font-medium">{limit > 0 ? formatAmount(limit) : 'No limit'}</span>
                 </div>
                 <Progress value={percent} className={`h-2 ${isOver ? 'bg-destructive/20' : ''}`} />
                 {limit > 0 && (
                   <p className={`text-xs mt-2 ${isOver ? 'text-destructive font-medium' : 'text-muted-foreground'}`}>
                     {isOver 
-                      ? `${formatCurrency(spent - limit)} over budget` 
-                      : `${formatCurrency(limit - spent)} remaining`}
+                      ? `${formatAmount(spent - limit)} over budget` 
+                      : `${formatAmount(limit - spent)} remaining`}
                   </p>
                 )}
               </CardContent>

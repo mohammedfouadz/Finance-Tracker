@@ -13,16 +13,20 @@ const ThemeContext = createContext<ThemeContextType>({
 });
 
 export function ThemeProvider({ children, initialTheme = "light" }: { children: ReactNode; initialTheme?: string }) {
-  const [theme, setTheme] = useState(initialTheme);
+  const [theme, setTheme] = useState(() => {
+    const stored = localStorage.getItem("theme");
+    return stored || initialTheme;
+  });
   const isDark = theme === "dark";
 
   useEffect(() => {
+    localStorage.setItem("theme", theme);
     if (isDark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [isDark]);
+  }, [isDark, theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, isDark }}>

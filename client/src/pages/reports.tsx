@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactions, useCategories } from "@/hooks/use-finance";
-import { formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/lib/currency";
 import { 
   BarChart, 
   Bar, 
@@ -18,6 +18,7 @@ import {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function ReportsPage() {
+  const { formatAmount } = useCurrency();
   const { data: transactions, isLoading: isTransLoading } = useTransactions();
   const { data: categories, isLoading: isCatLoading } = useCategories();
 
@@ -71,7 +72,7 @@ export default function ReportsPage() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: number) => formatAmount(value)}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -91,7 +92,7 @@ export default function ReportsPage() {
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" />
                 <YAxis tickFormatter={(value) => `$${value}`} />
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={(value: number) => formatAmount(value)} />
                 <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
