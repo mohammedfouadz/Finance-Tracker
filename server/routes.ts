@@ -62,15 +62,18 @@ export async function registerRoutes(
 
   app.post(api.transactions.create.path, isAuthenticated, async (req, res) => {
     const userId = (req.user as any).claims.sub;
-    // Coerce amount to string/number properly if needed by schema
-    const input = api.transactions.create.input.parse({ ...req.body, userId });
+    const body = { ...req.body, userId };
+    if (body.date && typeof body.date === "string") body.date = new Date(body.date);
+    const input = api.transactions.create.input.parse(body);
     const transaction = await storage.createTransaction(input);
     res.status(201).json(transaction);
   });
 
   app.put(api.transactions.update.path, isAuthenticated, async (req, res) => {
     const id = parseInt(req.params.id);
-    const input = api.transactions.update.input.parse(req.body);
+    const body = { ...req.body };
+    if (body.date && typeof body.date === "string") body.date = new Date(body.date);
+    const input = api.transactions.update.input.parse(body);
     const updated = await storage.updateTransaction(id, input);
     res.json(updated);
   });
@@ -90,14 +93,18 @@ export async function registerRoutes(
 
   app.post(api.goals.create.path, isAuthenticated, async (req, res) => {
     const userId = (req.user as any).claims.sub;
-    const input = api.goals.create.input.parse({ ...req.body, userId });
+    const body = { ...req.body, userId };
+    if (body.deadline && typeof body.deadline === "string") body.deadline = new Date(body.deadline);
+    const input = api.goals.create.input.parse(body);
     const goal = await storage.createGoal(input);
     res.status(201).json(goal);
   });
 
   app.put(api.goals.update.path, isAuthenticated, async (req, res) => {
     const id = parseInt(req.params.id);
-    const input = api.goals.update.input.parse(req.body);
+    const body = { ...req.body };
+    if (body.deadline && typeof body.deadline === "string") body.deadline = new Date(body.deadline);
+    const input = api.goals.update.input.parse(body);
     const updated = await storage.updateGoal(id, input);
     res.json(updated);
   });
