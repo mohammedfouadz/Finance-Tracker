@@ -1,0 +1,128 @@
+ 
+Build a web application dashboard for personal finance management  
+
+The application should have a simple, clean, and user-friendly UI, focused on manual data entry, monthly tracking, and automatic calculations.
+
+1. Income Management
+
+Allow users to add multiple income sources.
+
+Each income entry must be linked to a specific month and year.
+
+Automatically calculate total monthly income.
+
+Display income in an editable monthly table.
+
+2. Expense Management
+
+Create expense categories in the following order:
+
+Living Expenses
+
+Savings
+
+Investments
+
+Savings Accounts (Bank Savings)
+
+Emergency Fund
+
+For each category:
+
+Allow the user to define an expected percentage of total monthly income.
+
+Automatically calculate the maximum allowed amount per category.
+
+Provide a manual expense entry table with:
+
+Item name
+
+Category
+
+Amount
+
+Date
+
+The system must:
+
+Calculate actual spending vs expected budget.
+
+Display percentage used per category.
+
+Show a visual indicator or warning if spending exceeds the defined limit.
+
+3. Investments
+
+Create a dedicated investment section divided into:
+
+Gold
+
+Stocks
+
+Cryptocurrencies
+
+For each investment type:
+
+Allow assigning a percentage of monthly income.
+
+Enable manual entry of invested amounts.
+
+Automatically calculate total monthly investments.
+
+4. Savings Accounts (Banks)
+
+Add a separate section after Investments.
+
+Allow users to:
+
+Enter monthly saved amounts.
+
+Specify the bank name for each savings entry.
+
+Savings table fields:
+
+Bank name
+
+Saved amount
+
+Date
+
+The system should:
+
+Calculate total bank savings per month.
+
+Show savings as a percentage of total income.
+
+Include this section in total monthly expenses.
+
+5. Net Income
+
+Automatically calculate monthly net income:
+
+Net Income = Total Income – Total Expenses
+
+Display the result clearly on the dashboard.
+
+6. Reports & Charts
+
+Create a yearly chart for 2026 showing:
+
+Monthly income
+
+Monthly expenses
+
+Monthly net income
+
+Use clear bar and/or line charts.
+
+7. Additional Requirements
+
+Web-based application.
+
+Minimal and modern UI.
+
+Full CRUD support (add, edit, delete).
+
+All calculations must be automatic.
+
+Architecture should be scalable for future features (export, reports, alerts).
