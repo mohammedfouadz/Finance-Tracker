@@ -1,15 +1,16 @@
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { useFinance } from "@/hooks/use-finance";
+import { useTransactions, useCategories } from "@/hooks/use-finance";
 import { formatCurrency } from "@/lib/utils";
 import { PiggyBank, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function BudgetPage() {
-  const { categories, transactions, isLoading } = useFinance();
+  const { data: categories, isLoading: isCatLoading } = useCategories();
+  const { data: transactions, isLoading: isTransLoading } = useTransactions();
 
-  if (isLoading) {
+  if (isCatLoading || isTransLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -19,7 +20,7 @@ export default function BudgetPage() {
     );
   }
 
-  const expenseCategories = categories?.filter(c => c.type === 'expense') || [];
+  const expenseCategories = categories?.filter((c: any) => c.type === 'expense') || [];
   
   return (
     <Layout>
@@ -35,10 +36,10 @@ export default function BudgetPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {expenseCategories.map((category) => {
+        {expenseCategories.map((category: any) => {
           const spent = transactions
-            ?.filter(t => t.categoryId === category.id)
-            .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
+            ?.filter((t: any) => t.categoryId === category.id)
+            .reduce((acc: number, t: any) => acc + Number(t.amount), 0) || 0;
           const limit = Number(category.budgetLimit) || 0;
           const percent = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
           const isOver = spent > limit && limit > 0;

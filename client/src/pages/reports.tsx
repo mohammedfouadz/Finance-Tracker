@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useFinance } from "@/hooks/use-finance";
+import { useTransactions, useCategories } from "@/hooks/use-finance";
 import { formatCurrency } from "@/lib/utils";
 import { 
   BarChart, 
@@ -18,9 +18,10 @@ import {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 export default function ReportsPage() {
-  const { transactions, categories, isLoading } = useFinance();
+  const { data: transactions, isLoading: isTransLoading } = useTransactions();
+  const { data: categories, isLoading: isCatLoading } = useCategories();
 
-  if (isLoading) {
+  if (isTransLoading || isCatLoading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-[calc(100vh-200px)]">
@@ -31,15 +32,15 @@ export default function ReportsPage() {
   }
 
   // Aggregate by category
-  const categoryData = categories?.map(cat => {
+  const categoryData = categories?.map((cat: any) => {
     const total = transactions
-      ?.filter(t => t.categoryId === cat.id)
-      .reduce((acc, t) => acc + Number(t.amount), 0) || 0;
+      ?.filter((t: any) => t.categoryId === cat.id)
+      .reduce((acc: number, t: any) => acc + Number(t.amount), 0) || 0;
     return { name: cat.name, value: total, type: cat.type };
-  }).filter(d => d.value > 0) || [];
+  }).filter((d: any) => d.value > 0) || [];
 
-  const expenseData = categoryData.filter(d => d.type === 'expense');
-  const incomeData = categoryData.filter(d => d.type === 'income');
+  const expenseData = categoryData.filter((d: any) => d.type === 'expense');
+  const incomeData = categoryData.filter((d: any) => d.type === 'income');
 
   return (
     <Layout>
@@ -65,7 +66,7 @@ export default function ReportsPage() {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {expenseData.map((_, index) => (
+                  {expenseData.map((_: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -84,8 +85,8 @@ export default function ReportsPage() {
           <CardContent className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={[
-                { name: 'Income', amount: incomeData.reduce((acc, d) => acc + d.value, 0) },
-                { name: 'Expenses', amount: expenseData.reduce((acc, d) => acc + d.value, 0) }
+                { name: 'Income', amount: incomeData.reduce((acc: number, d: any) => acc + d.value, 0) },
+                { name: 'Expenses', amount: expenseData.reduce((acc: number, d: any) => acc + d.value, 0) }
               ]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" />
