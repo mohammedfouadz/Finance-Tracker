@@ -1,13 +1,18 @@
-# FinTrack - Personal Financial Management System
+# Mudabbir (مُدبِّر) - Personal Financial Management System
 
 ## Overview
 
-FinTrack is a comprehensive web-based personal financial management platform that helps users track income, manage expenses, set budgets, define savings goals, and get AI-powered financial coaching. The app follows a monorepo structure with a React frontend, Express backend, and PostgreSQL database. Authentication is handled via Replit Auth (OpenID Connect).
+Mudabbir is a comprehensive web-based personal financial management platform that helps users track income, manage expenses, set budgets, define savings goals, track investments, manage debts, monitor bank accounts and assets, and get AI-powered financial coaching. The app follows a monorepo structure with a React frontend, Express backend, and PostgreSQL database. Authentication is handled via Replit Auth (OpenID Connect).
 
 Key features:
 - **Income & Expense Tracking** — Log transactions with categories, tags, and optional receipts
 - **Budget Allocation** — Automated budget distribution based on customizable percentage/fixed-amount rules (inspired by 50/30/20 rule)
-- **Financial Goals** — Create and track savings/investment goals with progress indicators
+- **Financial Goals** — Create and track savings/investment goals with contribution tracking and progress indicators
+- **Investment Tracking** — Dedicated investment management for Gold, Stocks, Crypto, Real Estate, Bonds with buy/sell tracking
+- **Asset Management** — Track real estate, vehicles, jewelry, equipment with current valuations
+- **Bank Account Management** — Monitor multiple bank accounts with balance history tracking
+- **Debt Management** — Track debts with payment recording and remaining balance updates
+- **Dashboard Analytics** — Total Wealth calculation, wealth breakdown donut chart, income vs expenses bar chart, recent transactions, goals progress
 - **Reports & Charts** — Visual dashboards with Recharts (pie, bar, area charts)
 - **AI Financial Coach** — Chat interface powered by OpenAI for personalized financial advice, with voice input/output support
 - **Multi-category system** — System-seeded default categories plus user-defined custom categories with subcategory support
