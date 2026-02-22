@@ -91,7 +91,7 @@ export default function ReportsPage() {
               ]}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" />
-                <YAxis tickFormatter={(value) => `$${value}`} />
+                <YAxis tickFormatter={(value) => formatAmount(value)} />
                 <Tooltip formatter={(value: number) => formatAmount(value)} />
                 <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
               </BarChart>
