@@ -10,6 +10,11 @@ import TransactionsPage from "@/pages/transactions";
 import GoalsPage from "@/pages/goals";
 import BudgetPage from "@/pages/budget";
 import ReportsPage from "@/pages/reports";
+import IncomePage from "@/pages/income";
+import ExpensesPage from "@/pages/expenses";
+import InvestmentsPage from "@/pages/investments";
+import SavingsPage from "@/pages/savings";
+import SettingsPage from "@/pages/settings";
 import AICoachPage from "@/pages/ai-coach";
 import NotFound from "@/pages/not-found";
 
@@ -65,6 +70,21 @@ function Router() {
       </Route>
       <Route path="/reports">
         {() => <PrivateRoute component={ReportsPage} />}
+      </Route>
+      <Route path="/income">
+        {() => <PrivateRoute component={IncomePage} />}
+      </Route>
+      <Route path="/expenses">
+        {() => <PrivateRoute component={ExpensesPage} />}
+      </Route>
+      <Route path="/investments">
+        {() => <PrivateRoute component={InvestmentsPage} />}
+      </Route>
+      <Route path="/savings">
+        {() => <PrivateRoute component={SavingsPage} />}
+      </Route>
+      <Route path="/settings">
+        {() => <PrivateRoute component={SettingsPage} />}
       </Route>
       <Route path="/ai-coach">
         {() => <PrivateRoute component={AICoachPage} />}
