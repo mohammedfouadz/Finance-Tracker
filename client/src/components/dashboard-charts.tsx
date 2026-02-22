@@ -4,8 +4,9 @@ import {
 import { useTransactions, useCategories } from "@/hooks/use-finance";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useMemo } from "react";
-import { Progress } from "@/components/ui/progress";
 import { formatCurrency } from "@/lib/utils";
+
+const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
 
 export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
   const { data: transactions } = useTransactions();
@@ -40,9 +41,9 @@ export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
   }, [transactions, categories]);
 
   const breakdownData = useMemo(() => {
-    if (!transactions || !categories) return [];
+    if (!transactions || !categories) return { items: [], net: 0 };
     
-    const filteredCats = categories.filter(c => ['investment', 'savings', 'expense'].includes(c.type));
+    const filteredCats = categories.filter(c => ['expense', 'savings', 'investment'].includes(c.type));
     const totalIncome = transactions
       .filter(t => categories.find(c => c.id === t.categoryId)?.type === 'income')
       .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -68,7 +69,7 @@ export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
   if (type === "list") {
     return (
       <div className="space-y-8 pt-4">
-        {breakdownData.items.map((item, i) => (
+        {breakdownData.items.map((item: any, i: number) => (
           <div key={i} className="space-y-2">
             <div className="flex justify-between items-center text-sm">
               <span className="text-[#666666] font-medium">{item.name}</span>
@@ -84,7 +85,7 @@ export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
         ))}
         <div className="pt-4 border-t border-dashed flex justify-between items-center">
           <span className="font-bold text-[#1a1a1a]">Remaining (Net)</span>
-          <span className={cn("font-bold", breakdownData.net < 0 ? "text-[#e11d48]" : "text-success")}>
+          <span className={cn("font-bold", breakdownData.net < 0 ? "text-[#e11d48]" : "text-[#10b981]")}>
             {formatCurrency(breakdownData.net)}
           </span>
         </div>
@@ -120,8 +121,4 @@ export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
       </ResponsiveContainer>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }

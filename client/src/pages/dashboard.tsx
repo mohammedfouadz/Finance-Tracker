@@ -1,7 +1,7 @@
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactions, useCategories } from "@/hooks/use-finance";
-import { ArrowUp, ArrowDown, Wallet, PiggyBank, MoreHorizontal } from "lucide-react";
+import { ArrowUp, ArrowDown, Wallet, PiggyBank, MoreHorizontal, Receipt, LineChart } from "lucide-react";
 import { DashboardCharts } from "@/components/dashboard-charts";
 import { TransactionDialog } from "@/components/transaction-dialog";
 import { format } from "date-fns";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect } from "react";
 import { useLocation } from "wouter";
+import { cn } from "@/lib/utils";
 
 export default function Dashboard() {
   const { user, isLoading: isAuthLoading } = useAuth();
