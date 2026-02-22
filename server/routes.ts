@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
@@ -12,28 +12,27 @@ const openai = new OpenAI({
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
 
+function getUserId(req: Request): string {
+  return (req.user as any)?.claims?.sub || (req.session as any)?.userId;
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  // Auth Setup
   await setupAuth(app);
   registerAuthRoutes(app);
-
-  // Chat/AI Routes (for "Financial Coach")
   registerChatRoutes(app);
-
-  // === PROTECTED API ROUTES ===
 
   // Categories
   app.get(api.categories.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const categories = await storage.getCategories(userId);
     res.json(categories);
   });
 
   app.post(api.categories.create.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const input = api.categories.create.input.parse({ ...req.body, userId });
     const category = await storage.createCategory(input);
     res.status(201).json(category);
@@ -54,14 +53,14 @@ export async function registerRoutes(
 
   // Transactions
   app.get(api.transactions.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
-    const params = req.query as any; // Cast query params
+    const userId = getUserId(req);
+    const params = req.query as any;
     const transactions = await storage.getTransactions(userId, params);
     res.json(transactions);
   });
 
   app.post(api.transactions.create.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const body = { ...req.body, userId };
     if (body.date && typeof body.date === "string") body.date = new Date(body.date);
     const input = api.transactions.create.input.parse(body);
@@ -86,13 +85,13 @@ export async function registerRoutes(
 
   // Goals
   app.get(api.goals.list.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const goals = await storage.getGoals(userId);
     res.json(goals);
   });
 
   app.post(api.goals.create.path, isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).claims.sub;
+    const userId = getUserId(req);
     const body = { ...req.body, userId };
     if (body.deadline && typeof body.deadline === "string") body.deadline = new Date(body.deadline);
     const input = api.goals.create.input.parse(body);
@@ -115,25 +114,21 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
-  // AI Insights Endpoint
+  // AI Insights
   app.post(api.ai.insights.path, isAuthenticated, async (req, res) => {
     try {
       const { query } = req.body;
-      const userId = (req.user as any).claims.sub;
-      
-      // Fetch user's financial context (last 30 days transactions, current goals)
-      const transactions = await storage.getTransactions(userId, { 
-        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString() 
+      const userId = getUserId(req);
+      const transactions = await storage.getTransactions(userId, {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       });
       const goals = await storage.getGoals(userId);
-
       const context = `
         User Financial Data:
         Transactions (Last 30 days): ${JSON.stringify(transactions)}
         Goals: ${JSON.stringify(goals)}
         User Query: ${query || "Provide general financial insights and recommendations based on my recent activity."}
       `;
-
       const response = await openai.chat.completions.create({
         model: "gpt-5.1",
         messages: [
@@ -142,14 +137,11 @@ export async function registerRoutes(
         ],
         response_format: { type: "json_object" }
       });
-
       const content = JSON.parse(response.choices[0].message.content || "{}");
-      
       res.json({
         insight: content.insight || "Your spending is within normal ranges.",
         recommendations: content.recommendations || ["Track your daily expenses.", "Review your subscription services.", "Set a monthly savings goal."]
       });
-
     } catch (error) {
       console.error("AI Insights Error:", error);
       res.status(500).json({ message: "Failed to generate insights" });
