@@ -18,44 +18,62 @@ export default function Dashboard() {
   const currentYear = new Date().getFullYear();
 
   const allTx = useMemo(() => (transactions as any[]), [transactions]);
+  const allCats = useMemo(() => (categories as any[]), [categories]);
+
+  const INVESTMENT_NAMES = ["gold", "stocks", "cryptocurrencies"];
+
+  const incomeCatIds = useMemo(() =>
+    new Set(allCats.filter((c: any) => c.type === "income").map((c: any) => c.id))
+  , [allCats]);
+
+  const investmentCatIds = useMemo(() =>
+    new Set(allCats.filter((c: any) => INVESTMENT_NAMES.some(n => c.name.toLowerCase().includes(n))).map((c: any) => c.id))
+  , [allCats]);
+
+  const savingsCatIds = useMemo(() =>
+    new Set(allCats.filter((c: any) => c.name === "Bank Savings" || (c.name === "Savings" && c.type === "expense")).map((c: any) => c.id))
+  , [allCats]);
+
+  const expenseCatIds = useMemo(() =>
+    new Set(allCats.filter((c: any) => c.type === "expense" && !investmentCatIds.has(c.id) && !savingsCatIds.has(c.id)).map((c: any) => c.id))
+  , [allCats, investmentCatIds, savingsCatIds]);
 
   const totalIncome = useMemo(() =>
-    allTx.filter((tx: any) => tx.type === "income").reduce((s: number, tx: any) => s + Number(tx.amount), 0)
-  , [allTx]);
+    allTx.filter((tx: any) => incomeCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + Number(tx.amount), 0)
+  , [allTx, incomeCatIds]);
 
   const totalExpenses = useMemo(() =>
-    allTx.filter((tx: any) => tx.type === "expense").reduce((s: number, tx: any) => s + Number(tx.amount), 0)
-  , [allTx]);
+    allTx.filter((tx: any) => expenseCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + Number(tx.amount), 0)
+  , [allTx, expenseCatIds]);
 
   const totalInvestments = useMemo(() =>
-    allTx.filter((tx: any) => tx.type === "investment").reduce((s: number, tx: any) => s + Number(tx.amount), 0)
-  , [allTx]);
+    allTx.filter((tx: any) => investmentCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + Number(tx.amount), 0)
+  , [allTx, investmentCatIds]);
 
   const totalSavings = useMemo(() =>
-    allTx.filter((tx: any) => tx.type === "savings").reduce((s: number, tx: any) => s + Number(tx.amount), 0)
-  , [allTx]);
+    allTx.filter((tx: any) => savingsCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + Number(tx.amount), 0)
+  , [allTx, savingsCatIds]);
 
   const netCashflow = totalIncome - totalExpenses - totalInvestments - totalSavings;
-  const savingsRate = totalIncome > 0 ? ((totalSavings / totalIncome) * 100) : 0;
+  const savingsRate = totalIncome > 0 ? (((totalSavings + totalInvestments) / totalIncome) * 100) : 0;
 
   const monthlyData = useMemo(() => {
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const data: { month: string; income: number; expenses: number }[] = [];
     for (let m = 0; m < 12; m++) {
       const inc = allTx
-        .filter((tx: any) => { const d = new Date(tx.date); return d.getMonth() === m && d.getFullYear() === currentYear && tx.type === "income"; })
+        .filter((tx: any) => { const d = new Date(tx.date); return d.getMonth() === m && d.getFullYear() === currentYear && incomeCatIds.has(tx.categoryId); })
         .reduce((s: number, tx: any) => s + Number(tx.amount), 0);
       const exp = allTx
-        .filter((tx: any) => { const d = new Date(tx.date); return d.getMonth() === m && d.getFullYear() === currentYear && tx.type === "expense"; })
+        .filter((tx: any) => { const d = new Date(tx.date); return d.getMonth() === m && d.getFullYear() === currentYear && expenseCatIds.has(tx.categoryId); })
         .reduce((s: number, tx: any) => s + Number(tx.amount), 0);
       if (inc > 0 || exp > 0) {
         data.push({ month: monthNames[m], income: inc, expenses: exp });
       }
     }
     return data;
-  }, [allTx, currentYear]);
+  }, [allTx, currentYear, incomeCatIds, expenseCatIds]);
 
-  const totalOutflow = totalExpenses + totalInvestments + totalSavings;
   const maxOutflow = Math.max(totalExpenses, totalInvestments, totalSavings, 1);
 
   if (txLoading) {
@@ -158,7 +176,7 @@ export default function Dashboard() {
                 <span className="text-sm font-semibold text-[#1a1a1a] dark:text-white" data-testid="text-breakdown-investments">{formatAmount(totalInvestments)}</span>
               </div>
               <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${totalOutflow > 0 ? (totalInvestments / maxOutflow) * 100 : 0}%` }} />
+                <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${maxOutflow > 0 ? (totalInvestments / maxOutflow) * 100 : 0}%` }} />
               </div>
             </div>
 
@@ -168,7 +186,7 @@ export default function Dashboard() {
                 <span className="text-sm font-semibold text-[#1a1a1a] dark:text-white" data-testid="text-breakdown-savings">{formatAmount(totalSavings)}</span>
               </div>
               <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${totalOutflow > 0 ? (totalSavings / maxOutflow) * 100 : 0}%` }} />
+                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${maxOutflow > 0 ? (totalSavings / maxOutflow) * 100 : 0}%` }} />
               </div>
             </div>
 
@@ -178,7 +196,7 @@ export default function Dashboard() {
                 <span className="text-sm font-semibold text-[#1a1a1a] dark:text-white" data-testid="text-breakdown-expenses">{formatAmount(totalExpenses)}</span>
               </div>
               <div className="w-full h-2.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${totalOutflow > 0 ? (totalExpenses / maxOutflow) * 100 : 0}%` }} />
+                <div className="h-full bg-red-500 rounded-full transition-all" style={{ width: `${maxOutflow > 0 ? (totalExpenses / maxOutflow) * 100 : 0}%` }} />
               </div>
             </div>
 
