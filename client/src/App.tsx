@@ -8,6 +8,8 @@ import LandingPage from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import TransactionsPage from "@/pages/transactions";
 import GoalsPage from "@/pages/goals";
+import BudgetPage from "@/pages/budget";
+import ReportsPage from "@/pages/reports";
 import AICoachPage from "@/pages/ai-coach";
 import NotFound from "@/pages/not-found";
 
@@ -57,6 +59,12 @@ function Router() {
       </Route>
       <Route path="/goals">
         {() => <PrivateRoute component={GoalsPage} />}
+      </Route>
+      <Route path="/budget">
+        {() => <PrivateRoute component={BudgetPage} />}
+      </Route>
+      <Route path="/reports">
+        {() => <PrivateRoute component={ReportsPage} />}
       </Route>
       <Route path="/ai-coach">
         {() => <PrivateRoute component={AICoachPage} />}
