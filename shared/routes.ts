@@ -4,10 +4,23 @@ import {
   insertTransactionSchema, 
   insertGoalSchema, 
   insertBudgetSchema,
+  insertAssetSchema,
+  insertBankAccountSchema,
+  insertInvestmentSchema,
+  insertDebtSchema,
+  insertDebtPaymentSchema,
+  insertGoalContributionSchema,
   categories,
   transactions,
   goals,
-  budgets
+  budgets,
+  assets,
+  bankAccounts,
+  balanceHistory,
+  investments,
+  debts,
+  debtPayments,
+  goalContributions
 } from './schema';
 
 export const errorSchemas = {
@@ -163,6 +176,187 @@ export const api = {
       responses: {
         200: z.custom<typeof budgets.$inferSelect>(),
         404: errorSchemas.notFound,
+      },
+    },
+  },
+  assets: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/assets' as const,
+      responses: {
+        200: z.array(z.custom<typeof assets.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/assets' as const,
+      input: insertAssetSchema,
+      responses: {
+        201: z.custom<typeof assets.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/assets/:id' as const,
+      input: insertAssetSchema.partial(),
+      responses: {
+        200: z.custom<typeof assets.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/assets/:id' as const,
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  bankAccounts: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/bank-accounts' as const,
+      responses: {
+        200: z.array(z.custom<typeof bankAccounts.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/bank-accounts' as const,
+      input: insertBankAccountSchema,
+      responses: {
+        201: z.custom<typeof bankAccounts.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/bank-accounts/:id' as const,
+      input: insertBankAccountSchema.partial(),
+      responses: {
+        200: z.custom<typeof bankAccounts.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/bank-accounts/:id' as const,
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+    history: {
+      method: 'GET' as const,
+      path: '/api/bank-accounts/:id/history' as const,
+      responses: {
+        200: z.array(z.custom<typeof balanceHistory.$inferSelect>()),
+      },
+    },
+  },
+  investments: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/investments' as const,
+      responses: {
+        200: z.array(z.custom<typeof investments.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/investments' as const,
+      input: insertInvestmentSchema,
+      responses: {
+        201: z.custom<typeof investments.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/investments/:id' as const,
+      input: insertInvestmentSchema.partial(),
+      responses: {
+        200: z.custom<typeof investments.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/investments/:id' as const,
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+  },
+  debts: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/debts' as const,
+      responses: {
+        200: z.array(z.custom<typeof debts.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/debts' as const,
+      input: insertDebtSchema,
+      responses: {
+        201: z.custom<typeof debts.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+    update: {
+      method: 'PUT' as const,
+      path: '/api/debts/:id' as const,
+      input: insertDebtSchema.partial(),
+      responses: {
+        200: z.custom<typeof debts.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/debts/:id' as const,
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
+    payments: {
+      method: 'GET' as const,
+      path: '/api/debts/:id/payments' as const,
+      responses: {
+        200: z.array(z.custom<typeof debtPayments.$inferSelect>()),
+      },
+    },
+    createPayment: {
+      method: 'POST' as const,
+      path: '/api/debts/:id/payments' as const,
+      input: insertDebtPaymentSchema,
+      responses: {
+        201: z.custom<typeof debtPayments.$inferSelect>(),
+        400: errorSchemas.validation,
+      },
+    },
+  },
+  goalContributions: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/goals/:id/contributions' as const,
+      responses: {
+        200: z.array(z.custom<typeof goalContributions.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/goals/:id/contributions' as const,
+      input: insertGoalContributionSchema,
+      responses: {
+        201: z.custom<typeof goalContributions.$inferSelect>(),
+        400: errorSchemas.validation,
       },
     },
   },

@@ -1,0 +1,263 @@
+Build a comprehensive Personal Financial Management System called "مُدبِّر - Mudabbir" as a full-stack web application.
+
+TECH STACK: React.js with TypeScript, Tailwind CSS with shadcn/ui, Recharts for charts, Node.js with Express.js backend, PostgreSQL with Prisma ORM, JWT authentication with bcrypt, i18next for Arabic/English bilingual support, Lucide React icons, Google Fonts (Cairo for Arabic, Inter for English).
+
+---
+
+LANDING PAGE (Public):
+- Hero section with app name "مُدبِّر - Mudabbir" and tagline about personal finance management
+- Features section highlighting: Multi-source income tracking, Smart expense categorization, Investment portfolio management, Asset & property tracking, Bank account consolidation, Debt management, Financial goal setting, Interactive analytics dashboard
+- Testimonials section with placeholder data
+- Pricing section showing Free plan
+- Call-to-action buttons for Register/Login
+- Responsive design with smooth scroll animations
+- Footer with links
+
+---
+
+AUTHENTICATION:
+- Login page: Email/Username + Password + Remember Me option
+- Registration page: Full Name, Email, Username, Password, Confirm Password, Preferred Language (Arabic/English)
+- JWT tokens with 24-hour expiration and refresh token mechanism
+- Password hashing with bcrypt (10 salt rounds)
+- Form validation with bilingual error messages
+- Session timeout after 30 minutes of inactivity
+- Redirect to dashboard after successful login
+
+---
+
+THEME AND LOCALIZATION:
+- Dark Mode / Light Mode toggle with system preference detection, stored in localStorage
+- Full Arabic (RTL) and English (LTR) support with language switcher in navbar
+- All labels, buttons, placeholders, tooltips, messages in both languages
+- When Arabic is selected, entire layout switches to RTL direction
+- Light Mode colors: Primary #2563EB, Success/Income #16A34A, Danger/Debt #DC2626, Warning/Expenses #F59E0B, Investment #7C3AED, Background #F8FAFC, Cards #FFFFFF, Text #1E293B
+- Dark Mode colors: Primary #3B82F6, Success #22C55E, Danger #EF4444, Warning #FBBF24, Investment #8B5CF6, Background #0F172A, Cards #1E293B, Text #F1F5F9
+- Currency format support: SAR, USD, EGP, EUR (user selectable in settings)
+
+---
+
+SIDEBAR NAVIGATION (collapsible, becomes hamburger on mobile):
+1. 🏠 الرئيسية / Dashboard
+2. 💰 الدخل / Income
+3. 📊 توزيع الدخل / Budget Allocation
+4. 💸 المصروفات / Expenses
+5. 🏠 الأصول / Assets & Properties
+6. 🏦 الحسابات البنكية / Bank Accounts
+7. 📈 الاستثمارات / Investments
+8. 💳 الديون / Debts
+9. 🎯 الأهداف المالية / Financial Goals
+10. ⚙️ الإعدادات / Settings
+
+TOP NAVBAR: App logo, global search bar, language toggle AR/EN, dark/light mode toggle, notification bell, user avatar with dropdown (Profile, Settings, Logout)
+
+---
+
+MAIN DASHBOARD PAGE:
+
+Section 1 - Four summary cards in a row at the top:
+Card 1: "إجمالي الثروة / Total Wealth" = Sum of all bank account balances + investment current values + asset estimated values. Large bold number with currency, appropriate icon, subtle gradient background, small percentage showing change from previous month with green arrow up or red arrow down.
+Card 2: "إجمالي الديون / Total Debts" = Sum of all outstanding remaining debt amounts. Displayed in red color scheme.
+Card 3: "إجمالي الدخل الشهري / Total Monthly Income" = Sum of all income entries for current month. Displayed in green color scheme.
+Card 4: "إجمالي الصرف الشهري / Total Monthly Expenses" = Sum of all expense entries for current month. Displayed in orange color scheme.
+All cards should have number counting animation on load.
+
+Section 2 - Monthly Income vs Expenses Bar Chart:
+X-axis shows all 12 months of current year (Arabic month names when Arabic selected, English when English selected). Y-axis shows amount in selected currency. Two bars per month: green bar for total income that month, orange/red bar for total expenses that month. Tooltip on hover showing exact values. Legend at top. Option to switch between current year and previous year.
+
+Section 3 - Wealth Distribution Donut Chart:
+Segments: Cash/Bank Accounts total (💰 أموال نقدية), Real Estate/Properties total estimated value (🏠 عقارات), Investments total current value (📈 استثمارات), Savings allocation (💵 مدخرات). Each segment distinct color with percentage label. Center of donut shows total wealth amount. Clicking a segment shows its breakdown.
+
+Section 4 - Additional widgets:
+- Recent Transactions list showing last 5 income and last 5 expense entries
+- Upcoming Debt Payments due within 30 days
+- Top 3 priority goal progress bars
+- Quick Add buttons for adding income or expense quickly
+
+---
+
+MODULE 1 - INCOME MANAGEMENT (إدارة الدخل):
+Table view with add, edit, delete functionality.
+Fields per income entry:
+- المصدر / Source Name (text, required) - e.g. "راتب شركة ABC", "إيجار شقة", "عمل حر"
+- نوع المصدر / Source Type (dropdown, required) - Options: Salary, Freelance, Rental Income, Business, Dividends, Side Hustle, Other
+- المبلغ / Amount (number, required)
+- العملة / Currency (dropdown, required) - SAR, USD, EGP, EUR etc.
+- التكرار / Frequency (dropdown, required) - Monthly, Weekly, Bi-weekly, Quarterly, Annually, One-time
+- تاريخ الاستلام / Date Received (date, required)
+- ملاحظات / Notes (textarea, optional)
+- الحالة / Status (toggle, required) - Active / Inactive
+Features: Monthly income summary at top, filter by source type and date range, search functionality, export to CSV, bulk delete.
+
+---
+
+MODULE 2 - BUDGET ALLOCATION (توزيع الدخل):
+Takes total monthly income and distributes it across categories with adjustable percentages.
+Default categories:
+- مصاريف المعيشة / Living Expenses: 50%, blue, 🏠 icon
+- الادخار / Savings: 20%, green, 🏦 icon
+- الاستثمار / Investment: 15%, purple, 📈 icon
+- صندوق الطوارئ / Emergency Fund: 10%, red, 🚨 icon
+- أخرى / Other: 5%, gray, ➕ icon
+Features:
+- Visual slider or number input for each category percentage
+- Total MUST always equal 100% with warning if it doesn't
+- Show calculated amount next to percentage (e.g. 50% of 10,000 = 5,000 SAR)
+- "Add Custom Category" button where user enters: Name, Percentage, Icon from predefined list, Color
+- User can add categories like: Charity, Entertainment, Education, Travel, etc.
+- Bar chart showing allocation visually
+- Comparison with previous month allocation
+- "Reset to Default" button
+- Save as template for future months
+
+---
+
+MODULE 3 - EXPENSE MANAGEMENT (إدارة المصروفات):
+Table view with filters, add, edit, delete.
+Fields per expense:
+- البند / Item Description (text, required) - e.g. "بنزين السيارة", "فاتورة الكهرباء"
+- النوع / Category (dropdown, required) - Categories: 🚗 مواصلات/Transportation, ✈️ سفر/Travel, 🍔 طعام وشراب/Food & Drinks, 🏠 إيجار/Rent, 💡 فواتير/Bills & Utilities, 👕 ملابس/Clothing, 🏥 صحة وعلاج/Health & Medical, 📚 تعليم/Education, 🎮 ترفيه/Entertainment, 🛒 تسوق/Shopping, 💇 عناية شخصية/Personal Care, 🎁 هدايا وتبرعات/Gifts & Charity, 📱 اتصالات وإنترنت/Telecom & Internet, 🔧 صيانة/Maintenance, 👨‍👩‍👧‍👦 عائلة/Family, ❓ أخرى/Other
+- المبلغ / Amount (number, required)
+- العملة / Currency (dropdown, required)
+- التاريخ / Date (date, required)
+- طريقة الدفع / Payment Method (dropdown, optional) - Cash, Credit Card, Bank Transfer, Digital Wallet
+- ملاحظات / Notes (textarea, optional)
+- مرفق / Attachment (file upload, optional) - Receipt photo/PDF
+Features: Monthly expense summary at top, pie chart showing expense distribution by category for current month, filter by category and date range and payment method, search by description, "Over Budget" warning if expenses in any category exceed allocated budget from Module 2, daily/weekly/monthly view toggle, export to CSV.
+
+---
+
+MODULE 4 - ASSETS AND PROPERTIES (الأصول والممتلكات):
+Card/Grid view for each asset.
+Fields per asset:
+- اسم الأصل / Asset Name (text, required) - e.g. "شقة في الرياض", "أرض في جدة"
+- نوع الأصل / Asset Type (dropdown, required) - Apartment, Land, Villa, Commercial Property, Vehicle, Other
+- الموقع / Location (text, optional)
+- تاريخ الشراء / Purchase Date (date, required)
+- سعر الشراء / Purchase Price (number, required)
+- القيمة الحالية المقدرة / Estimated Current Value (number, required)
+- حالة الأصل / Status (dropdown, required) - Owned, Rented Out, Under Construction, For Sale
+- دخل شهري / Monthly Income if rented out (number, optional)
+- ملاحظات / Notes (textarea, optional)
+- صورة / Image (file upload, optional)
+Features: Total assets value at top, appreciation/depreciation calculation showing current value vs purchase price with percentage, filter by asset type.
+
+---
+
+MODULE 5 - BANK ACCOUNTS (الحسابات البنكية):
+List/Card view.
+Fields per account:
+- اسم البنك / Bank Name (text, required) - e.g. "البنك الأهلي", "الراجحي"
+- نوع الحساب / Account Type (dropdown, required) - Savings, Current/Checking, Fixed Deposit, Digital Wallet
+- رقم الحساب / Account Number (text, required) - displayed masked showing only last 4 digits
+- العملة / Currency (dropdown, required)
+- الرصيد الحالي / Current Balance (number, required)
+- تاريخ آخر تحديث / Last Updated (date, auto-set when balance modified)
+- ملاحظات / Notes (textarea, optional) - e.g. "حساب الراتب"
+Features: Total balance across all banks at top, pie chart showing balance distribution by bank, quick update balance button, currency conversion display showing equivalent in primary currency, balance history log tracking every update with old and new values and timestamp.
+
+---
+
+MODULE 6 - INVESTMENTS (الاستثمارات):
+Table and Cards hybrid view.
+Fields per investment:
+- اسم الاستثمار / Investment Name (text, required) - e.g. "ذهب عيار 24", "بيتكوين", "أسهم أرامكو"
+- نوع الاستثمار / Investment Type (dropdown, required) - Options: 🥇 ذهب/Gold, 💎 فضة/Silver, ₿ عملات رقمية/Cryptocurrency, 📊 أسهم/Stocks, 🏢 صناديق استثمار/Mutual Funds, 🏠 عقارات استثمارية/Real Estate Investment, 💵 ودائع ثابتة/Fixed Deposits, 📜 سندات/Bonds, 🔄 أخرى/Other
+- الكمية / Quantity (number, optional) - e.g. 10 grams, 0.5 BTC, 100 shares
+- سعر الشراء / Purchase Price (number, required) - total amount invested
+- سعر الوحدة عند الشراء / Unit Price at Purchase (number, optional)
+- القيمة الحالية / Current Value (number, required) - manual entry
+- تاريخ الشراء / Purchase Date (date, required)
+- المنصة / Platform (text, optional) - e.g. "Binance", "تداول"
+- الحالة / Status (dropdown, required) - Active, Sold, Matured
+- تاريخ البيع / Sell Date (date, optional if sold)
+- سعر البيع / Sell Price (number, optional if sold)
+- ملاحظات / Notes (textarea, optional)
+Features: Total portfolio value at top, profit/loss calculation for each investment (Current Value minus Purchase Price), overall portfolio P&L percentage, pie chart showing distribution by investment type, line chart showing portfolio value over time, ROI calculator, green color for profit and red for loss.
+
+---
+
+MODULE 7 - DEBT MANAGEMENT (إدارة الديون):
+Table view with status indicators.
+Fields per debt:
+- اسم الدائن / Creditor Name (text, required) - person or institution
+- المبلغ الأصلي / Original Amount (number, required)
+- المبلغ المتبقي / Remaining Amount (number, required)
+- العملة / Currency (dropdown, required)
+- سبب الدين / Reason (text, required) - e.g. "قرض سيارة", "دين شخصي"
+- تاريخ الاستلام / Date Taken (date, required)
+- تاريخ الاستحقاق / Due Date (date, optional)
+- نسبة الفائدة / Interest Rate (number, optional, percentage)
+- حالة الدين / Status (dropdown, required) - Active, Partially Paid, Fully Paid, Overdue
+- طريقة السداد / Payment Plan (dropdown, optional) - Lump Sum, Monthly Installments
+- مبلغ القسط / Installment Amount (number, optional)
+- ملاحظات / Notes (textarea, optional)
+Features: Total debt summary at top showing total owed and total paid and remaining, progress bar for each debt showing percentage paid, overdue debts highlighted in red, payment history log for each debt with date and amount paid, "Make Payment" button that reduces remaining amount and logs the payment with date and amount, debt payoff projection calculator, sort by due date and amount and status.
+
+---
+
+MODULE 8 - FINANCIAL GOALS (الأهداف المالية):
+Cards view with progress indicators.
+Fields per goal:
+- اسم الهدف / Goal Name (text, required) - e.g. "شراء سيارة", "صندوق تقاعد"
+- نوع الهدف / Goal Type (dropdown, required) - Savings, Investment, Debt Payoff, Purchase, Emergency Fund, Other
+- المبلغ المستهدف / Target Amount (number, required)
+- المبلغ الحالي / Current Amount (number, required)
+- العملة / Currency (dropdown, required)
+- الفترة الزمنية / Time Frame (dropdown, required) - Quarterly ربعي, Annual سنوي, Custom
+- تاريخ البداية / Start Date (date, required)
+- تاريخ الاستهداف / Target Date (date, required)
+- الأولوية / Priority (dropdown, required) - High, Medium, Low
+- ملاحظات / Notes (textarea, optional)
+Features: Visual progress bar for each goal showing currentAmount/targetAmount as percentage, days remaining countdown, auto-calculated monthly contribution needed to reach goal on time, "Add Contribution" button to log progress with amount and date, confetti celebration animation when goal reaches 100%, filter by Active and Completed and Overdue status.
+
+---
+
+SETTINGS PAGE:
+- Profile: Edit name, email, password, profile picture
+- Preferences: Default currency, default language, theme preference (Light/Dark/System), date format (DD/MM/YYYY or MM/DD/YYYY), number format (1,000.00 or 1.000,00)
+- Budget Templates: Save and load allocation templates
+- Data Management: Export all data as JSON/CSV, import data, delete account with confirmation
+- Notifications: Toggle notifications for debt due dates, goal milestones, budget exceeded warnings, monthly summary
+
+---
+
+DATABASE TABLES:
+Users: id, fullName, email, username, passwordHash, language, currency, theme, createdAt, updatedAt
+IncomeEntries: id, userId, sourceName, sourceType, amount, currency, frequency, dateReceived, notes, isActive, createdAt
+BudgetAllocations: id, userId, categoryName, percentage, icon, color, month, year, createdAt
+ExpenseEntries: id, userId, description, category, amount, currency, date, paymentMethod, notes, attachmentUrl, createdAt
+Assets: id, userId, name, type, location, purchaseDate, purchasePrice, currentValue, status, monthlyIncome, notes, imageUrl, createdAt
+BankAccounts: id, userId, bankName, accountType, accountNumber, currency, balance, lastUpdated, notes, createdAt
+BalanceHistory: id, bankAccountId, previousBalance, newBalance, changedAt
+Investments: id, userId, name, type, quantity, purchasePrice, unitPriceAtPurchase, currentValue, purchaseDate, platform, status, sellDate, sellPrice, notes, createdAt
+Debts: id, userId, creditorName, originalAmount, remainingAmount, currency, reason, dateTaken, dueDate, interestRate, status, paymentPlan, installmentAmount, notes, createdAt
+DebtPayments: id, debtId, amount, paymentDate, notes
+FinancialGoals: id, userId, name, type, targetAmount, currentAmount, currency, timeFrame, startDate, targetDate, priority, notes, status, createdAt
+GoalContributions: id, goalId, amount, contributionDate, notes
+
+---
+
+UI/UX REQUIREMENTS:
+- Smooth page transitions with fade in/out
+- Card hover effects with subtle lift shadow
+- Chart loading animations
+- Loading skeleton placeholders while data loads
+- Toast notifications top-right for success, error, info messages
+- Responsive design: mobile-first approach, cards stack vertically on mobile, charts resize, touch-friendly buttons
+- All forms have proper validation with clear bilingual error messages
+- Confirmation dialogs before delete operations
+- Empty state illustrations when no data exists in a module
+
+---
+
+SAMPLE DATA:
+Pre-populate for demo: 3 income sources (Salary 15000 SAR, Freelance 5000 SAR, Rental 3000 SAR), 10 expense entries across different categories, 2 bank accounts (الأهلي with 50000 SAR, الراجحي with 30000 SAR), 2 assets (apartment valued 500000 SAR, land valued 200000 SAR), 3 investments (Gold 10000 SAR, Bitcoin 15000 SAR, Aramco stocks 25000 SAR), 2 debts (personal debt 5000 SAR, car loan 40000 SAR), 2 financial goals (Emergency Fund target 50000 SAR current 20000 SAR, Car Purchase target 100000 SAR current 35000 SAR).
+
+---
+
+SECURITY: Input validation and sanitization on all forms, SQL injection prevention, XSS prevention, CORS configuration, rate limiting on auth endpoints, bank account numbers masked showing only last 4 digits.
+
+DEPLOYMENT: Deploy on Replit, use Replit PostgreSQL database, environment variables for DATABASE_URL and JWT_SECRET and JWT_REFRESH_SECRET. App starts with single command. Include README.md.
+
+Build this complete application with clean organized code structure, production-ready quality, fully functional CRUD operations on all modules, working charts and calculations, and complete bilingual Arabic/English support with RTL layout switching.

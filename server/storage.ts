@@ -1,10 +1,17 @@
 import { db } from "./db";
 import { 
   categories, transactions, goals, budgets,
+  assets, bankAccounts, balanceHistory, investments, debts, debtPayments, goalContributions,
   type InsertCategory, type UpdateCategoryRequest,
   type InsertTransaction, type UpdateTransactionRequest,
   type InsertGoal, type UpdateGoalRequest,
   type InsertBudget, type UpdateBudgetRequest,
+  type InsertAsset, type UpdateAssetRequest,
+  type InsertBankAccount, type UpdateBankAccountRequest,
+  type InsertInvestment, type UpdateInvestmentRequest,
+  type InsertDebt, type UpdateDebtRequest,
+  type InsertDebtPayment,
+  type InsertGoalContribution,
   type TransactionQueryParams
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, sql, or } from "drizzle-orm";
@@ -37,10 +44,40 @@ export interface IStorage extends IAuthStorage, IChatStorage {
   getBudgets(userId: string, month: number, year: number): Promise<typeof budgets.$inferSelect[]>;
   createBudget(budget: InsertBudget): Promise<typeof budgets.$inferSelect>;
   updateBudget(id: number, updates: UpdateBudgetRequest): Promise<typeof budgets.$inferSelect>;
+
+  // Assets
+  getAssets(userId: string): Promise<typeof assets.$inferSelect[]>;
+  createAsset(asset: InsertAsset): Promise<typeof assets.$inferSelect>;
+  updateAsset(id: number, updates: UpdateAssetRequest): Promise<typeof assets.$inferSelect>;
+  deleteAsset(id: number): Promise<void>;
+
+  // Bank Accounts
+  getBankAccounts(userId: string): Promise<typeof bankAccounts.$inferSelect[]>;
+  createBankAccount(account: InsertBankAccount): Promise<typeof bankAccounts.$inferSelect>;
+  updateBankAccount(id: number, updates: UpdateBankAccountRequest): Promise<typeof bankAccounts.$inferSelect>;
+  deleteBankAccount(id: number): Promise<void>;
+  getBalanceHistory(bankAccountId: number): Promise<typeof balanceHistory.$inferSelect[]>;
+
+  // Investments
+  getInvestments(userId: string): Promise<typeof investments.$inferSelect[]>;
+  createInvestment(investment: InsertInvestment): Promise<typeof investments.$inferSelect>;
+  updateInvestment(id: number, updates: UpdateInvestmentRequest): Promise<typeof investments.$inferSelect>;
+  deleteInvestment(id: number): Promise<void>;
+
+  // Debts
+  getDebts(userId: string): Promise<typeof debts.$inferSelect[]>;
+  createDebt(debt: InsertDebt): Promise<typeof debts.$inferSelect>;
+  updateDebt(id: number, updates: UpdateDebtRequest): Promise<typeof debts.$inferSelect>;
+  deleteDebt(id: number): Promise<void>;
+  getDebtPayments(debtId: number): Promise<typeof debtPayments.$inferSelect[]>;
+  createDebtPayment(payment: InsertDebtPayment): Promise<typeof debtPayments.$inferSelect>;
+
+  // Goal Contributions
+  getGoalContributions(goalId: number): Promise<typeof goalContributions.$inferSelect[]>;
+  createGoalContribution(contribution: InsertGoalContribution): Promise<typeof goalContributions.$inferSelect>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // Inherit methods from auth and chat storage
   getUser = authStorage.getUser;
   upsertUser = authStorage.upsertUser;
   getConversation = chatStorage.getConversation;
@@ -93,7 +130,6 @@ export class DatabaseStorage implements IStorage {
       if (params.categoryId) {
         query.where(eq(transactions.categoryId, params.categoryId));
       }
-      // Implement search if needed
     }
 
     return await query.orderBy(desc(transactions.date));
@@ -160,6 +196,123 @@ export class DatabaseStorage implements IStorage {
   async updateBudget(id: number, updates: UpdateBudgetRequest) {
     const [updated] = await db.update(budgets).set(updates).where(eq(budgets.id, id)).returning();
     return updated;
+  }
+
+  // Assets
+  async getAssets(userId: string) {
+    return await db.select().from(assets).where(eq(assets.userId, userId)).orderBy(desc(assets.createdAt));
+  }
+
+  async createAsset(asset: InsertAsset) {
+    const [newAsset] = await db.insert(assets).values(asset).returning();
+    return newAsset;
+  }
+
+  async updateAsset(id: number, updates: UpdateAssetRequest) {
+    const [updated] = await db.update(assets).set(updates).where(eq(assets.id, id)).returning();
+    return updated;
+  }
+
+  async deleteAsset(id: number) {
+    await db.delete(assets).where(eq(assets.id, id));
+  }
+
+  // Bank Accounts
+  async getBankAccounts(userId: string) {
+    return await db.select().from(bankAccounts).where(eq(bankAccounts.userId, userId)).orderBy(desc(bankAccounts.createdAt));
+  }
+
+  async createBankAccount(account: InsertBankAccount) {
+    const [newAccount] = await db.insert(bankAccounts).values(account).returning();
+    return newAccount;
+  }
+
+  async updateBankAccount(id: number, updates: UpdateBankAccountRequest) {
+    if (updates.balance !== undefined) {
+      const [existing] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, id));
+      if (existing && existing.balance !== updates.balance) {
+        await db.insert(balanceHistory).values({
+          bankAccountId: id,
+          previousBalance: existing.balance,
+          newBalance: updates.balance,
+        });
+      }
+    }
+    const [updated] = await db.update(bankAccounts).set({ ...updates, lastUpdated: new Date() }).where(eq(bankAccounts.id, id)).returning();
+    return updated;
+  }
+
+  async deleteBankAccount(id: number) {
+    await db.delete(balanceHistory).where(eq(balanceHistory.bankAccountId, id));
+    await db.delete(bankAccounts).where(eq(bankAccounts.id, id));
+  }
+
+  async getBalanceHistory(bankAccountId: number) {
+    return await db.select().from(balanceHistory).where(eq(balanceHistory.bankAccountId, bankAccountId)).orderBy(desc(balanceHistory.changedAt));
+  }
+
+  // Investments
+  async getInvestments(userId: string) {
+    return await db.select().from(investments).where(eq(investments.userId, userId)).orderBy(desc(investments.createdAt));
+  }
+
+  async createInvestment(investment: InsertInvestment) {
+    const [newInvestment] = await db.insert(investments).values(investment).returning();
+    return newInvestment;
+  }
+
+  async updateInvestment(id: number, updates: UpdateInvestmentRequest) {
+    const [updated] = await db.update(investments).set(updates).where(eq(investments.id, id)).returning();
+    return updated;
+  }
+
+  async deleteInvestment(id: number) {
+    await db.delete(investments).where(eq(investments.id, id));
+  }
+
+  // Debts
+  async getDebts(userId: string) {
+    return await db.select().from(debts).where(eq(debts.userId, userId)).orderBy(desc(debts.createdAt));
+  }
+
+  async createDebt(debt: InsertDebt) {
+    const [newDebt] = await db.insert(debts).values(debt).returning();
+    return newDebt;
+  }
+
+  async updateDebt(id: number, updates: UpdateDebtRequest) {
+    const [updated] = await db.update(debts).set(updates).where(eq(debts.id, id)).returning();
+    return updated;
+  }
+
+  async deleteDebt(id: number) {
+    await db.delete(debtPayments).where(eq(debtPayments.debtId, id));
+    await db.delete(debts).where(eq(debts.id, id));
+  }
+
+  async getDebtPayments(debtId: number) {
+    return await db.select().from(debtPayments).where(eq(debtPayments.debtId, debtId)).orderBy(desc(debtPayments.paymentDate));
+  }
+
+  async createDebtPayment(payment: InsertDebtPayment) {
+    const [newPayment] = await db.insert(debtPayments).values(payment).returning();
+    await db.update(debts).set({
+      remainingAmount: sql`${debts.remainingAmount}::numeric - ${payment.amount}::numeric`,
+    }).where(eq(debts.id, payment.debtId));
+    return newPayment;
+  }
+
+  // Goal Contributions
+  async getGoalContributions(goalId: number) {
+    return await db.select().from(goalContributions).where(eq(goalContributions.goalId, goalId)).orderBy(desc(goalContributions.contributionDate));
+  }
+
+  async createGoalContribution(contribution: InsertGoalContribution) {
+    const [newContribution] = await db.insert(goalContributions).values(contribution).returning();
+    await db.update(goals).set({
+      currentAmount: sql`${goals.currentAmount}::numeric + ${contribution.amount}::numeric`,
+    }).where(eq(goals.id, contribution.goalId));
+    return newContribution;
   }
 }
 

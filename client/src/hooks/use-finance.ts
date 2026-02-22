@@ -5,6 +5,12 @@ import {
   type InsertCategory, 
   type InsertGoal, 
   type InsertBudget,
+  type InsertAsset,
+  type InsertBankAccount,
+  type InsertInvestment,
+  type InsertDebt,
+  type InsertDebtPayment,
+  type InsertGoalContribution,
   type TransactionQueryParams
 } from "@shared/schema";
 
@@ -251,6 +257,362 @@ export function useCreateBudget() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.budgets.list.path] });
+    },
+  });
+}
+
+// --- Assets ---
+
+export function useAssets() {
+  return useQuery({
+    queryKey: [api.assets.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.assets.list.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch assets");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: InsertAsset) => {
+      const res = await fetch(api.assets.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create asset");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.assets.list.path] });
+    },
+  });
+}
+
+export function useUpdateAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertAsset>) => {
+      const url = buildUrl(api.assets.update.path, { id });
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update asset");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.assets.list.path] });
+    },
+  });
+}
+
+export function useDeleteAsset() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.assets.delete.path, { id });
+      const res = await fetch(url, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete asset");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.assets.list.path] });
+    },
+  });
+}
+
+// --- Bank Accounts ---
+
+export function useBankAccounts() {
+  return useQuery({
+    queryKey: [api.bankAccounts.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.bankAccounts.list.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch bank accounts");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateBankAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: InsertBankAccount) => {
+      const res = await fetch(api.bankAccounts.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create bank account");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.bankAccounts.list.path] });
+    },
+  });
+}
+
+export function useUpdateBankAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertBankAccount>) => {
+      const url = buildUrl(api.bankAccounts.update.path, { id });
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update bank account");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.bankAccounts.list.path] });
+    },
+  });
+}
+
+export function useDeleteBankAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.bankAccounts.delete.path, { id });
+      const res = await fetch(url, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete bank account");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.bankAccounts.list.path] });
+    },
+  });
+}
+
+export function useBalanceHistory(bankAccountId: number) {
+  return useQuery({
+    queryKey: [api.bankAccounts.history.path, bankAccountId],
+    queryFn: async () => {
+      const url = buildUrl(api.bankAccounts.history.path, { id: bankAccountId });
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch balance history");
+      return res.json();
+    },
+  });
+}
+
+// --- Investments ---
+
+export function useInvestments() {
+  return useQuery({
+    queryKey: [api.investments.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.investments.list.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch investments");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateInvestment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: InsertInvestment) => {
+      const res = await fetch(api.investments.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create investment");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.investments.list.path] });
+    },
+  });
+}
+
+export function useUpdateInvestment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertInvestment>) => {
+      const url = buildUrl(api.investments.update.path, { id });
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update investment");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.investments.list.path] });
+    },
+  });
+}
+
+export function useDeleteInvestment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.investments.delete.path, { id });
+      const res = await fetch(url, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete investment");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.investments.list.path] });
+    },
+  });
+}
+
+// --- Debts ---
+
+export function useDebts() {
+  return useQuery({
+    queryKey: [api.debts.list.path],
+    queryFn: async () => {
+      const res = await fetch(api.debts.list.path, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch debts");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateDebt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: InsertDebt) => {
+      const res = await fetch(api.debts.create.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create debt");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.debts.list.path] });
+    },
+  });
+}
+
+export function useUpdateDebt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number } & Partial<InsertDebt>) => {
+      const url = buildUrl(api.debts.update.path, { id });
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update debt");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.debts.list.path] });
+    },
+  });
+}
+
+export function useDeleteDebt() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const url = buildUrl(api.debts.delete.path, { id });
+      const res = await fetch(url, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete debt");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.debts.list.path] });
+    },
+  });
+}
+
+export function useDebtPayments(debtId: number) {
+  return useQuery({
+    queryKey: [api.debts.payments.path, debtId],
+    queryFn: async () => {
+      const url = buildUrl(api.debts.payments.path, { id: debtId });
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch debt payments");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateDebtPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ debtId, ...data }: { debtId: number } & Omit<InsertDebtPayment, "debtId">) => {
+      const url = buildUrl(api.debts.createPayment.path, { id: debtId });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create debt payment");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.debts.payments.path] });
+      queryClient.invalidateQueries({ queryKey: [api.debts.list.path] });
+    },
+  });
+}
+
+// --- Goal Contributions ---
+
+export function useGoalContributions(goalId: number) {
+  return useQuery({
+    queryKey: [api.goalContributions.list.path, goalId],
+    queryFn: async () => {
+      const url = buildUrl(api.goalContributions.list.path, { id: goalId });
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch goal contributions");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateGoalContribution() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ goalId, ...data }: { goalId: number } & Omit<InsertGoalContribution, "goalId">) => {
+      const url = buildUrl(api.goalContributions.create.path, { id: goalId });
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create goal contribution");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.goalContributions.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.goals.list.path] });
     },
   });
 }

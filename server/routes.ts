@@ -114,6 +114,121 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  // Assets
+  app.get(api.assets.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    res.json(await storage.getAssets(userId));
+  });
+  app.post(api.assets.create.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const body = { ...req.body, userId };
+    if (body.purchaseDate && typeof body.purchaseDate === "string") body.purchaseDate = new Date(body.purchaseDate);
+    const input = api.assets.create.input.parse(body);
+    res.status(201).json(await storage.createAsset(input));
+  });
+  app.put(api.assets.update.path, isAuthenticated, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const body = { ...req.body };
+    if (body.purchaseDate && typeof body.purchaseDate === "string") body.purchaseDate = new Date(body.purchaseDate);
+    res.json(await storage.updateAsset(id, api.assets.update.input.parse(body)));
+  });
+  app.delete(api.assets.delete.path, isAuthenticated, async (req, res) => {
+    await storage.deleteAsset(parseInt(req.params.id));
+    res.status(204).send();
+  });
+
+  // Bank Accounts
+  app.get(api.bankAccounts.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    res.json(await storage.getBankAccounts(userId));
+  });
+  app.post(api.bankAccounts.create.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const input = api.bankAccounts.create.input.parse({ ...req.body, userId });
+    res.status(201).json(await storage.createBankAccount(input));
+  });
+  app.put(api.bankAccounts.update.path, isAuthenticated, async (req, res) => {
+    const id = parseInt(req.params.id);
+    res.json(await storage.updateBankAccount(id, api.bankAccounts.update.input.parse(req.body)));
+  });
+  app.delete(api.bankAccounts.delete.path, isAuthenticated, async (req, res) => {
+    await storage.deleteBankAccount(parseInt(req.params.id));
+    res.status(204).send();
+  });
+  app.get(api.bankAccounts.history.path, isAuthenticated, async (req, res) => {
+    res.json(await storage.getBalanceHistory(parseInt(req.params.id)));
+  });
+
+  // Investments
+  app.get(api.investments.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    res.json(await storage.getInvestments(userId));
+  });
+  app.post(api.investments.create.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const body = { ...req.body, userId };
+    if (body.purchaseDate && typeof body.purchaseDate === "string") body.purchaseDate = new Date(body.purchaseDate);
+    if (body.sellDate && typeof body.sellDate === "string") body.sellDate = new Date(body.sellDate);
+    const input = api.investments.create.input.parse(body);
+    res.status(201).json(await storage.createInvestment(input));
+  });
+  app.put(api.investments.update.path, isAuthenticated, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const body = { ...req.body };
+    if (body.purchaseDate && typeof body.purchaseDate === "string") body.purchaseDate = new Date(body.purchaseDate);
+    if (body.sellDate && typeof body.sellDate === "string") body.sellDate = new Date(body.sellDate);
+    res.json(await storage.updateInvestment(id, api.investments.update.input.parse(body)));
+  });
+  app.delete(api.investments.delete.path, isAuthenticated, async (req, res) => {
+    await storage.deleteInvestment(parseInt(req.params.id));
+    res.status(204).send();
+  });
+
+  // Debts
+  app.get(api.debts.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    res.json(await storage.getDebts(userId));
+  });
+  app.post(api.debts.create.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const body = { ...req.body, userId };
+    if (body.dateTaken && typeof body.dateTaken === "string") body.dateTaken = new Date(body.dateTaken);
+    if (body.dueDate && typeof body.dueDate === "string") body.dueDate = new Date(body.dueDate);
+    const input = api.debts.create.input.parse(body);
+    res.status(201).json(await storage.createDebt(input));
+  });
+  app.put(api.debts.update.path, isAuthenticated, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const body = { ...req.body };
+    if (body.dateTaken && typeof body.dateTaken === "string") body.dateTaken = new Date(body.dateTaken);
+    if (body.dueDate && typeof body.dueDate === "string") body.dueDate = new Date(body.dueDate);
+    res.json(await storage.updateDebt(id, api.debts.update.input.parse(body)));
+  });
+  app.delete(api.debts.delete.path, isAuthenticated, async (req, res) => {
+    await storage.deleteDebt(parseInt(req.params.id));
+    res.status(204).send();
+  });
+  app.get(api.debts.payments.path, isAuthenticated, async (req, res) => {
+    res.json(await storage.getDebtPayments(parseInt(req.params.id)));
+  });
+  app.post(api.debts.createPayment.path, isAuthenticated, async (req, res) => {
+    const body = { ...req.body, debtId: parseInt(req.params.id) };
+    if (body.paymentDate && typeof body.paymentDate === "string") body.paymentDate = new Date(body.paymentDate);
+    const input = api.debts.createPayment.input.parse(body);
+    res.status(201).json(await storage.createDebtPayment(input));
+  });
+
+  // Goal Contributions
+  app.get(api.goalContributions.list.path, isAuthenticated, async (req, res) => {
+    res.json(await storage.getGoalContributions(parseInt(req.params.id)));
+  });
+  app.post(api.goalContributions.create.path, isAuthenticated, async (req, res) => {
+    const body = { ...req.body, goalId: parseInt(req.params.id) };
+    if (body.contributionDate && typeof body.contributionDate === "string") body.contributionDate = new Date(body.contributionDate);
+    const input = api.goalContributions.create.input.parse(body);
+    res.status(201).json(await storage.createGoalContribution(input));
+  });
+
   // AI Insights
   app.post(api.ai.insights.path, isAuthenticated, async (req, res) => {
     try {

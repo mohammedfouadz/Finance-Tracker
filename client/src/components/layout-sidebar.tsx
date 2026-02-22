@@ -15,6 +15,12 @@ import {
   Moon,
   Sun,
   Languages,
+  Building2,
+  Landmark,
+  HandCoins,
+  Target,
+  PieChart,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -28,6 +34,12 @@ function useNavItems() {
     { label: t("expenses"), href: "/expenses", icon: Receipt },
     { label: t("investments"), href: "/investments", icon: LineChart },
     { label: t("bankSavings"), href: "/savings", icon: PiggyBank },
+    { label: "Assets", href: "/assets", icon: Building2 },
+    { label: "Bank Accounts", href: "/bank-accounts", icon: Landmark },
+    { label: "Debts", href: "/debts", icon: HandCoins },
+    { label: "Goals", href: "/goals", icon: Target },
+    { label: "Budget", href: "/budget", icon: PieChart },
+    { label: "Reports", href: "/reports", icon: BarChart3 },
     { label: t("settings"), href: "/settings", icon: Settings },
   ];
 }
