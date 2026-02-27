@@ -2,7 +2,7 @@ import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTransactions, useCategories, useAssets, useBankAccounts, useInvestments, useDebts, useGoals } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { useMemo } from "react";
 import { DollarSign, TrendingUp, TrendingDown, Landmark, Building2, LineChart, HandCoins, Target } from "lucide-react";
@@ -34,27 +34,27 @@ export default function Dashboard() {
   , [allCats]);
 
   const totalIncome = useMemo(() =>
-    allTx.filter((tx: any) => incomeCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + Number(tx.amount), 0)
+    allTx.filter((tx: any) => incomeCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + toUsd(tx.amount, tx.exchangeRateToUsd), 0)
   , [allTx, incomeCatIds]);
 
   const totalExpenses = useMemo(() =>
-    allTx.filter((tx: any) => expenseCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + Number(tx.amount), 0)
+    allTx.filter((tx: any) => expenseCatIds.has(tx.categoryId)).reduce((s: number, tx: any) => s + toUsd(tx.amount, tx.exchangeRateToUsd), 0)
   , [allTx, expenseCatIds]);
 
   const totalAssetsValue = useMemo(() =>
-    (assets as any[]).reduce((s: number, a: any) => s + Number(a.currentValue || 0), 0)
+    (assets as any[]).reduce((s: number, a: any) => s + toUsd(a.currentValue || 0, a.exchangeRateToUsd), 0)
   , [assets]);
 
   const totalBankBalance = useMemo(() =>
-    (bankAccounts as any[]).reduce((s: number, a: any) => s + Number(a.balance || 0), 0)
+    (bankAccounts as any[]).reduce((s: number, a: any) => s + toUsd(a.balance || 0, a.exchangeRateToUsd), 0)
   , [bankAccounts]);
 
   const totalInvestmentsValue = useMemo(() =>
-    (investments as any[]).reduce((s: number, i: any) => s + Number(i.currentValue || 0), 0)
+    (investments as any[]).reduce((s: number, i: any) => s + toUsd(i.currentValue || 0, i.exchangeRateToUsd), 0)
   , [investments]);
 
   const totalDebt = useMemo(() =>
-    (debts as any[]).filter((d: any) => d.status === "active").reduce((s: number, d: any) => s + Number(d.remainingAmount || 0), 0)
+    (debts as any[]).filter((d: any) => d.status === "active").reduce((s: number, d: any) => s + toUsd(d.remainingAmount || 0, d.exchangeRateToUsd), 0)
   , [debts]);
 
   const totalWealth = totalAssetsValue + totalBankBalance + totalInvestmentsValue - totalDebt;
@@ -75,10 +75,10 @@ export default function Dashboard() {
     for (let m = 0; m < 12; m++) {
       const inc = allTx
         .filter((tx: any) => { const d = new Date(tx.date); return d.getMonth() === m && d.getFullYear() === currentYear && incomeCatIds.has(tx.categoryId); })
-        .reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+        .reduce((s: number, tx: any) => s + toUsd(tx.amount, tx.exchangeRateToUsd), 0);
       const exp = allTx
         .filter((tx: any) => { const d = new Date(tx.date); return d.getMonth() === m && d.getFullYear() === currentYear && expenseCatIds.has(tx.categoryId); })
-        .reduce((s: number, tx: any) => s + Number(tx.amount), 0);
+        .reduce((s: number, tx: any) => s + toUsd(tx.amount, tx.exchangeRateToUsd), 0);
       if (inc > 0 || exp > 0) {
         data.push({ month: monthNames[m], income: inc, expenses: exp });
       }
@@ -243,7 +243,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <span className={`text-sm font-bold ${tx.categoryType === "income" ? "text-green-600" : "text-red-600"}`}>
-                      {tx.categoryType === "income" ? "+" : "-"}{formatAmount(Number(tx.amount))}
+                      {tx.categoryType === "income" ? "+" : "-"}{formatAmount(toUsd(tx.amount, tx.exchangeRateToUsd))}
                     </span>
                   </div>
                 ))}
@@ -262,7 +262,9 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {activeGoals.map((goal: any) => {
-                  const progress = Number(goal.targetAmount) > 0 ? (Number(goal.currentAmount) / Number(goal.targetAmount)) * 100 : 0;
+                  const targetUsd = toUsd(goal.targetAmount, goal.exchangeRateToUsd);
+                  const currentUsd = toUsd(goal.currentAmount, goal.exchangeRateToUsd);
+                  const progress = targetUsd > 0 ? (currentUsd / targetUsd) * 100 : 0;
                   return (
                     <div key={goal.id} data-testid={`row-goal-${goal.id}`}>
                       <div className="flex items-center justify-between mb-1">
@@ -276,8 +278,8 @@ export default function Dashboard() {
                         <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${Math.min(progress, 100)}%` }} />
                       </div>
                       <div className="flex justify-between mt-1">
-                        <span className="text-xs text-[#999] dark:text-gray-500">{formatAmount(Number(goal.currentAmount))}</span>
-                        <span className="text-xs text-[#999] dark:text-gray-500">{formatAmount(Number(goal.targetAmount))}</span>
+                        <span className="text-xs text-[#999] dark:text-gray-500">{formatAmount(currentUsd)}</span>
+                        <span className="text-xs text-[#999] dark:text-gray-500">{formatAmount(targetUsd)}</span>
                       </div>
                     </div>
                   );

@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAssets, useCreateAsset, useUpdateAsset, useDeleteAsset } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd } from "@/lib/currency";
+import { CurrencyFields } from "@/components/currency-fields";
 import { Plus, Trash2, Pencil, Building2, DollarSign, Hash, TrendingUp } from "lucide-react";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -24,6 +25,8 @@ const emptyForm = {
   monthlyIncome: "",
   status: "Owned",
   notes: "",
+  currencyCode: "USD",
+  exchangeRateToUsd: "1",
 };
 
 export default function AssetsPage() {
@@ -41,7 +44,7 @@ export default function AssetsPage() {
 
   const totalAssetsValue = useMemo(() => {
     if (!assets) return 0;
-    return assets.reduce((sum: number, a: any) => sum + Number(a.currentValue || 0), 0);
+    return assets.reduce((sum: number, a: any) => sum + toUsd(a.currentValue, a.exchangeRateToUsd), 0);
   }, [assets]);
 
   const totalMonthlyIncome = useMemo(() => {
@@ -54,9 +57,11 @@ export default function AssetsPage() {
   const avgAppreciation = useMemo(() => {
     if (!assets || assets.length === 0) return 0;
     const totalGain = assets.reduce((sum: number, a: any) => {
-      return sum + (Number(a.currentValue || 0) - Number(a.purchasePrice || 0));
+      const currentValueUsd = toUsd(a.currentValue, a.exchangeRateToUsd);
+      const purchasePriceUsd = toUsd(a.purchasePrice, a.exchangeRateToUsd);
+      return sum + (currentValueUsd - purchasePriceUsd);
     }, 0);
-    const totalPurchase = assets.reduce((sum: number, a: any) => sum + Number(a.purchasePrice || 0), 0);
+    const totalPurchase = assets.reduce((sum: number, a: any) => sum + toUsd(a.purchasePrice, a.exchangeRateToUsd), 0);
     return totalPurchase > 0 ? (totalGain / totalPurchase) * 100 : 0;
   }, [assets]);
 
@@ -75,6 +80,8 @@ export default function AssetsPage() {
         monthlyIncome: formData.monthlyIncome || null,
         status: formData.status,
         notes: formData.notes || null,
+        currencyCode: formData.currencyCode,
+        exchangeRateToUsd: formData.exchangeRateToUsd,
       };
 
       if (editingId) {
@@ -103,6 +110,8 @@ export default function AssetsPage() {
       monthlyIncome: asset.monthlyIncome ? String(asset.monthlyIncome) : "",
       status: asset.status || "Owned",
       notes: asset.notes || "",
+      currencyCode: asset.currencyCode || "USD",
+      exchangeRateToUsd: String(asset.exchangeRateToUsd || 1),
     });
     setEditingId(asset.id);
     setShowForm(true);
@@ -222,6 +231,14 @@ export default function AssetsPage() {
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Current Value</label>
                 <Input data-testid="input-current-value" type="number" step="0.01" placeholder="0.00" value={formData.currentValue} onChange={e => setFormData({...formData, currentValue: e.target.value})} />
               </div>
+              <CurrencyFields
+                currencyCode={formData.currencyCode}
+                exchangeRate={formData.exchangeRateToUsd}
+                amount={formData.currentValue}
+                onCurrencyChange={(code) => setFormData({...formData, currencyCode: code})}
+                onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                showUsdPreview={true}
+              />
               <div>
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Monthly Income (optional)</label>
                 <Input data-testid="input-monthly-income" type="number" step="0.01" placeholder="0.00" value={formData.monthlyIncome} onChange={e => setFormData({...formData, monthlyIncome: e.target.value})} />
@@ -265,8 +282,9 @@ export default function AssetsPage() {
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Name</th>
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Type</th>
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Location</th>
-                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Purchase Price</th>
-                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Current Value</th>
+                    <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Currency</th>
+                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Purchase Price (USD)</th>
+                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Current Value (USD)</th>
                     <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Gain/Loss</th>
                     <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Monthly Income</th>
                     <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Status</th>
@@ -275,7 +293,9 @@ export default function AssetsPage() {
                 </thead>
                 <tbody>
                   {assets.map((a: any) => {
-                    const gainLoss = Number(a.currentValue || 0) - Number(a.purchasePrice || 0);
+                    const purchasePriceUsd = toUsd(a.purchasePrice, a.exchangeRateToUsd);
+                    const currentValueUsd = toUsd(a.currentValue, a.exchangeRateToUsd);
+                    const gainLoss = currentValueUsd - purchasePriceUsd;
                     return (
                       <tr key={a.id} className="border-b dark:border-gray-800 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 transition-colors" data-testid={`row-asset-${a.id}`}>
                         <td className="py-3 px-4 font-medium dark:text-white">{a.name}</td>
@@ -283,8 +303,9 @@ export default function AssetsPage() {
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700">{a.type}</span>
                         </td>
                         <td className="py-3 px-4 text-[#666] dark:text-gray-400">{a.location || "—"}</td>
-                        <td className="py-3 px-4 text-right dark:text-gray-300">{formatAmount(Number(a.purchasePrice))}</td>
-                        <td className="py-3 px-4 text-right font-bold dark:text-white">{formatAmount(Number(a.currentValue))}</td>
+                        <td className="py-3 px-4 text-center dark:text-gray-300">{a.currencyCode || "USD"}</td>
+                        <td className="py-3 px-4 text-right dark:text-gray-300">{formatAmount(purchasePriceUsd)}</td>
+                        <td className="py-3 px-4 text-right font-bold dark:text-white">{formatAmount(currentValueUsd)}</td>
                         <td className={`py-3 px-4 text-right font-bold ${gainLoss >= 0 ? "text-green-600" : "text-red-600"}`} data-testid={`text-gain-loss-${a.id}`}>
                           {gainLoss >= 0 ? "+" : ""}{formatAmount(gainLoss)}
                         </td>

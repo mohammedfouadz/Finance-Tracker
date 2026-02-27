@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDebts, useCreateDebt, useUpdateDebt, useDeleteDebt, useDebtPayments, useCreateDebtPayment } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd, getDefaultRate } from "@/lib/currency";
 import { Plus, Trash2, CreditCard, CheckCircle, AlertTriangle, Percent, DollarSign } from "lucide-react";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { CURRENCIES } from "@/lib/currency";
+import { CurrencyFields } from "@/components/currency-fields";
 
 export default function DebtsPage() {
   const { user } = useAuth();
@@ -31,7 +32,8 @@ export default function DebtsPage() {
     creditorName: "",
     originalAmount: "",
     remainingAmount: "",
-    currency: "SAR",
+    currency: "USD",
+    exchangeRateToUsd: "1",
     reason: "",
     dateTaken: new Date().toISOString().split("T")[0],
     dueDate: "",
@@ -49,7 +51,7 @@ export default function DebtsPage() {
 
   const totalDebt = useMemo(() => {
     if (!debts) return 0;
-    return debts.reduce((sum: number, d: any) => sum + Number(d.remainingAmount), 0);
+    return debts.reduce((sum: number, d: any) => sum + toUsd(d.remainingAmount, d.exchangeRateToUsd), 0);
   }, [debts]);
 
   const activeDebts = useMemo(() => {
@@ -92,6 +94,7 @@ export default function DebtsPage() {
         originalAmount: formData.originalAmount,
         remainingAmount: formData.remainingAmount,
         currency: formData.currency,
+        exchangeRateToUsd: formData.exchangeRateToUsd,
         reason: formData.reason,
         dateTaken: new Date(formData.dateTaken),
         dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
@@ -105,7 +108,8 @@ export default function DebtsPage() {
         creditorName: "",
         originalAmount: "",
         remainingAmount: "",
-        currency: "SAR",
+        currency: "USD",
+        exchangeRateToUsd: "1",
         reason: "",
         dateTaken: new Date().toISOString().split("T")[0],
         dueDate: "",
@@ -124,10 +128,13 @@ export default function DebtsPage() {
 
   const handlePaymentSubmit = async (debtId: number) => {
     if (!paymentForm.amount) return;
+    const parentDebt = (debts as any[])?.find((d: any) => d.id === debtId);
     try {
       await createDebtPayment.mutateAsync({
         debtId,
         amount: paymentForm.amount,
+        currencyCode: parentDebt?.currency || "USD",
+        exchangeRateToUsd: parentDebt?.exchangeRateToUsd || "1",
         paymentDate: new Date(paymentForm.paymentDate),
         notes: paymentForm.notes || undefined,
       });
@@ -240,15 +247,13 @@ export default function DebtsPage() {
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Remaining Amount</label>
                 <Input data-testid="input-remaining-amount" type="number" step="0.01" placeholder="0.00" value={formData.remainingAmount} onChange={e => setFormData({...formData, remainingAmount: e.target.value})} />
               </div>
-              <div>
-                <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Currency</label>
-                <Select value={formData.currency} onValueChange={v => setFormData({...formData, currency: v})}>
-                  <SelectTrigger data-testid="select-currency"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map(c => <SelectItem key={c.code} value={c.code}>{c.code} - {c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
+              <CurrencyFields
+                currencyCode={formData.currency}
+                exchangeRate={formData.exchangeRateToUsd}
+                onCurrencyChange={(code) => setFormData({...formData, currency: code})}
+                onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                showUsdPreview={false}
+              />
               <div>
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Reason</label>
                 <Input data-testid="input-reason" placeholder="e.g. Car loan" value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value})} />

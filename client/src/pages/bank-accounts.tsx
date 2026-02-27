@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useDeleteBankAccount } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd } from "@/lib/currency";
+import { CurrencyFields } from "@/components/currency-fields";
 import { Plus, Trash2, Pencil, Landmark, Wallet, CreditCard, TrendingUp, Hash } from "lucide-react";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -26,7 +27,8 @@ const emptyForm = {
   bankName: "",
   accountType: "",
   accountNumber: "",
-  currency: "SAR",
+  currency: "USD",
+  exchangeRateToUsd: "1",
   balance: "",
   notes: "",
 };
@@ -46,7 +48,7 @@ export default function BankAccountsPage() {
 
   const totalBalance = useMemo(() => {
     if (!accounts) return 0;
-    return accounts.reduce((sum: number, a: any) => sum + Number(a.balance), 0);
+    return accounts.reduce((sum: number, a: any) => sum + toUsd(a.balance, a.exchangeRateToUsd), 0);
   }, [accounts]);
 
   const accountCount = accounts?.length || 0;
@@ -73,7 +75,8 @@ export default function BankAccountsPage() {
       bankName: account.bankName,
       accountType: account.accountType,
       accountNumber: account.accountNumber,
-      currency: account.currency || "SAR",
+      currency: account.currency || "USD",
+      exchangeRateToUsd: String(account.exchangeRateToUsd || "1"),
       balance: String(account.balance),
       notes: account.notes || "",
     });
@@ -91,6 +94,7 @@ export default function BankAccountsPage() {
           accountType: formData.accountType,
           accountNumber: formData.accountNumber,
           currency: formData.currency,
+          exchangeRateToUsd: formData.exchangeRateToUsd,
           balance: formData.balance,
           notes: formData.notes || null,
           userId: user!.id,
@@ -102,6 +106,7 @@ export default function BankAccountsPage() {
           accountType: formData.accountType,
           accountNumber: formData.accountNumber,
           currency: formData.currency,
+          exchangeRateToUsd: formData.exchangeRateToUsd,
           balance: formData.balance,
           notes: formData.notes || null,
           userId: user!.id,
@@ -204,10 +209,14 @@ export default function BankAccountsPage() {
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Account Number</label>
                 <Input data-testid="input-account-number" placeholder="e.g. 1234567890" value={formData.accountNumber} onChange={e => setFormData({...formData, accountNumber: e.target.value})} />
               </div>
-              <div>
-                <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Currency</label>
-                <Input data-testid="input-currency" placeholder="SAR" value={formData.currency} onChange={e => setFormData({...formData, currency: e.target.value})} />
-              </div>
+              <CurrencyFields
+                currencyCode={formData.currency}
+                exchangeRate={formData.exchangeRateToUsd}
+                amount={formData.balance}
+                onCurrencyChange={(code) => setFormData({...formData, currency: code})}
+                onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                showUsdPreview={true}
+              />
               <div>
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Balance</label>
                 <Input data-testid="input-balance" type="number" step="0.01" placeholder="0.00" value={formData.balance} onChange={e => setFormData({...formData, balance: e.target.value})} />

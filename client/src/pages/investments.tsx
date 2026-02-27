@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useInvestments, useCreateInvestment, useUpdateInvestment, useDeleteInvestment } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd } from "@/lib/currency";
+import { CurrencyFields } from "@/components/currency-fields";
 import { Plus, Trash2, Pencil, TrendingUp, TrendingDown, Gem, BarChart3, Bitcoin, Building2, Landmark, MoreHorizontal, X } from "lucide-react";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -29,6 +30,8 @@ const emptyForm = {
   purchasePrice: "",
   unitPriceAtPurchase: "",
   currentValue: "",
+  currencyCode: "USD",
+  exchangeRateToUsd: "1",
   purchaseDate: new Date().toISOString().split("T")[0],
   platform: "",
   status: "active",
@@ -61,18 +64,18 @@ export default function InvestmentsPage() {
   }, [investments]);
 
   const totalPortfolioValue = useMemo(() => {
-    return activeInvestments.reduce((sum: number, inv: any) => sum + Number(inv.currentValue || 0), 0);
+    return activeInvestments.reduce((sum: number, inv: any) => sum + toUsd(inv.currentValue, inv.exchangeRateToUsd), 0);
   }, [activeInvestments]);
 
   const totalGainLoss = useMemo(() => {
-    return activeInvestments.reduce((sum: number, inv: any) => sum + (Number(inv.currentValue || 0) - Number(inv.purchasePrice || 0)), 0);
+    return activeInvestments.reduce((sum: number, inv: any) => sum + (toUsd(inv.currentValue, inv.exchangeRateToUsd) - toUsd(inv.purchasePrice, inv.exchangeRateToUsd)), 0);
   }, [activeInvestments]);
 
   const typeBreakdown = useMemo(() => {
     if (!investments) return INVESTMENT_TYPES.map(t => ({ ...t, total: 0, count: 0 }));
     return INVESTMENT_TYPES.map(type => {
       const matching = activeInvestments.filter((inv: any) => inv.type === type.name);
-      const total = matching.reduce((sum: number, inv: any) => sum + Number(inv.currentValue || 0), 0);
+      const total = matching.reduce((sum: number, inv: any) => sum + toUsd(inv.currentValue, inv.exchangeRateToUsd), 0);
       return { ...type, total, count: matching.length };
     });
   }, [investments, activeInvestments]);
@@ -86,6 +89,8 @@ export default function InvestmentsPage() {
       purchasePrice: inv.purchasePrice || "",
       unitPriceAtPurchase: inv.unitPriceAtPurchase || "",
       currentValue: inv.currentValue || "",
+      currencyCode: inv.currencyCode || "USD",
+      exchangeRateToUsd: String(inv.exchangeRateToUsd || "1"),
       purchaseDate: inv.purchaseDate ? new Date(inv.purchaseDate).toISOString().split("T")[0] : "",
       platform: inv.platform || "",
       status: inv.status || "active",
@@ -114,6 +119,8 @@ export default function InvestmentsPage() {
         purchasePrice: formData.purchasePrice,
         unitPriceAtPurchase: formData.unitPriceAtPurchase || null,
         currentValue: formData.currentValue,
+        currencyCode: formData.currencyCode,
+        exchangeRateToUsd: formData.exchangeRateToUsd,
         purchaseDate: new Date(formData.purchaseDate),
         platform: formData.platform || null,
         status: formData.status,
@@ -281,6 +288,14 @@ export default function InvestmentsPage() {
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Current Value</label>
                 <Input data-testid="input-current-value" type="number" step="0.01" placeholder="0.00" value={formData.currentValue} onChange={e => setFormData({ ...formData, currentValue: e.target.value })} />
               </div>
+              <CurrencyFields
+                currencyCode={formData.currencyCode}
+                exchangeRate={formData.exchangeRateToUsd}
+                amount={formData.currentValue}
+                onCurrencyChange={(code) => setFormData({ ...formData, currencyCode: code })}
+                onExchangeRateChange={(rate) => setFormData({ ...formData, exchangeRateToUsd: rate })}
+                showUsdPreview={true}
+              />
               <div>
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Purchase Date</label>
                 <Input data-testid="input-purchase-date" type="date" value={formData.purchaseDate} onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })} />
@@ -346,8 +361,9 @@ export default function InvestmentsPage() {
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Type</th>
                     <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Quantity</th>
                     <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Purchase Price</th>
-                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Current Value</th>
+                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Current Value (USD)</th>
                     <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Gain/Loss</th>
+                    <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Currency</th>
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Platform</th>
                     <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Status</th>
                     <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Actions</th>
@@ -357,7 +373,9 @@ export default function InvestmentsPage() {
                   {(investments as any[])
                     .sort((a: any, b: any) => new Date(b.purchaseDate).getTime() - new Date(a.purchaseDate).getTime())
                     .map((inv: any) => {
-                      const gainLoss = Number(inv.currentValue || 0) - Number(inv.purchasePrice || 0);
+                      const currentValueUsd = toUsd(inv.currentValue, inv.exchangeRateToUsd);
+                      const purchasePriceUsd = toUsd(inv.purchasePrice, inv.exchangeRateToUsd);
+                      const gainLoss = currentValueUsd - purchasePriceUsd;
                       const typeInfo = INVESTMENT_TYPES.find(t => t.name === inv.type);
                       return (
                         <tr key={inv.id} className="border-b dark:border-gray-800 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 transition-colors" data-testid={`row-investment-${inv.id}`}>
@@ -368,11 +386,17 @@ export default function InvestmentsPage() {
                             </Badge>
                           </td>
                           <td className="py-3 px-4 text-right text-[#1a1a1a] dark:text-white" data-testid={`text-quantity-${inv.id}`}>{inv.quantity || "-"}</td>
-                          <td className="py-3 px-4 text-right text-[#1a1a1a] dark:text-white" data-testid={`text-purchase-price-${inv.id}`}>{formatAmount(Number(inv.purchasePrice))}</td>
-                          <td className="py-3 px-4 text-right font-bold text-[#1a1a1a] dark:text-white" data-testid={`text-current-value-${inv.id}`}>{formatAmount(Number(inv.currentValue))}</td>
+                          <td className="py-3 px-4 text-right text-[#1a1a1a] dark:text-white" data-testid={`text-purchase-price-${inv.id}`}>{formatAmount(purchasePriceUsd)}</td>
+                          <td className="py-3 px-4 text-right font-bold text-[#1a1a1a] dark:text-white" data-testid={`text-current-value-${inv.id}`}>
+                            <div>{formatAmount(currentValueUsd)}</div>
+                            {inv.currencyCode !== "USD" && (
+                              <div className="text-xs text-[#666] dark:text-gray-400">{formatAmount(Number(inv.currentValue))} {inv.currencyCode}</div>
+                            )}
+                          </td>
                           <td className={`py-3 px-4 text-right font-bold ${gainLoss >= 0 ? "text-green-600" : "text-red-600"}`} data-testid={`text-gain-loss-${inv.id}`}>
                             {gainLoss >= 0 ? "+" : ""}{formatAmount(gainLoss)}
                           </td>
+                          <td className="py-3 px-4 text-[#666] dark:text-gray-400" data-testid={`text-currency-${inv.id}`}>{inv.currencyCode || "USD"}</td>
                           <td className="py-3 px-4 text-[#666] dark:text-gray-400" data-testid={`text-platform-${inv.id}`}>{inv.platform || "-"}</td>
                           <td className="py-3 px-4 text-center">
                             <Badge variant={inv.status === "active" ? "default" : "secondary"} className="text-xs" data-testid={`badge-status-${inv.id}`}>

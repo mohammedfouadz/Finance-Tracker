@@ -11,12 +11,16 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
+import { CurrencyFields } from "@/components/currency-fields";
+import { getDefaultRate } from "@/lib/currency";
 
 // Extend schema to handle string -> number coercion for amount/categoryId
 const formSchema = insertTransactionSchema.extend({
   amount: z.string().refine((val) => !isNaN(Number(val)) && Number(val) > 0, "Must be a positive number"),
   categoryId: z.coerce.number().min(1, "Category is required"),
   date: z.coerce.date(),
+  currencyCode: z.string().default("USD"),
+  exchangeRateToUsd: z.string().default("1"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -35,6 +39,8 @@ export function TransactionDialog() {
       description: "",
       date: new Date(),
       categoryId: undefined,
+      currencyCode: "USD",
+      exchangeRateToUsd: "1",
     },
   });
 
@@ -55,7 +61,7 @@ export function TransactionDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
+        <Button data-testid="button-add-transaction" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
           <Plus className="w-4 h-4 mr-2" />
           Add Transaction
         </Button>
@@ -73,7 +79,7 @@ export function TransactionDialog() {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="Grocery shopping, Rent, Salary..." {...field} />
+                    <Input data-testid="input-transaction-description" placeholder="Grocery shopping, Rent, Salary..." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -90,7 +96,7 @@ export function TransactionDialog() {
                     <FormControl>
                       <div className="relative">
                         <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
-                        <Input type="number" step="0.01" className="pl-7" placeholder="0.00" {...field} />
+                        <Input data-testid="input-transaction-amount" type="number" step="0.01" className="pl-7" placeholder="0.00" {...field} />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -106,7 +112,7 @@ export function TransactionDialog() {
                     <FormLabel>Category</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger data-testid="select-transaction-category">
                           <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                       </FormControl>
@@ -124,6 +130,29 @@ export function TransactionDialog() {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="currencyCode"
+                render={({ field }) => (
+                  <CurrencyFields
+                    currencyCode={field.value}
+                    exchangeRate={form.getValues("exchangeRateToUsd")}
+                    amount={form.getValues("amount")}
+                    onCurrencyChange={(code) => {
+                      field.onChange(code);
+                      const defaultRate = getDefaultRate(code);
+                      form.setValue("exchangeRateToUsd", String(defaultRate));
+                    }}
+                    onExchangeRateChange={(rate) => {
+                      form.setValue("exchangeRateToUsd", rate);
+                    }}
+                    showUsdPreview={true}
+                  />
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
               name="date"
@@ -132,6 +161,7 @@ export function TransactionDialog() {
                   <FormLabel>Date</FormLabel>
                   <FormControl>
                     <Input 
+                      data-testid="input-transaction-date"
                       type="date" 
                       value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value}
                       onChange={(e) => field.onChange(new Date(e.target.value))}
@@ -142,7 +172,7 @@ export function TransactionDialog() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={createTransaction.isPending}>
+            <Button data-testid="button-submit-transaction" type="submit" className="w-full" disabled={createTransaction.isPending}>
               {createTransaction.isPending ? "Saving..." : "Save Transaction"}
             </Button>
           </form>

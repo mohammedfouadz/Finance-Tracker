@@ -12,7 +12,8 @@ import { insertGoalSchema, type InsertGoal } from "@shared/schema";
 import { Trophy, Target, Calendar, Plus, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd, getDefaultRate } from "@/lib/currency";
+import { CurrencyFields } from "@/components/currency-fields";
 import { format } from "date-fns";
 import { z } from "zod";
 
@@ -20,6 +21,8 @@ const formSchema = insertGoalSchema.extend({
   targetAmount: z.string().refine(val => Number(val) > 0, "Must be positive"),
   currentAmount: z.string().refine(val => Number(val) >= 0, "Must be non-negative"),
   deadline: z.coerce.date().optional(),
+  currencyCode: z.string().default("USD"),
+  exchangeRateToUsd: z.string().default("1"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -36,11 +39,18 @@ function GoalDialog() {
       name: "",
       targetAmount: "",
       currentAmount: "0",
+      currencyCode: "USD",
+      exchangeRateToUsd: "1",
     }
   });
 
   const onSubmit = async (values: FormValues) => {
-    await createGoal.mutateAsync({ ...values, userId: user!.id });
+    await createGoal.mutateAsync({ 
+      ...values, 
+      userId: user!.id,
+      currencyCode: values.currencyCode,
+      exchangeRateToUsd: values.exchangeRateToUsd,
+    });
     setOpen(false);
     form.reset();
   };
@@ -91,6 +101,44 @@ function GoalDialog() {
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="currencyCode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <CurrencyFields
+                        currencyCode={field.value}
+                        exchangeRate={form.getValues("exchangeRateToUsd")}
+                        amount={form.getValues("targetAmount")}
+                        onCurrencyChange={(code) => {
+                          field.onChange(code);
+                          form.setValue("exchangeRateToUsd", String(getDefaultRate(code)));
+                        }}
+                        onExchangeRateChange={(rate) => {
+                          form.setValue("exchangeRateToUsd", rate);
+                        }}
+                        showUsdPreview
+                        className="mb-0"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="exchangeRateToUsd"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="deadline"
@@ -170,9 +218,12 @@ export default function GoalsPage() {
   const handleContributionSubmit = async (goalId: number) => {
     const amount = Number(contributionForm.amount);
     if (!amount || amount <= 0) return;
+    const parentGoal = (goals as any[])?.find((g: any) => g.id === goalId);
     await createGoalContribution.mutateAsync({
       goalId,
       amount: contributionForm.amount,
+      currencyCode: parentGoal?.currencyCode || "USD",
+      exchangeRateToUsd: parentGoal?.exchangeRateToUsd || "1",
       contributionDate: new Date(),
       notes: contributionForm.notes || undefined,
     });
@@ -252,10 +303,16 @@ export default function GoalsPage() {
                     <div>
                       <p className="text-xs text-[#999] dark:text-gray-500 mb-1">Current</p>
                       <p className="text-lg font-mono font-bold text-[#1a1a1a] dark:text-white" data-testid={`text-goal-current-${goal.id}`}>{formatAmount(Number(goal.currentAmount))}</p>
+                      {goal.currencyCode && goal.currencyCode !== "USD" && (
+                        <p className="text-xs text-[#999] dark:text-gray-500 mt-1">{formatAmount(toUsd(Number(goal.currentAmount), Number(goal.exchangeRateToUsd)))}</p>
+                      )}
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-[#999] dark:text-gray-500 mb-1">Target</p>
                       <p className="text-lg font-mono font-bold text-accent" data-testid={`text-goal-target-${goal.id}`}>{formatAmount(Number(goal.targetAmount))}</p>
+                      {goal.currencyCode && goal.currencyCode !== "USD" && (
+                        <p className="text-xs text-[#999] dark:text-gray-500 mt-1">{formatAmount(toUsd(Number(goal.targetAmount), Number(goal.exchangeRateToUsd)))}</p>
+                      )}
                     </div>
                   </div>
 
