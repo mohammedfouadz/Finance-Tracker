@@ -149,7 +149,7 @@ export default function ExpensesPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Category</label>
-                <Select value={formData.categoryId} onValueChange={v => setFormData({...formData, categoryId: v})}>
+                <Select value={formData.categoryId || undefined} onValueChange={v => setFormData({...formData, categoryId: v})}>
                   <SelectTrigger data-testid="select-category"><SelectValue placeholder="Select..." /></SelectTrigger>
                   <SelectContent>
                     {expenseCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
