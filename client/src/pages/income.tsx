@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTransactions, useCategories, useCreateTransaction, useDeleteTransaction } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency } from "@/lib/currency";
+import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
+import { CurrencyFields } from "@/components/currency-fields";
 import { Plus, Trash2, DollarSign } from "lucide-react";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
@@ -24,7 +25,7 @@ export default function IncomePage() {
 
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: new Date().toISOString().split("T")[0] });
+  const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: new Date().toISOString().split("T")[0], currencyCode: "USD", exchangeRateToUsd: "1" });
 
   const incomeCategories = useMemo(() => categories?.filter((c: any) => c.type === "income") || [], [categories]);
 
@@ -40,7 +41,7 @@ export default function IncomePage() {
     incomeTransactions.forEach((t: any) => {
       const d = new Date(t.date);
       if (d.getFullYear() === selectedYear) {
-        totals[d.getMonth()] += Number(t.amount);
+        totals[d.getMonth()] += toUsd(t.amount, t.exchangeRateToUsd);
       }
     });
     return totals;
@@ -60,8 +61,10 @@ export default function IncomePage() {
         amount: formData.amount,
         categoryId: Number(formData.categoryId),
         date: new Date(formData.date),
+        currencyCode: formData.currencyCode,
+        exchangeRateToUsd: formData.exchangeRateToUsd,
       });
-      setFormData({ description: "", amount: "", categoryId: "", date: new Date().toISOString().split("T")[0] });
+      setFormData({ description: "", amount: "", categoryId: "", date: new Date().toISOString().split("T")[0], currencyCode: "USD", exchangeRateToUsd: "1" });
       setShowForm(false);
       toast({ title: "Income added successfully" });
     } catch {
@@ -144,31 +147,43 @@ export default function IncomePage() {
         <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900 mb-6">
           <CardHeader><CardTitle>Add Income Entry</CardTitle></CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-              <div>
-                <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Description</label>
-                <Input data-testid="input-description" placeholder="e.g. Monthly Salary" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Description</label>
+                  <Input data-testid="input-description" placeholder="e.g. Monthly Salary" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Amount</label>
+                  <Input data-testid="input-amount" type="number" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Category</label>
+                  <Select value={formData.categoryId || undefined} onValueChange={v => setFormData({...formData, categoryId: v})}>
+                    <SelectTrigger data-testid="select-category"><SelectValue placeholder="Select..." /></SelectTrigger>
+                    <SelectContent>
+                      {incomeCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Date</label>
+                  <Input data-testid="input-date" type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
+                </div>
               </div>
-              <div>
-                <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Amount</label>
-                <Input data-testid="input-amount" type="number" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => setFormData({...formData, amount: e.target.value})} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                <CurrencyFields
+                  currencyCode={formData.currencyCode}
+                  exchangeRate={formData.exchangeRateToUsd}
+                  amount={formData.amount}
+                  onCurrencyChange={(code) => setFormData({...formData, currencyCode: code})}
+                  onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                  showUsdPreview={true}
+                />
+                <Button type="submit" disabled={createTransaction.isPending} data-testid="button-submit-income">
+                  {createTransaction.isPending ? "Saving..." : "Save"}
+                </Button>
               </div>
-              <div>
-                <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Category</label>
-                <Select value={formData.categoryId || undefined} onValueChange={v => setFormData({...formData, categoryId: v})}>
-                  <SelectTrigger data-testid="select-category"><SelectValue placeholder="Select..." /></SelectTrigger>
-                  <SelectContent>
-                    {incomeCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Date</label>
-                <Input data-testid="input-date" type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
-              </div>
-              <Button type="submit" disabled={createTransaction.isPending} data-testid="button-submit-income">
-                {createTransaction.isPending ? "Saving..." : "Save"}
-              </Button>
             </form>
           </CardContent>
         </Card>
@@ -216,6 +231,7 @@ export default function IncomePage() {
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Description</th>
                     <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Category</th>
                     <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Amount</th>
+                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">USD Value</th>
                     <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Actions</th>
                   </tr>
                 </thead>
@@ -225,12 +241,15 @@ export default function IncomePage() {
                     .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
                     .map((t: any) => {
                       const cat = categories?.find((c: any) => c.id === t.categoryId);
+                      const curr = t.currencyCode || "USD";
+                      const usdVal = toUsd(t.amount, t.exchangeRateToUsd);
                       return (
                         <tr key={t.id} className="border-b dark:border-gray-800 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 transition-colors" data-testid={`row-income-${t.id}`}>
                           <td className="py-3 px-4">{format(new Date(t.date), "MMM d, yyyy")}</td>
                           <td className="py-3 px-4 font-medium">{t.description}</td>
                           <td className="py-3 px-4"><span className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">{cat?.name}</span></td>
-                          <td className="py-3 px-4 text-right font-bold text-green-600">{formatAmount(Number(t.amount))}</td>
+                          <td className="py-3 px-4 text-right font-bold text-green-600">{getCurrencySymbol(curr)}{Number(t.amount).toLocaleString()} {curr}</td>
+                          <td className="py-3 px-4 text-right text-[#666] dark:text-gray-400">{curr !== "USD" ? formatAmount(usdVal) : ""}</td>
                           <td className="py-3 px-4 text-center">
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(t.id)} data-testid={`button-delete-${t.id}`}>
                               <Trash2 className="w-4 h-4" />
