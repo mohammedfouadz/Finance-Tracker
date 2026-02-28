@@ -235,8 +235,8 @@ export default function AssetsPage() {
                 currencyCode={formData.currencyCode}
                 exchangeRate={formData.exchangeRateToUsd}
                 amount={formData.currentValue}
-                onCurrencyChange={(code) => setFormData({...formData, currencyCode: code})}
-                onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                onCurrencyChange={(code) => setFormData(prev => ({...prev, currencyCode: code}))}
+                onExchangeRateChange={(rate) => setFormData(prev => ({...prev, exchangeRateToUsd: rate}))}
                 showUsdPreview={true}
               />
               <div>

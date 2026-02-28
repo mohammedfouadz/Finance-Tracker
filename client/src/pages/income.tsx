@@ -176,8 +176,8 @@ export default function IncomePage() {
                   currencyCode={formData.currencyCode}
                   exchangeRate={formData.exchangeRateToUsd}
                   amount={formData.amount}
-                  onCurrencyChange={(code) => setFormData({...formData, currencyCode: code})}
-                  onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                  onCurrencyChange={(code) => setFormData(prev => ({...prev, currencyCode: code}))}
+                  onExchangeRateChange={(rate) => setFormData(prev => ({...prev, exchangeRateToUsd: rate}))}
                   showUsdPreview={true}
                 />
                 <Button type="submit" disabled={createTransaction.isPending} data-testid="button-submit-income">

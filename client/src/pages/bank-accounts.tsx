@@ -213,8 +213,8 @@ export default function BankAccountsPage() {
                 currencyCode={formData.currency}
                 exchangeRate={formData.exchangeRateToUsd}
                 amount={formData.balance}
-                onCurrencyChange={(code) => setFormData({...formData, currency: code})}
-                onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                onCurrencyChange={(code) => setFormData(prev => ({...prev, currency: code}))}
+                onExchangeRateChange={(rate) => setFormData(prev => ({...prev, exchangeRateToUsd: rate}))}
                 showUsdPreview={true}
               />
               <div>

@@ -250,8 +250,8 @@ export default function DebtsPage() {
               <CurrencyFields
                 currencyCode={formData.currency}
                 exchangeRate={formData.exchangeRateToUsd}
-                onCurrencyChange={(code) => setFormData({...formData, currency: code})}
-                onExchangeRateChange={(rate) => setFormData({...formData, exchangeRateToUsd: rate})}
+                onCurrencyChange={(code) => setFormData(prev => ({...prev, currency: code}))}
+                onExchangeRateChange={(rate) => setFormData(prev => ({...prev, exchangeRateToUsd: rate}))}
                 showUsdPreview={false}
               />
               <div>
