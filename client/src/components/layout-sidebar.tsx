@@ -6,7 +6,6 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Receipt,
-  PiggyBank,
   Settings,
   LineChart,
   LogOut,
@@ -33,7 +32,6 @@ function useNavItems() {
     { label: t("income"), href: "/income", icon: Wallet },
     { label: t("expenses"), href: "/expenses", icon: Receipt },
     { label: t("investments"), href: "/investments", icon: LineChart },
-    { label: t("bankSavings"), href: "/savings", icon: PiggyBank },
     { label: "Assets", href: "/assets", icon: Building2 },
     { label: "Bank Accounts", href: "/bank-accounts", icon: Landmark },
     { label: "Debts", href: "/debts", icon: HandCoins },

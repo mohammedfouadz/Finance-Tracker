@@ -9,7 +9,6 @@ import Dashboard from "@/pages/dashboard";
 import IncomePage from "@/pages/income";
 import ExpensesPage from "@/pages/expenses";
 import InvestmentsPage from "@/pages/investments";
-import SavingsPage from "@/pages/savings";
 import AssetsPage from "@/pages/assets";
 import BankAccountsPage from "@/pages/bank-accounts";
 import DebtsPage from "@/pages/debts";
@@ -70,7 +69,6 @@ function Router() {
       <Route path="/income">{() => <ProtectedPage component={IncomePage} />}</Route>
       <Route path="/expenses">{() => <ProtectedPage component={ExpensesPage} />}</Route>
       <Route path="/investments">{() => <ProtectedPage component={InvestmentsPage} />}</Route>
-      <Route path="/savings">{() => <ProtectedPage component={SavingsPage} />}</Route>
       <Route path="/assets">{() => <ProtectedPage component={AssetsPage} />}</Route>
       <Route path="/bank-accounts">{() => <ProtectedPage component={BankAccountsPage} />}</Route>
       <Route path="/debts">{() => <ProtectedPage component={DebtsPage} />}</Route>
