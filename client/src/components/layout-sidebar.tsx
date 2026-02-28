@@ -20,6 +20,7 @@ import {
   Target,
   PieChart,
   BarChart3,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -38,6 +39,7 @@ function useNavItems() {
     { label: "Goals", href: "/goals", icon: Target },
     { label: "Budget", href: "/budget", icon: PieChart },
     { label: "Reports", href: "/reports", icon: BarChart3 },
+    { label: "Zakat", href: "/zakat", icon: Star },
     { label: t("settings"), href: "/settings", icon: Settings },
   ];
 }

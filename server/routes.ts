@@ -246,6 +246,71 @@ export async function registerRoutes(
     res.status(201).json(await storage.createGoalContribution(input));
   });
 
+  // Zakat
+  app.get("/api/zakat/settings", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const settings = await storage.getZakatSettings(userId);
+    res.json(settings || null);
+  });
+
+  app.put("/api/zakat/settings", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const settings = await storage.upsertZakatSettings(userId, req.body);
+    res.json(settings);
+  });
+
+  app.get("/api/zakat/snapshots", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    res.json(await storage.getZakatSnapshots(userId));
+  });
+
+  app.post("/api/zakat/snapshots", isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const snapshot = await storage.createZakatSnapshot({ ...req.body, userId });
+    res.status(201).json(snapshot);
+  });
+
+  app.delete("/api/zakat/snapshots/:id", isAuthenticated, async (req, res) => {
+    await storage.deleteZakatSnapshot(parseInt(req.params.id));
+    res.status(204).send();
+  });
+
+  app.patch("/api/investments/:id/zakat", isAuthenticated, async (req, res) => {
+    await storage.updateInvestmentZakatMethod(parseInt(req.params.id), req.body.zakatMethod);
+    res.json({ ok: true });
+  });
+
+  app.patch("/api/bank-accounts/:id/zakat", isAuthenticated, async (req, res) => {
+    await storage.updateBankAccountZakatable(parseInt(req.params.id), req.body.isZakatable);
+    res.json({ ok: true });
+  });
+
+  // Try to fetch live gold/silver prices from a free public API
+  app.get("/api/zakat/prices", isAuthenticated, async (_req, res) => {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const r = await fetch("https://api.metals.live/v1/spot/gold,silver", { signal: controller.signal });
+      clearTimeout(timeout);
+      if (r.ok) {
+        const data = await r.json() as any[];
+        const gold = data.find((d: any) => d.gold !== undefined);
+        const silver = data.find((d: any) => d.silver !== undefined);
+        // metals.live returns price per troy ounce; 1 troy oz = 31.1035 g
+        const TROY_OZ_TO_GRAMS = 31.1035;
+        res.json({
+          goldPricePerGram: gold ? +(gold.gold / TROY_OZ_TO_GRAMS).toFixed(4) : null,
+          silverPricePerGram: silver ? +(silver.silver / TROY_OZ_TO_GRAMS).toFixed(4) : null,
+          source: "metals.live",
+        });
+        return;
+      }
+    } catch {
+      // Fall through to manual fallback
+    }
+    res.json({ goldPricePerGram: null, silverPricePerGram: null, source: "manual" });
+  });
+
   // AI Insights
   app.post(api.ai.insights.path, isAuthenticated, async (req, res) => {
     try {

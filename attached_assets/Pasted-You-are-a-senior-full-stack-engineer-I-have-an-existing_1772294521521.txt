@@ -1,0 +1,75 @@
+You are a senior full-stack engineer. I have an existing personal finance web app hosted on Replit. The app already stores:
+- income transactions
+- expense transactions
+- investment holdings/transactions
+- bank balances (cash accounts)
+- debts/loans (liabilities)
+and it calculates Net Worth and other summaries.
+
+I want you to add a full “Zakat Calculator” feature.
+
+GOALS
+1) Calculate Zakat due based on a selected Zakat date (hijri year concept approximated as 354 days) OR a “last zakat paid date” + “today”.
+2) Support Zakat for:
+   A) Cash & cash equivalents: bank balances, cash on hand, e-wallets
+   B) Gold & silver: user enters grams, purity (karat) OR value; calculate zakatable value
+   C) Investments: stocks/ETFs/crypto; allow user to tag holdings as “zakatable” and choose valuation method
+   D) Business receivables: optional input field
+   E) Real estate: support two modes:
+      - Primary residence: not zakatable
+      - Investment property: provide a user setting with two options:
+         Option 1 (common contemporary): Zakat is NOT on property market value; only on net rental income/cash that remains and has passed hawl.
+         Option 2 (trading property / inventory): Zakat on market value if property is held for resale (treated like trade inventory).
+3) Debts: allow user to include deductible liabilities (short-term debts due within 12 months) with a toggle.
+4) Nisab threshold: support nisab by GOLD or SILVER standard.
+   - The user can choose nisab standard: gold (85 grams) or silver (595 grams).
+   - Fetch live gold/silver price per gram in the user’s currency OR let user manually input prices if API is unavailable.
+5) Currency: support the app’s base currency; all zakat calculations should convert to that base currency.
+6) Output:
+   - Show whether the user has reached nisab.
+   - Show zakatable assets breakdown, deductible liabilities, net zakatable amount.
+   - Zakat due = 2.5% of net zakatable amount if nisab met AND hawl condition met.
+   - Provide a “What’s included” breakdown and assumptions (chosen nisab standard, debts toggle, real estate mode).
+7) Data model:
+   - Persist zakat settings and yearly zakat snapshots (for record keeping).
+   - A snapshot should include: date, nisab method, prices used, zakatable assets totals by category, liabilities deducted, net zakatable, zakat due.
+8) UX:
+   - Add a new navigation tab “Zakat”.
+   - A form for settings (nisab standard, debts toggle, hawl settings, real estate mode, price source).
+   - A calculator view with editable inputs (gold grams, silver grams, receivables, rental income cash-on-hand, etc.).
+   - A results view + a “Save Snapshot” button.
+9) Quality:
+   - Add unit tests for the core zakat calculation function.
+   - Provide clear comments explaining each rule and where the user can change interpretations.
+
+IMPLEMENTATION DETAILS
+- First inspect the current codebase structure and identify where net worth and account totals are computed.
+- Create a dedicated module/service like `zakatCalculator` with a pure function:
+  `calculateZakat({ assets, liabilities, settings, prices, dates }) -> { nisabMet, hawlMet, breakdown, zakatDue }`
+- Reuse existing totals for cash, investments, debts rather than duplicating logic.
+- Add tags/flags on assets:
+  - For accounts: isZakatable (default true for cash accounts)
+  - For investment holdings: zakatMethod (market_value | zakatable_portion | exempt)
+- Gold valuation:
+  - If user enters karat and grams, convert to pure gold grams: pure = grams * (karat/24), then multiply by gold price/gram.
+- Hawl logic:
+  - Provide a simple approach: if user indicates “I have been above nisab for the past lunar year” checkbox, hawlMet=true.
+  - Also provide an optional automatic approximation: if historical daily balance data exists, attempt to determine if net zakatable stayed above nisab for >= 354 days; if not available, fall back to the checkbox.
+- Price fetching:
+  - Implement a simple price provider interface. Use a free public endpoint if possible; if not, provide manual input.
+  - Always store the price used in snapshot.
+- Security:
+  - Do not expose any secrets; if API key needed, use Replit secrets and handle missing key gracefully.
+
+DELIVERABLES
+- Code changes to add the Zakat feature end-to-end.
+- A short README section explaining the zakat calculator settings and limitations.
+- At least 6 unit tests covering:
+  1) nisab not met => zakatDue=0
+  2) nisab met but hawl not met => zakatDue=0
+  3) cash + gold + investments with deductible debts
+  4) gold karat conversion accuracy
+  5) silver nisab option
+  6) real estate mode differences (rental income vs resale inventory)
+
+IMPORTANT: Ask me any ONE critical question only if truly blocked; otherwise make reasonable defaults and implement.

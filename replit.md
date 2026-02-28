@@ -5,7 +5,7 @@
 Mudabbir is a comprehensive web-based personal financial management platform that helps users track income, manage expenses, set budgets, define savings goals, track investments, manage debts, monitor bank accounts and assets, and get AI-powered financial coaching. The app follows a monorepo structure with a React frontend, Express backend, and PostgreSQL database. Authentication is handled via Replit Auth (OpenID Connect).
 
 Key features:
-- **Multi-Currency Support** — Per-entry currency selection (USD, EUR, OMR, ILS + 17 more), exchange rate to USD stored at entry time, all totals and analytics displayed in USD. Scalable architecture via `shared/currency.ts` module and reusable `CurrencyFields` component
+- **Multi-Currency Support** — Per-entry currency selection (USD, EUR, OMR, ILS, SAR), exchange rate to USD stored at entry time, all totals and analytics displayed in USD. Scalable architecture via `shared/currency.ts` module and reusable `CurrencyFields` component
 - **Income & Expense Tracking** — Log transactions with categories, tags, currency, and optional receipts
 - **Budget Allocation** — Automated budget distribution based on customizable percentage/fixed-amount rules (inspired by 50/30/20 rule)
 - **Financial Goals** — Create and track savings/investment goals with contribution tracking, currency support, and progress indicators
@@ -17,6 +17,7 @@ Key features:
 - **Reports & Charts** — Visual dashboards with Recharts (pie, bar, area charts)
 - **AI Financial Coach** — Chat interface powered by OpenAI for personalized financial advice, with voice input/output support
 - **Multi-category system** — System-seeded default categories plus user-defined custom categories with subcategory support
+- **Zakat Calculator** — Islamic Zakat obligation calculator with gold/silver nisab standards, hawl tracking, real estate modes (exempt/rental/trading), per-asset inclusion toggles on bank accounts and investments, live gold/silver price fetching, calculation snapshots history. Pure calculation logic in `shared/zakatCalculator.ts` with 12 unit tests. DB tables: `zakatSettings`, `zakatSnapshots`. New columns: `isZakatable` on bankAccounts, `zakatMethod` on investments.
 
 ## User Preferences
 

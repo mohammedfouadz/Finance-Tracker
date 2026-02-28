@@ -16,6 +16,7 @@ import GoalsPage from "@/pages/goals";
 import BudgetPage from "@/pages/budget";
 import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
+import ZakatPage from "@/pages/zakat";
 import NotFound from "@/pages/not-found";
 
 import { useAuth } from "@/hooks/use-auth";
@@ -76,6 +77,7 @@ function Router() {
       <Route path="/budget">{() => <ProtectedPage component={BudgetPage} />}</Route>
       <Route path="/reports">{() => <ProtectedPage component={ReportsPage} />}</Route>
       <Route path="/settings">{() => <ProtectedPage component={SettingsPage} />}</Route>
+      <Route path="/zakat">{() => <ProtectedPage component={ZakatPage} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

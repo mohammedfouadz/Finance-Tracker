@@ -2,6 +2,7 @@ import { db } from "./db";
 import { 
   categories, transactions, goals, budgets,
   assets, bankAccounts, balanceHistory, investments, debts, debtPayments, goalContributions,
+  zakatSettings, zakatSnapshots,
   type InsertCategory, type UpdateCategoryRequest,
   type InsertTransaction, type UpdateTransactionRequest,
   type InsertGoal, type UpdateGoalRequest,
@@ -12,6 +13,8 @@ import {
   type InsertDebt, type UpdateDebtRequest,
   type InsertDebtPayment,
   type InsertGoalContribution,
+  type InsertZakatSettings, type UpdateZakatSettingsRequest,
+  type InsertZakatSnapshot,
   type TransactionQueryParams
 } from "@shared/schema";
 import { eq, and, gte, lte, desc, sql, or } from "drizzle-orm";
@@ -75,6 +78,15 @@ export interface IStorage extends IAuthStorage, IChatStorage {
   // Goal Contributions
   getGoalContributions(goalId: number): Promise<typeof goalContributions.$inferSelect[]>;
   createGoalContribution(contribution: InsertGoalContribution): Promise<typeof goalContributions.$inferSelect>;
+
+  // Zakat
+  getZakatSettings(userId: string): Promise<typeof zakatSettings.$inferSelect | undefined>;
+  upsertZakatSettings(userId: string, data: UpdateZakatSettingsRequest): Promise<typeof zakatSettings.$inferSelect>;
+  getZakatSnapshots(userId: string): Promise<typeof zakatSnapshots.$inferSelect[]>;
+  createZakatSnapshot(snapshot: InsertZakatSnapshot): Promise<typeof zakatSnapshots.$inferSelect>;
+  deleteZakatSnapshot(id: number): Promise<void>;
+  updateInvestmentZakatMethod(id: number, zakatMethod: string): Promise<void>;
+  updateBankAccountZakatable(id: number, isZakatable: boolean): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -313,6 +325,51 @@ export class DatabaseStorage implements IStorage {
       currentAmount: sql`${goals.currentAmount}::numeric + ${contribution.amount}::numeric`,
     }).where(eq(goals.id, contribution.goalId));
     return newContribution;
+  }
+
+  // Zakat
+  async getZakatSettings(userId: string) {
+    const [settings] = await db.select().from(zakatSettings).where(eq(zakatSettings.userId, userId));
+    return settings;
+  }
+
+  async upsertZakatSettings(userId: string, data: UpdateZakatSettingsRequest) {
+    const existing = await this.getZakatSettings(userId);
+    if (existing) {
+      const [updated] = await db.update(zakatSettings)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(zakatSettings.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(zakatSettings)
+        .values({ userId, ...data } as InsertZakatSettings)
+        .returning();
+      return created;
+    }
+  }
+
+  async getZakatSnapshots(userId: string) {
+    return await db.select().from(zakatSnapshots)
+      .where(eq(zakatSnapshots.userId, userId))
+      .orderBy(desc(zakatSnapshots.createdAt));
+  }
+
+  async createZakatSnapshot(snapshot: InsertZakatSnapshot) {
+    const [created] = await db.insert(zakatSnapshots).values(snapshot).returning();
+    return created;
+  }
+
+  async deleteZakatSnapshot(id: number) {
+    await db.delete(zakatSnapshots).where(eq(zakatSnapshots.id, id));
+  }
+
+  async updateInvestmentZakatMethod(id: number, zakatMethod: string) {
+    await db.update(investments).set({ zakatMethod }).where(eq(investments.id, id));
+  }
+
+  async updateBankAccountZakatable(id: number, isZakatable: boolean) {
+    await db.update(bankAccounts).set({ isZakatable }).where(eq(bankAccounts.id, id));
   }
 }
 

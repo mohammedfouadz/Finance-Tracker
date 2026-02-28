@@ -98,6 +98,7 @@ export const bankAccounts = pgTable("bank_accounts", {
   currency: text("currency").notNull().default("USD"),
   exchangeRateToUsd: numeric("exchange_rate_to_usd").notNull().default("1"),
   balance: numeric("balance").notNull().default("0"),
+  isZakatable: boolean("is_zakatable").default(true),
   lastUpdated: timestamp("last_updated").defaultNow(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -128,6 +129,8 @@ export const investments = pgTable("investments", {
   sellDate: timestamp("sell_date"),
   sellPrice: numeric("sell_price"),
   notes: text("notes"),
+  // Zakat: "market_value" = full current value zakatable | "zakatable_portion" = partial | "exempt" = not zakatable
+  zakatMethod: text("zakat_method").default("market_value"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -168,6 +171,68 @@ export const goalContributions = pgTable("goal_contributions", {
   exchangeRateToUsd: numeric("exchange_rate_to_usd").notNull().default("1"),
   contributionDate: timestamp("contribution_date").notNull(),
   notes: text("notes"),
+});
+
+// === ZAKAT TABLES ===
+
+/**
+ * Persisted Zakat settings per user.
+ * Stores nisab standard preference, prices, and manual asset inputs
+ * that don't come from the main financial tables.
+ */
+export const zakatSettings = pgTable("zakat_settings", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull().unique(),
+  // Nisab standard: "gold" (85g, AAOIFI) or "silver" (595g, classical)
+  nisabStandard: text("nisab_standard").notNull().default("gold"),
+  // Whether to deduct short-term debts (due within 12 months) from zakatable wealth
+  includeDebts: boolean("include_debts").notNull().default(true),
+  // Real estate treatment: "exempt" | "rental_income" | "trading"
+  realEstateMode: text("real_estate_mode").notNull().default("exempt"),
+  // Hawl: user confirms wealth has been above nisab for one full lunar year (354 days)
+  hawlMet: boolean("hawl_met").notNull().default(false),
+  // Precious metal prices (USD per gram) — user-entered or fetched from API
+  goldPricePerGram: numeric("gold_price_per_gram").default("60"),
+  silverPricePerGram: numeric("silver_price_per_gram").default("0.75"),
+  // Manual asset inputs (not derived from other tables)
+  cashOnHand: numeric("cash_on_hand").default("0"),       // Physical cash + e-wallets
+  goldGrams: numeric("gold_grams").default("0"),
+  goldKarat: integer("gold_karat").default(24),
+  silverGrams: numeric("silver_grams").default("0"),
+  receivables: numeric("receivables").default("0"),        // Business receivables
+  rentalIncomeCash: numeric("rental_income_cash").default("0"), // Net rental income at hand
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+/**
+ * Historical Zakat calculation snapshots for record-keeping.
+ * Each saved calculation creates one snapshot.
+ */
+export const zakatSnapshots = pgTable("zakat_snapshots", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  snapshotDate: timestamp("snapshot_date").notNull().defaultNow(),
+  // Settings at time of snapshot
+  nisabStandard: text("nisab_standard").notNull(),
+  goldPricePerGram: numeric("gold_price_per_gram"),
+  silverPricePerGram: numeric("silver_price_per_gram"),
+  nisabValueUsd: numeric("nisab_value_usd"),
+  // Asset breakdown (all in USD)
+  cashTotal: numeric("cash_total").default("0"),
+  goldValue: numeric("gold_value").default("0"),
+  silverValue: numeric("silver_value").default("0"),
+  investmentsTotal: numeric("investments_total").default("0"),
+  receivablesTotal: numeric("receivables_total").default("0"),
+  realEstateValue: numeric("real_estate_value").default("0"),
+  totalZakatableAssets: numeric("total_zakatable_assets").default("0"),
+  deductibleDebts: numeric("deductible_debts").default("0"),
+  netZakatable: numeric("net_zakatable").default("0"),
+  // Results
+  nisabMet: boolean("nisab_met").notNull().default(false),
+  hawlMet: boolean("hawl_met").notNull().default(false),
+  zakatDue: numeric("zakat_due").default("0"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // === RELATIONS ===
@@ -251,6 +316,15 @@ export type UpdateAssetRequest = Partial<InsertAsset>;
 export type UpdateBankAccountRequest = Partial<InsertBankAccount>;
 export type UpdateInvestmentRequest = Partial<InsertInvestment>;
 export type UpdateDebtRequest = Partial<InsertDebt>;
+
+// Zakat
+export const insertZakatSettingsSchema = createInsertSchema(zakatSettings).omit({ id: true, updatedAt: true });
+export const insertZakatSnapshotSchema = createInsertSchema(zakatSnapshots).omit({ id: true, createdAt: true });
+export type ZakatSettings = typeof zakatSettings.$inferSelect;
+export type InsertZakatSettings = z.infer<typeof insertZakatSettingsSchema>;
+export type ZakatSnapshot = typeof zakatSnapshots.$inferSelect;
+export type InsertZakatSnapshot = z.infer<typeof insertZakatSnapshotSchema>;
+export type UpdateZakatSettingsRequest = Partial<InsertZakatSettings>;
 
 // Response types
 export type CategoryResponse = Category & { children?: Category[] };
