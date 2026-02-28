@@ -218,6 +218,23 @@ export async function registerRoutes(
     res.status(201).json(await storage.createDebtPayment(input));
   });
 
+  // Budgets
+  app.get(api.budgets.list.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const month = parseInt(req.query.month as string) || new Date().getMonth() + 1;
+    const year = parseInt(req.query.year as string) || new Date().getFullYear();
+    res.json(await storage.getBudgets(userId, month, year));
+  });
+  app.post(api.budgets.create.path, isAuthenticated, async (req, res) => {
+    const userId = getUserId(req);
+    const input = api.budgets.create.input.parse({ ...req.body, userId });
+    res.status(201).json(await storage.createBudget(input));
+  });
+  app.put(api.budgets.update.path, isAuthenticated, async (req, res) => {
+    const id = parseInt(req.params.id);
+    res.json(await storage.updateBudget(id, req.body));
+  });
+
   // Goal Contributions
   app.get(api.goalContributions.list.path, isAuthenticated, async (req, res) => {
     res.json(await storage.getGoalContributions(parseInt(req.params.id)));

@@ -261,6 +261,25 @@ export function useCreateBudget() {
   });
 }
 
+export function useUpdateBudget() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, amount }: { id: number; amount: string }) => {
+      const res = await fetch(`/api/budgets/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update budget");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.budgets.list.path] });
+    },
+  });
+}
+
 // --- Assets ---
 
 export function useAssets() {
