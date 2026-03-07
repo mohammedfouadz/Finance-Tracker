@@ -26,6 +26,7 @@ export default function IncomePage() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ description: "", amount: "", categoryId: "", date: new Date().toISOString().split("T")[0], currencyCode: "USD", exchangeRateToUsd: "1" });
+  const [visibleEntries, setVisibleEntries] = useState(10);
 
   const incomeCategories = useMemo(() => categories?.filter((c: any) => c.type === "income") || [], [categories]);
 
@@ -93,7 +94,7 @@ export default function IncomePage() {
           <p className="text-[#666666] dark:text-gray-400 mt-1">Track and manage your income sources.</p>
         </div>
         <div className="flex gap-3 items-center">
-          <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+          <Select value={String(selectedYear)} onValueChange={(v) => { setSelectedYear(Number(v)); setVisibleEntries(10); }}>
             <SelectTrigger className="w-[120px]" data-testid="select-year">
               <SelectValue />
             </SelectTrigger>
@@ -201,12 +202,15 @@ export default function IncomePage() {
                 </tr>
               </thead>
               <tbody>
-                {MONTHS.map((month, i) => (
-                  <tr key={i} className="border-b dark:border-gray-800 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 transition-colors">
-                    <td className="py-3 px-4 font-medium">{month}</td>
-                    <td className="py-3 px-4 text-right font-bold text-[#1a1a1a] dark:text-white">{formatAmount(monthlyTotals[i])}</td>
-                  </tr>
-                ))}
+                {MONTHS.map((month, i) => {
+                  if (monthlyTotals[i] === 0) return null;
+                  return (
+                    <tr key={i} className="border-b dark:border-gray-800 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 transition-colors">
+                      <td className="py-3 px-4 font-medium">{month}</td>
+                      <td className="py-3 px-4 text-right font-bold text-[#1a1a1a] dark:text-white">{formatAmount(monthlyTotals[i])}</td>
+                    </tr>
+                  );
+                })}
                 <tr className="bg-primary/5 font-bold">
                   <td className="py-3 px-4">Total</td>
                   <td className="py-3 px-4 text-right text-primary">{formatAmount(totalIncome)}</td>
@@ -222,24 +226,26 @@ export default function IncomePage() {
         <CardContent>
           {incomeTransactions.length === 0 ? (
             <p className="text-center text-[#999] dark:text-gray-500 py-8">No income entries yet. Click "Add Income" to get started.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b dark:border-gray-800">
-                    <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Date</th>
-                    <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Description</th>
-                    <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Category</th>
-                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Amount</th>
-                    <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">USD Value</th>
-                    <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {incomeTransactions
-                    .filter((t: any) => new Date(t.date).getFullYear() === selectedYear)
-                    .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .map((t: any) => {
+          ) : (() => {
+            const filtered = incomeTransactions
+              .filter((t: any) => new Date(t.date).getFullYear() === selectedYear)
+              .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+            const visible = filtered.slice(0, visibleEntries);
+            return (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b dark:border-gray-800">
+                      <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Date</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Description</th>
+                      <th className="text-left py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Category</th>
+                      <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Amount</th>
+                      <th className="text-right py-3 px-4 font-semibold text-[#666] dark:text-gray-400">USD Value</th>
+                      <th className="text-center py-3 px-4 font-semibold text-[#666] dark:text-gray-400">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visible.map((t: any) => {
                       const cat = categories?.find((c: any) => c.id === t.categoryId);
                       const curr = t.currencyCode || "USD";
                       const usdVal = toUsd(t.amount, t.exchangeRateToUsd);
@@ -258,10 +264,18 @@ export default function IncomePage() {
                         </tr>
                       );
                     })}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </tbody>
+                </table>
+                {visibleEntries < filtered.length && (
+                  <div className="flex justify-center mt-4">
+                    <Button variant="outline" onClick={() => setVisibleEntries(v => v + 10)} data-testid="button-load-more-entries">
+                      Load More
+                    </Button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
     </Layout>
