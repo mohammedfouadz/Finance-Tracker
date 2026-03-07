@@ -21,6 +21,7 @@ import NotFound from "@/pages/not-found";
 import AdminOverviewPage from "@/pages/admin/index";
 import AdminUsersPage from "@/pages/admin/users";
 import AdminUserDetailPage from "@/pages/admin/user-detail";
+import LandingPage from "@/pages/landing";
 
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/lib/theme";
@@ -75,16 +76,17 @@ function HomePage() {
   }
 
   if (user) {
-    return <Dashboard />;
+    return <Redirect to="/dashboard" />;
   }
 
-  return <AuthPage />;
+  return <LandingPage />;
 }
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
+      <Route path="/landing" component={LandingPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/dashboard">{() => <ProtectedPage component={Dashboard} />}</Route>
       <Route path="/income">{() => <ProtectedPage component={IncomePage} />}</Route>

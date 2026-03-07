@@ -1,0 +1,62 @@
+## البرومبت الاحترافي:
+
+---
+
+Create a professional, modern landing page for **FinTrack** at the route `/landing` (accessible without login). The landing page should be the default page shown to non-logged-in users when they visit the root URL `/`.
+
+**Design Requirements:**
+- Full dark/light mode toggle button in the navbar
+- Bilingual support: Arabic and English with a language toggle button (AR/EN) in the navbar
+- RTL layout support when Arabic is selected
+- Modern gradient design using blue as the primary color (matching the app's existing blue theme)
+- Fully responsive for mobile, tablet, and desktop
+
+**Navbar:**
+- FinTrack logo + name on the left
+- Language toggle (AR/EN) and Dark/Light mode toggle
+- "Login" and "Sign Up" buttons on the right
+
+**Hero Section:**
+- Big headline in English: "Take Full Control of Your Financial Life"
+- Arabic: "تحكم الكامل بحياتك المالية"
+- Subtext describing the app
+- Two CTA buttons: "Get Started Free" → `/auth` and "View Demo" scrolls down
+- A screenshot or mockup of the dashboard (use the actual dashboard UI as reference)
+
+**Features Section** — highlight these 10 features with icons:
+- Dashboard & Overview
+- Income Tracking
+- Expense Management
+- Investment Portfolio
+- Assets Management
+- Bank Accounts
+- Debt Tracking
+- Goals & Savings
+- Budget Planning
+- Zakat Calculator
+
+**Stats Section:**
+- "Everything you need to manage your money"
+- Show 3 stats: 10+ Features / Multi-currency Support / Arabic & English
+
+**Testimonials Section:**
+- 3 fake but realistic testimonials in both Arabic and English
+
+**CTA Section:**
+- "Start managing your finances today"
+- "ابدأ إدارة مالياتك اليوم"
+- Big "Sign Up Free" button → `/auth`
+
+**Footer:**
+- FinTrack logo
+- Copyright 2026
+
+**Technical Requirements:**
+- Use the existing shadcn/ui components and Tailwind CSS
+- Store language and theme preference in localStorage
+- Smooth scroll animations using CSS transitions
+- Make sure logged-in users are redirected to `/` (dashboard) and not shown the landing page
+
+---
+
+أرسل هذا البرومبت كاملاً إلى Replit Agent. 🚀
