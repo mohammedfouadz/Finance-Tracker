@@ -1,0 +1,43 @@
+Convert FinTrack into a Progressive Web App (PWA) with push notifications support:
+PWA Core Requirements:
+1. Web App Manifest
+Create /public/manifest.json with:
+App name: "FinTrack" (Arabic: "فين تراك")
+Short name: "FinTrack"
+Theme color: blue (matching existing design)
+Background color: white/dark based on theme
+Display: standalone (looks like a native app)
+Icons: generate multiple sizes (192x192, 512x512) using the existing FinTrack logo
+Start URL: /
+Language: supports both ar and en
+2. Service Worker
+Register a service worker for offline support
+Cache all static assets, pages, and API responses
+Show offline page when there's no internet connection
+Background sync: queue failed API requests and retry when online
+3. Install Prompt
+Show a custom "Install App" banner at the bottom of the screen on mobile
+"Install FinTrack on your home screen for the best experience"
+Bilingual: Arabic and English
+Remember if user dismissed it and don't show again for 7 days
+4. Push Notifications - Budget Alerts:
+Use Web Push API with VAPID keys
+Ask user permission for notifications on first login
+Trigger a push notification when:
+User reaches 80% of any budget category → "⚠️ You've used 80% of your Food budget"
+User exceeds 100% of any budget category → "🚨 You've exceeded your Entertainment budget!"
+Bill reminder is due tomorrow → "📅 Netflix payment of $15 is due tomorrow"
+Notifications should work even when the app is closed (background push)
+Bilingual notifications based on user language preference
+5. Mobile UI Improvements:
+Add a bottom navigation bar on mobile screens with: Dashboard, Transactions, Budget, Goals, Reports
+Make all existing pages fully responsive and mobile-friendly
+Add pull-to-refresh on the dashboard and transaction pages
+Optimize touch targets (minimum 44px height for all buttons)
+Technical Requirements:
+Use web-push npm library for VAPID push notifications
+Generate VAPID keys and add as environment variables: VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY
+Store push subscriptions in a new database table: push_subscriptions (id, user_id, subscription JSON, created_at)
+Check budgets and send notifications using the existing node-cron daily job
+Add a Notifications settings page where user can enable/disable each type of notification
+Use existing shadcn/ui components and Tailwind CSS
