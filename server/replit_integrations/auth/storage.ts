@@ -1,12 +1,17 @@
 import { users, type User, type UpsertUser } from "@shared/models/auth";
 import { db } from "../../db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPreferences(id: string, prefs: { currency?: string; language?: string; theme?: string }): Promise<User | undefined>;
+  ensureAdminByEmail(email: string): Promise<void>;
+  getAllUsers(): Promise<Omit<User, "password">[]>;
+  adminUpdateUser(id: string, data: Partial<Pick<User, "firstName" | "lastName" | "email" | "phone" | "country" | "isActive" | "isAdmin">>): Promise<User | undefined>;
+  adminDeleteUser(id: string): Promise<void>;
+  setUserActive(id: string, isActive: boolean): Promise<User | undefined>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -41,6 +46,55 @@ class AuthStorage implements IAuthStorage {
     if (prefs.language !== undefined) updates.language = prefs.language;
     if (prefs.theme !== undefined) updates.theme = prefs.theme;
     const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async ensureAdminByEmail(email: string): Promise<void> {
+    await db.update(users).set({ isAdmin: true }).where(eq(users.email, email));
+  }
+
+  async getAllUsers(): Promise<Omit<User, "password">[]> {
+    const all = await db
+      .select({
+        id: users.id,
+        email: users.email,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        phone: users.phone,
+        country: users.country,
+        currency: users.currency,
+        language: users.language,
+        theme: users.theme,
+        profileImageUrl: users.profileImageUrl,
+        isAdmin: users.isAdmin,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users)
+      .orderBy(desc(users.createdAt));
+    return all;
+  }
+
+  async adminUpdateUser(id: string, data: Partial<Pick<User, "firstName" | "lastName" | "email" | "phone" | "country" | "isActive" | "isAdmin">>): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async adminDeleteUser(id: string): Promise<void> {
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async setUserActive(id: string, isActive: boolean): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ isActive, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
     return user;
   }
 }

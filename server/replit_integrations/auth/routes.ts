@@ -4,6 +4,8 @@ import { isAuthenticated } from "./replitAuth";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+const ADMIN_EMAIL = "mohammedfalzaq@gmail.com";
+
 const signupSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
@@ -27,6 +29,7 @@ export function registerAuthRoutes(app: Express): void {
         return res.status(400).json({ message: "Email already registered" });
       }
       const hashedPassword = await bcrypt.hash(data.password, 10);
+      const isAdminEmail = data.email === ADMIN_EMAIL;
       const user = await authStorage.upsertUser({
         email: data.email,
         firstName: data.firstName,
@@ -34,6 +37,7 @@ export function registerAuthRoutes(app: Express): void {
         phone: data.phone,
         country: data.country,
         password: hashedPassword,
+        isAdmin: isAdminEmail,
       });
       (req.session as any).userId = user.id;
       const { password, ...safeUser } = user;
@@ -57,6 +61,9 @@ export function registerAuthRoutes(app: Express): void {
       const valid = await bcrypt.compare(data.password, user.password);
       if (!valid) {
         return res.status(401).json({ message: "Invalid email or password" });
+      }
+      if (user.isActive === false) {
+        return res.status(403).json({ message: "Account is deactivated. Please contact an administrator." });
       }
       (req.session as any).userId = user.id;
       const { password, ...safeUser } = user;
@@ -104,7 +111,7 @@ export function registerAuthRoutes(app: Express): void {
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-      const { currency, language, theme } = req.body;
+      const { currency, language, theme, firstName, lastName, phone, country } = req.body;
       const user = await authStorage.updateUserPreferences(userId, { currency, language, theme });
       if (!user) {
         return res.status(404).json({ message: "User not found" });

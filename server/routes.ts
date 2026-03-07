@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { z } from "zod";
-import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { setupAuth, registerAuthRoutes, registerAdminRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import { registerChatRoutes } from "./replit_integrations/chat";
 import OpenAI from "openai";
 
@@ -22,7 +22,10 @@ export async function registerRoutes(
 ): Promise<Server> {
   await setupAuth(app);
   registerAuthRoutes(app);
+  registerAdminRoutes(app);
   registerChatRoutes(app);
+
+  await authStorage.ensureAdminByEmail("mohammedfalzaq@gmail.com");
 
   // Categories
   app.get(api.categories.list.path, isAuthenticated, async (req, res) => {

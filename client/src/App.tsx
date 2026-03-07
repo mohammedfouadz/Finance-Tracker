@@ -18,6 +18,9 @@ import ReportsPage from "@/pages/reports";
 import SettingsPage from "@/pages/settings";
 import ZakatPage from "@/pages/zakat";
 import NotFound from "@/pages/not-found";
+import AdminOverviewPage from "@/pages/admin/index";
+import AdminUsersPage from "@/pages/admin/users";
+import AdminUserDetailPage from "@/pages/admin/user-detail";
 
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/lib/theme";
@@ -39,6 +42,23 @@ function ProtectedPage({ component: Component }: { component: () => JSX.Element 
   if (!user) {
     return <Redirect to="/" />;
   }
+
+  return <Component />;
+}
+
+function AdminPage({ component: Component }: { component: () => JSX.Element }) {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!user) return <Redirect to="/" />;
+  if (!(user as any).isAdmin) return <Redirect to="/dashboard" />;
 
   return <Component />;
 }
@@ -78,6 +98,9 @@ function Router() {
       <Route path="/reports">{() => <ProtectedPage component={ReportsPage} />}</Route>
       <Route path="/settings">{() => <ProtectedPage component={SettingsPage} />}</Route>
       <Route path="/zakat">{() => <ProtectedPage component={ZakatPage} />}</Route>
+      <Route path="/admin">{() => <AdminPage component={AdminOverviewPage} />}</Route>
+      <Route path="/admin/users">{() => <AdminPage component={AdminUsersPage} />}</Route>
+      <Route path="/admin/users/:id">{() => <AdminPage component={AdminUserDetailPage} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

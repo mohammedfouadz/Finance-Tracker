@@ -1,6 +1,7 @@
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
+import { authStorage } from "./storage";
 
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000;
@@ -33,6 +34,18 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
   const userId = (req.session as any)?.userId;
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized" });
+  }
+  return next();
+};
+
+export const isAdmin: RequestHandler = async (req, res, next) => {
+  const userId = (req.session as any)?.userId;
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  const user = await authStorage.getUser(userId);
+  if (!user?.isAdmin) {
+    return res.status(403).json({ message: "Forbidden" });
   }
   return next();
 };

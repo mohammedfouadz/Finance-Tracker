@@ -21,6 +21,7 @@ import {
   PieChart,
   BarChart3,
   Star,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -50,6 +51,7 @@ export function Sidebar() {
   const { theme, setTheme, isDark } = useTheme();
   const { lang, setLang, t } = useI18n();
   const navItems = useNavItems();
+  const isAdmin = (user as any)?.isAdmin;
 
   const handleThemeToggle = () => {
     const newTheme = isDark ? "light" : "dark";
@@ -74,7 +76,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex h-screen w-72 flex-col fixed left-0 top-0 border-r bg-white dark:bg-gray-950 dark:border-gray-800 z-50 rtl:left-auto rtl:right-0 rtl:border-r-0 rtl:border-l">
+    <aside className="hidden lg:flex h-screen w-72 flex-col fixed left-0 top-0 border-r bg-white dark:bg-gray-950 dark:border-gray-800 z-50 rtl:left-auto rtl:right-0 rtl:border-r-0 rtl:border-l overflow-y-auto">
       <div className="p-8 flex items-center gap-3">
         <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
           <LineChart className="w-5 h-5" />
@@ -102,6 +104,36 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {isAdmin && (
+          <>
+            <div className="pt-2 pb-1 px-4">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#bbb] dark:text-gray-600">Administration</p>
+            </div>
+            {[
+              { label: "Admin Panel", href: "/admin", icon: Shield },
+              { label: "Users", href: "/admin/users", icon: Shield },
+            ].map((item) => {
+              const isActive = location === item.href || (item.href === "/admin/users" && location.startsWith("/admin/users"));
+              return (
+                <Link key={item.href} href={item.href}>
+                  <div
+                    className={cn(
+                      "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer group",
+                      isActive
+                        ? "bg-primary text-white shadow-lg shadow-primary/30"
+                        : "text-[#666666] dark:text-gray-400 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 hover:text-[#1a1a1a] dark:hover:text-white"
+                    )}
+                    data-testid={`nav-${item.href.replace(/\//g, "-").slice(1)}`}
+                  >
+                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-[#999999] dark:text-gray-500 group-hover:text-primary")} />
+                    <span className="font-semibold text-[15px]">{item.label}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </>
+        )}
       </nav>
 
       <div className="px-6 pb-2 space-y-1">
@@ -129,7 +161,10 @@ export function Sidebar() {
             {(user as any)?.firstName?.[0] || "U"}
           </div>
           <div className="overflow-hidden">
-            <p className="text-sm font-medium truncate dark:text-white">{(user as any)?.firstName} {(user as any)?.lastName}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-sm font-medium truncate dark:text-white">{(user as any)?.firstName} {(user as any)?.lastName}</p>
+              {isAdmin && <Shield className="w-3 h-3 text-primary flex-shrink-0" />}
+            </div>
             <p className="text-xs text-muted-foreground truncate">{(user as any)?.email}</p>
           </div>
         </div>
@@ -149,11 +184,19 @@ export function Sidebar() {
 
 export function MobileHeader() {
   const [location] = useLocation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { isDark, setTheme } = useTheme();
   const { lang, setLang, t } = useI18n();
   const [open, setOpen] = useState(false);
   const navItems = useNavItems();
+  const isAdmin = (user as any)?.isAdmin;
+
+  const adminItems = isAdmin
+    ? [
+        { label: "Admin Panel", href: "/admin", icon: Shield },
+        { label: "Users", href: "/admin/users", icon: Shield },
+      ]
+    : [];
 
   return (
     <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card dark:bg-gray-950 dark:border-gray-800 sticky top-0 z-50">
@@ -169,7 +212,7 @@ export function MobileHeader() {
           <div className="p-6 border-b dark:border-gray-800">
             <h2 className="text-xl font-bold dark:text-white">Menu</h2>
           </div>
-          <nav className="flex-1 p-4 space-y-2">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto max-h-[60vh]">
             {navItems.map((item) => {
               const isActive = location === item.href;
               return (
@@ -189,6 +232,30 @@ export function MobileHeader() {
                 </Link>
               );
             })}
+            {adminItems.length > 0 && (
+              <>
+                <div className="pt-2 pb-1 px-4">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Admin</p>
+                </div>
+                {adminItems.map((item) => {
+                  const isActive = location === item.href;
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <div
+                        className={cn(
+                          "flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer",
+                          isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+                        )}
+                        onClick={() => setOpen(false)}
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </nav>
           <div className="p-4 border-t dark:border-gray-800 space-y-2">
             <button
