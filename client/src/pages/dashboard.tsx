@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import {
-  DollarSign, TrendingUp, TrendingDown, Landmark, Building2,
+  DollarSign, TrendingUp, TrendingDown, Gem, Building2,
   LineChart, HandCoins, Target, Plus, ArrowUpRight, ArrowDownRight,
   RefreshCw, Sparkles, ChevronRight, AlertCircle, Clock, Wallet,
   Receipt,
@@ -112,7 +112,11 @@ export default function Dashboard() {
   const trendPct = (cur: number, prev: number) => prev === 0 ? null : ((cur - prev) / prev) * 100;
   const incomeTrend = trendPct(curIncome, prevIncome);
   const expenseTrend = trendPct(curExpenses, prevExpenses);
-  const bankTrend = null;
+  const monthlyNet = curIncome - curExpenses;
+  const estimatedPrevWealth = totalWealth - monthlyNet;
+  const wealthTrend = estimatedPrevWealth !== 0
+    ? ((totalWealth - estimatedPrevWealth) / Math.abs(estimatedPrevWealth)) * 100
+    : null;
   const debtTrend = null;
 
   const wealthBreakdown = useMemo(() => {
@@ -275,18 +279,18 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <Link href="/bank-accounts">
-            <Card className="cursor-pointer border-gray-100 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 hover:shadow-lg hover:shadow-blue-100 dark:hover:shadow-blue-900/20 hover:-translate-y-0.5 transition-all duration-200 group" data-testid="card-bank-balance">
+            <Card className="cursor-pointer border-gray-100 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 hover:shadow-lg hover:shadow-blue-100 dark:hover:shadow-blue-900/20 hover:-translate-y-0.5 transition-all duration-200 group" data-testid="card-total-wealth">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{isAr ? "رصيد البنوك" : "Bank Balance"}</span>
-                  <div className="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-900 flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Landmark className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{isAr ? "إجمالي الثروة" : "Total Wealth"}</span>
+                  <div className="w-9 h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: "rgba(0,200,150,0.15)" }}>
+                    <Gem className="w-4 h-4" style={{ color: "#00C896" }} />
                   </div>
                 </div>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-bank-balance">{formatAmount(totalBankBalance)}</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-total-wealth">{formatAmount(totalWealth)}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-400">{(bankAccounts as any[]).length} {isAr ? "حسابات" : "accounts"}</p>
-                  <TrendBadge trend={bankTrend} />
+                  <p className="text-xs text-gray-400">{isAr ? "بنوك + استثمارات + أصول - ديون" : "Assets + Banks + Invst - Debts"}</p>
+                  <TrendBadge trend={wealthTrend} />
                 </div>
               </CardContent>
             </Card>
