@@ -1,8 +1,8 @@
-# Mudabbir (مُدبِّر) - Personal Financial Management System
+# Wealthly — Personal Financial Management System
 
 ## Overview
 
-Mudabbir is a comprehensive web-based personal financial management platform that helps users track income, manage expenses, set budgets, define savings goals, track investments, manage debts, monitor bank accounts and assets, and get AI-powered financial coaching. The app follows a monorepo structure with a React frontend, Express backend, and PostgreSQL database. Authentication is handled via Replit Auth (OpenID Connect).
+Wealthly is a comprehensive web-based personal financial management platform that helps users track income, manage expenses, set budgets, define savings goals, track investments, manage debts, monitor bank accounts and assets, and get AI-powered financial coaching. The app follows a monorepo structure with a React frontend, Express backend, and PostgreSQL database. Authentication is handled via Replit Auth (OpenID Connect).
 
 Key features:
 - **Multi-Currency Support** — Per-entry currency selection (USD, EUR, OMR, ILS, SAR), exchange rate to USD stored at entry time, all totals and analytics displayed in USD. Scalable architecture via `shared/currency.ts` module and reusable `CurrencyFields` component
@@ -39,7 +39,7 @@ script/          → Build scripts (esbuild + vite)
 - **Routing**: Wouter (lightweight router)
 - **State/Data**: TanStack React Query for server state management
 - **UI Components**: shadcn/ui (New York style) built on Radix UI primitives
-- **Styling**: Tailwind CSS with CSS variables for theming, custom color palette (primary blue, accent purple, success green, destructive red)
+- **Styling**: Tailwind CSS with "Ocean Wealth" brand theme. Colors: Primary #1B4FE4 (Deep Blue), Accent #00C896 (Mint Green), Bg #F8FAFF, Dark #0F1729. All via CSS variables in `client/src/index.css`. 300ms transitions for dark/light mode.
 - **Charts**: Recharts for financial data visualization
 - **Forms**: React Hook Form + Zod resolvers for validation
 - **Auth**: Custom `useAuth` hook that checks `/api/auth/user`; unauthenticated users redirect to `/api/login`

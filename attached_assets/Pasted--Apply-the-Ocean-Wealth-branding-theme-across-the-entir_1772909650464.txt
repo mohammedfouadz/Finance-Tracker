@@ -1,0 +1,309 @@
+ 
+
+Apply the "Ocean Wealth" branding theme across the entire Wealthly app with the following color system:
+
+Color Palette:
+
+Primary:     #1B4FE4  (Deep Blue)
+Secondary:   #4F8EF7  (Light Blue)
+Accent:      #00C896  (Mint Green)
+Background:  #F8FAFF  (Soft White)
+Dark Mode BG: #0F1729 (Navy Dark)
+Text Primary: #0F1729
+Text Secondary: #64748B
+Success:     #00C896
+Warning:     #F59E0B
+Danger:      #EF4444
+
+
+Apply these colors to ALL of the following:
+
+1. Global Theme
+
+
+
+
+
+Update tailwind.config.ts to add these as custom colors
+
+
+
+Update CSS variables in globals.css for both light and dark mode
+
+
+
+Primary buttons: #1B4FE4 background with white text
+
+
+
+Hover state: #1640C0 (darker blue)
+
+
+
+Focus rings: #4F8EF7
+
+2. Navbar & Sidebar
+
+
+
+
+
+Sidebar background light mode: white with #F8FAFF
+
+
+
+Sidebar active item: #1B4FE4 background with white text
+
+
+
+Sidebar hover: light blue #EEF4FF
+
+
+
+Logo text color: #1B4FE4
+
+
+
+Dark mode sidebar: #0F1729 with #1B4FE4 accents
+
+3. Dashboard Cards
+
+
+
+
+
+Top stats cards: white background with subtle blue border #EEF4FF
+
+
+
+Card hover: slight blue shadow 0 4px 20px rgba(27, 79, 228, 0.08)
+
+
+
+Positive numbers (income): #00C896
+
+
+
+Negative numbers (expenses): #EF4444
+
+
+
+Card icons: use gradient from #1B4FE4 to #4F8EF7
+
+4. Charts
+
+
+
+
+
+Income bars: #00C896 (mint green)
+
+
+
+Expense bars: #EF4444 (red)
+
+
+
+Donut chart colors: #1B4FE4, #00C896, #F59E0B, #4F8EF7, #6366F1
+
+
+
+Chart grid lines: #EEF4FF
+
+
+
+Tooltip background: #0F1729
+
+5. Buttons
+
+
+
+
+
+Primary button: #1B4FE4 → hover #1640C0
+
+
+
+Secondary button: white border #1B4FE4 text
+
+
+
+Success/Confirm button: #00C896
+
+
+
+Danger/Delete button: #EF4444
+
+
+
+All buttons: rounded-lg with smooth transition
+
+6. Forms & Inputs
+
+
+
+
+
+Input border: #CBD5E1
+
+
+
+Input focus border: #1B4FE4
+
+
+
+Input focus ring: rgba(27, 79, 228, 0.15)
+
+
+
+Label color: #0F1729
+
+
+
+Placeholder: #94A3B8
+
+7. Landing Page
+
+
+
+
+
+Hero gradient: linear-gradient(135deg, #1B4FE4 0%, #4F8EF7 50%, #00C896 100%)
+
+
+
+Section backgrounds: alternate between #FFFFFF and #F8FAFF
+
+
+
+CTA button: #1B4FE4 with white text and subtle glow effect
+
+
+
+Feature icons: gradient from #1B4FE4 to #00C896
+
+
+
+Stats section background: #0F1729 with white text
+
+8. Login & Signup Pages
+
+
+
+
+
+Background: subtle gradient #F8FAFF to #EEF4FF
+
+
+
+Card: white with soft shadow
+
+
+
+Logo: #1B4FE4
+
+
+
+Sign in button: #1B4FE4
+
+9. Progress Bars & Badges
+
+
+
+
+
+Progress bars: gradient from #1B4FE4 to #00C896
+
+
+
+Success badge: #00C896 background
+
+
+
+Warning badge: #F59E0B background
+
+
+
+Info badge: #4F8EF7 background
+
+10. Dark Mode
+
+
+
+
+
+Background: #0F1729
+
+
+
+Card background: #1A2744
+
+
+
+Border color: #1E3A5F
+
+
+
+Text primary: #F1F5F9
+
+
+
+Text secondary: #94A3B8
+
+
+
+Sidebar: #0A1628
+
+
+
+Active item: #1B4FE4
+
+11. Logo & Favicon
+
+
+
+
+
+Create a new logo for "Wealthly" using the letter "W"
+
+
+
+Style: modern, bold "W" with gradient from #1B4FE4 to #00C896
+
+
+
+Rounded square background: #1B4FE4
+
+
+
+Update favicon to match
+
+
+
+Update all places that show "FinTrack" logo to "Wealthly"
+
+Technical Requirements:
+
+
+
+
+
+Update tailwind.config.ts with the complete custom color palette
+
+
+
+Update globals.css with CSS custom properties for all colors
+
+
+
+Ensure smooth transitions between light and dark mode (transition: 300ms)
+
+
+
+Test all components to make sure no hardcoded colors remain
+
+
+
+Maintain WCAG AA accessibility contrast ratios
+
+ 

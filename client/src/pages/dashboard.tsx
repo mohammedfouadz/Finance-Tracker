@@ -117,10 +117,10 @@ export default function Dashboard() {
 
   const wealthBreakdown = useMemo(() => {
     const d = [];
-    if (totalBankBalance > 0) d.push({ name: isAr ? "البنوك" : "Bank Accounts", value: totalBankBalance, color: "#3b82f6" });
-    if (totalInvestmentsValue > 0) d.push({ name: isAr ? "الاستثمارات" : "Investments", value: totalInvestmentsValue, color: "#22c55e" });
-    if (totalAssetsValue > 0) d.push({ name: isAr ? "الأصول" : "Assets", value: totalAssetsValue, color: "#f59e0b" });
-    if (d.length === 0) d.push({ name: isAr ? "لا بيانات" : "No Data", value: 1, color: "#e5e7eb" });
+    if (totalBankBalance > 0) d.push({ name: isAr ? "البنوك" : "Bank Accounts", value: totalBankBalance, color: "#1B4FE4" });
+    if (totalInvestmentsValue > 0) d.push({ name: isAr ? "الاستثمارات" : "Investments", value: totalInvestmentsValue, color: "#00C896" });
+    if (totalAssetsValue > 0) d.push({ name: isAr ? "الأصول" : "Assets", value: totalAssetsValue, color: "#F59E0B" });
+    if (d.length === 0) d.push({ name: isAr ? "لا بيانات" : "No Data", value: 1, color: "#EEF4FF" });
     return d;
   }, [totalBankBalance, totalInvestmentsValue, totalAssetsValue, isAr]);
 
@@ -371,9 +371,9 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#00C896" }} />
                 <span className="text-xs text-gray-500 dark:text-gray-400">{isAr ? "الدخل:" : "Income:"}</span>
-                <span className="text-xs font-bold text-green-600 dark:text-green-400">{formatAmount(chartPeriodIncome)}</span>
+                <span className="text-xs font-bold" style={{ color: "#00C896" }}>{formatAmount(chartPeriodIncome)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
@@ -394,8 +394,8 @@ export default function Dashboard() {
                       contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: "12px" }}
                       formatter={(v: any) => formatAmount(v)}
                     />
-                    <Bar dataKey="income" fill="#22c55e" fillOpacity={0.85} radius={[4,4,0,0]} name={isAr ? "الدخل" : "Income"} />
-                    <Bar dataKey="expenses" fill="#ef4444" fillOpacity={0.85} radius={[4,4,0,0]} name={isAr ? "المصروفات" : "Expenses"} />
+                    <Bar dataKey="income" fill="#00C896" fillOpacity={0.9} radius={[4,4,0,0]} name={isAr ? "الدخل" : "Income"} />
+                    <Bar dataKey="expenses" fill="#EF4444" fillOpacity={0.9} radius={[4,4,0,0]} name={isAr ? "المصروفات" : "Expenses"} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (

@@ -28,6 +28,29 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
+function WealthlyLogo({ size = 32 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="32" height="32" rx="8" fill="#1B4FE4" />
+      <path
+        d="M5 9L10.5 23L16 13L21.5 23L27 9"
+        stroke="white"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10.5 23L16 13L21.5 23"
+        stroke="#00C896"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        opacity="0.9"
+      />
+    </svg>
+  );
+}
+
 function useNavItems() {
   const { t } = useI18n();
   return [
@@ -78,12 +101,10 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex h-screen w-72 flex-col fixed left-0 top-0 border-r bg-white dark:bg-gray-950 dark:border-gray-800 z-50 rtl:left-auto rtl:right-0 rtl:border-r-0 rtl:border-l overflow-y-auto">
+    <aside className="hidden lg:flex h-screen w-72 flex-col fixed left-0 top-0 border-r border-[#EEF4FF] dark:border-[#1E3A5F] bg-white dark:bg-[#0A1628] z-50 rtl:left-auto rtl:right-0 rtl:border-r-0 rtl:border-l overflow-y-auto">
       <div className="p-8 flex items-center gap-3">
-        <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
-          <LineChart className="w-5 h-5" />
-        </div>
-        <h1 className="text-2xl font-bold text-[#1a1a1a] dark:text-white">FinTrack</h1>
+        <WealthlyLogo size={34} />
+        <h1 className="text-2xl font-bold text-[#1B4FE4] dark:text-white tracking-tight">Wealthly</h1>
       </div>
 
       <nav className="flex-1 px-6 space-y-1">
@@ -95,12 +116,12 @@ export function Sidebar() {
                 className={cn(
                   "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer group",
                   isActive
-                    ? "bg-primary text-white shadow-lg shadow-primary/30"
-                    : "text-[#666666] dark:text-gray-400 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 hover:text-[#1a1a1a] dark:hover:text-white"
+                    ? "bg-[#1B4FE4] text-white shadow-lg shadow-[#1B4FE4]/25"
+                    : "text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744] hover:text-[#1B4FE4] dark:hover:text-white"
                 )}
                 data-testid={`nav-${item.href.slice(1)}`}
               >
-                <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-[#999999] dark:text-gray-500 group-hover:text-primary")} />
+                <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : "text-[#94A3B8] dark:text-[#64748B] group-hover:text-[#1B4FE4] dark:group-hover:text-[#4F8EF7]")} />
                 <span className="font-semibold text-[15px]">{item.label}</span>
               </div>
             </Link>
@@ -110,7 +131,7 @@ export function Sidebar() {
         {isAdmin && (
           <>
             <div className="pt-2 pb-1 px-4">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#bbb] dark:text-gray-600">Administration</p>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-[#CBD5E1] dark:text-[#1E3A5F]">Administration</p>
             </div>
             {[
               { label: "Admin Panel", href: "/admin", icon: Shield },
@@ -123,12 +144,12 @@ export function Sidebar() {
                     className={cn(
                       "flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer group",
                       isActive
-                        ? "bg-primary text-white shadow-lg shadow-primary/30"
-                        : "text-[#666666] dark:text-gray-400 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 hover:text-[#1a1a1a] dark:hover:text-white"
+                        ? "bg-[#1B4FE4] text-white shadow-lg shadow-[#1B4FE4]/25"
+                        : "text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744] hover:text-[#1B4FE4] dark:hover:text-white"
                     )}
                     data-testid={`nav-${item.href.replace(/\//g, "-").slice(1)}`}
                   >
-                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-[#999999] dark:text-gray-500 group-hover:text-primary")} />
+                    <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-[#94A3B8] dark:text-[#64748B] group-hover:text-[#1B4FE4]")} />
                     <span className="font-semibold text-[15px]">{item.label}</span>
                   </div>
                 </Link>
@@ -141,33 +162,33 @@ export function Sidebar() {
       <div className="px-6 pb-2 space-y-1">
         <button
           onClick={handleThemeToggle}
-          className="flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer w-full text-[#666666] dark:text-gray-400 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 hover:text-[#1a1a1a] dark:hover:text-white"
+          className="flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer w-full text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744] hover:text-[#1B4FE4] dark:hover:text-white"
           data-testid="button-theme-toggle"
         >
-          {isDark ? <Sun className="w-5 h-5 text-[#999] dark:text-gray-500" /> : <Moon className="w-5 h-5 text-[#999]" />}
+          {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           <span className="font-semibold text-[15px]">{isDark ? t("lightMode") : t("darkMode")}</span>
         </button>
         <button
           onClick={handleLangToggle}
-          className="flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer w-full text-[#666666] dark:text-gray-400 hover:bg-[#f8f9fa] dark:hover:bg-gray-800 hover:text-[#1a1a1a] dark:hover:text-white"
+          className="flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer w-full text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744] hover:text-[#1B4FE4] dark:hover:text-white"
           data-testid="button-lang-toggle"
         >
-          <Languages className="w-5 h-5 text-[#999] dark:text-gray-500" />
+          <Languages className="w-5 h-5" />
           <span className="font-semibold text-[15px]">{lang === "en" ? t("arabic") : t("english")}</span>
         </button>
       </div>
 
-      <div className="p-4 border-t dark:border-gray-800 bg-card/30">
+      <div className="p-4 border-t border-[#EEF4FF] dark:border-[#1E3A5F]">
         <div className="flex items-center gap-3 mb-4 px-2">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-primary to-accent flex items-center justify-center text-white font-bold">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0" style={{ background: "linear-gradient(135deg, #1B4FE4, #00C896)" }}>
             {(user as any)?.firstName?.[0] || "U"}
           </div>
           <div className="overflow-hidden">
             <div className="flex items-center gap-1">
-              <p className="text-sm font-medium truncate dark:text-white">{(user as any)?.firstName} {(user as any)?.lastName}</p>
-              {isAdmin && <Shield className="w-3 h-3 text-primary flex-shrink-0" />}
+              <p className="text-sm font-semibold truncate text-[#0F1729] dark:text-white">{(user as any)?.firstName} {(user as any)?.lastName}</p>
+              {isAdmin && <Shield className="w-3 h-3 text-[#1B4FE4] flex-shrink-0" />}
             </div>
-            <p className="text-xs text-muted-foreground truncate">{(user as any)?.email}</p>
+            <p className="text-xs text-[#64748B] truncate">{(user as any)?.email}</p>
           </div>
         </div>
         <Button
@@ -201,8 +222,11 @@ export function MobileHeader() {
     : [];
 
   return (
-    <div className="lg:hidden flex items-center justify-between p-4 border-b bg-card dark:bg-gray-950 dark:border-gray-800 sticky top-0 z-50">
-      <h1 className="text-xl font-bold text-gradient">FinTrack</h1>
+    <div className="lg:hidden flex items-center justify-between p-4 border-b border-[#EEF4FF] dark:border-[#1E3A5F] bg-white dark:bg-[#0A1628] sticky top-0 z-50">
+      <div className="flex items-center gap-2">
+        <WealthlyLogo size={28} />
+        <h1 className="text-xl font-bold text-[#1B4FE4] dark:text-white tracking-tight">Wealthly</h1>
+      </div>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
@@ -210,9 +234,10 @@ export function MobileHeader() {
             <Menu className="w-6 h-6" />
           </Button>
         </SheetTrigger>
-        <SheetContent side={lang === "ar" ? "right" : "left"} className="w-64 p-0 dark:bg-gray-950">
-          <div className="p-6 border-b dark:border-gray-800">
-            <h2 className="text-xl font-bold dark:text-white">Menu</h2>
+        <SheetContent side={lang === "ar" ? "right" : "left"} className="w-64 p-0 bg-white dark:bg-[#0A1628] border-[#EEF4FF] dark:border-[#1E3A5F]">
+          <div className="p-6 border-b border-[#EEF4FF] dark:border-[#1E3A5F] flex items-center gap-2">
+            <WealthlyLogo size={24} />
+            <h2 className="text-lg font-bold text-[#1B4FE4] dark:text-white">Wealthly</h2>
           </div>
           <nav className="flex-1 p-4 space-y-2 overflow-y-auto max-h-[60vh]">
             {navItems.map((item) => {
@@ -223,8 +248,8 @@ export function MobileHeader() {
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer",
                       isActive
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:bg-secondary"
+                        ? "bg-[#1B4FE4] text-white"
+                        : "text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744] hover:text-[#1B4FE4] dark:hover:text-white"
                     )}
                     onClick={() => setOpen(false)}
                   >
@@ -237,7 +262,7 @@ export function MobileHeader() {
             {adminItems.length > 0 && (
               <>
                 <div className="pt-2 pb-1 px-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">Admin</p>
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-[#CBD5E1]">Admin</p>
                 </div>
                 {adminItems.map((item) => {
                   const isActive = location === item.href;
@@ -246,7 +271,9 @@ export function MobileHeader() {
                       <div
                         className={cn(
                           "flex items-center gap-3 px-4 py-3 rounded-xl transition-all cursor-pointer",
-                          isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"
+                          isActive
+                            ? "bg-[#1B4FE4] text-white"
+                            : "text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744]"
                         )}
                         onClick={() => setOpen(false)}
                       >
@@ -259,17 +286,17 @@ export function MobileHeader() {
               </>
             )}
           </nav>
-          <div className="p-4 border-t dark:border-gray-800 space-y-2">
+          <div className="p-4 border-t border-[#EEF4FF] dark:border-[#1E3A5F] space-y-2">
             <button
               onClick={() => { setTheme(isDark ? "light" : "dark"); }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-muted-foreground hover:bg-secondary"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744]"
             >
               {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               <span className="font-medium">{isDark ? t("lightMode") : t("darkMode")}</span>
             </button>
             <button
               onClick={() => { setLang(lang === "en" ? "ar" : "en"); }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-muted-foreground hover:bg-secondary"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl w-full text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744]"
             >
               <Languages className="w-5 h-5" />
               <span className="font-medium">{lang === "en" ? t("arabic") : t("english")}</span>

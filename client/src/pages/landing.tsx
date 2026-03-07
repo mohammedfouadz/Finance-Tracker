@@ -14,7 +14,7 @@ const content = {
       badge: "Smart Personal Finance",
       headline: "Take Full Control of Your",
       headlineAccent: "Financial Life",
-      sub: "FinTrack brings all your finances into one place — income, expenses, investments, assets, debts, goals and Zakat — with beautiful insights and full bilingual support.",
+      sub: "Wealthly brings all your finances into one place — income, expenses, investments, assets, debts, goals and Zakat — with beautiful insights and full bilingual support.",
       cta1: "Get Started Free",
       cta2: "See Features",
     },
@@ -46,13 +46,13 @@ const content = {
     testimonials: {
       title: "Trusted by users worldwide",
       items: [
-        { name: "Ahmed Al-Rashidi", role: "Business Owner, Saudi Arabia", text: "FinTrack changed how I manage my finances. The Zakat calculator alone is worth it. I can finally track my investments and expenses across multiple currencies without any headache.", avatar: "A" },
-        { name: "Sarah Johnson", role: "Finance Analyst, UAE", text: "The budget planning and goal tracking features are incredible. I've managed to save 30% more every month since I started using FinTrack. The dark mode is gorgeous too!", avatar: "S" },
+        { name: "Ahmed Al-Rashidi", role: "Business Owner, Saudi Arabia", text: "Wealthly changed how I manage my finances. The Zakat calculator alone is worth it. I can finally track my investments and expenses across multiple currencies without any headache.", avatar: "A" },
+        { name: "Sarah Johnson", role: "Finance Analyst, UAE", text: "The budget planning and goal tracking features are incredible. I've managed to save 30% more every month since I started using Wealthly. The dark mode is gorgeous too!", avatar: "S" },
         { name: "Mohammed Al-Farsi", role: "Entrepreneur, Qatar", text: "Finally a financial app that truly supports Arabic! The RTL layout is perfect and switching between languages is seamless. My whole team uses it now.", avatar: "M" },
       ],
     },
-    cta: { title: "Start managing your finances today", sub: "Join thousands of users who trust FinTrack to take control of their money.", button: "Sign Up Free" },
-    footer: { copy: "© 2026 FinTrack. All rights reserved." },
+    cta: { title: "Start managing your finances today", sub: "Join thousands of users who trust Wealthly to take control of their money.", button: "Sign Up Free" },
+    footer: { copy: "© 2026 Wealthly. All rights reserved." },
   },
   ar: {
     dir: "rtl" as const,
@@ -61,7 +61,7 @@ const content = {
       badge: "إدارة مالية ذكية",
       headline: "تحكم كامل في",
       headlineAccent: "حياتك المالية",
-      sub: "FinTrack يجمع كل أمورك المالية في مكان واحد — الدخل والمصروفات والاستثمارات والأصول والديون والأهداف والزكاة — مع رؤى تحليلية ودعم كامل للغتين.",
+      sub: "Wealthly يجمع كل أمورك المالية في مكان واحد — الدخل والمصروفات والاستثمارات والأصول والديون والأهداف والزكاة — مع رؤى تحليلية ودعم كامل للغتين.",
       cta1: "ابدأ مجاناً",
       cta2: "استعرض المميزات",
     },
@@ -93,13 +93,13 @@ const content = {
     testimonials: {
       title: "موثوق به من مستخدمين حول العالم",
       items: [
-        { name: "أحمد الراشدي", role: "صاحب أعمال، المملكة العربية السعودية", text: "غيّر FinTrack طريقة إدارتي لأموالي. حاسبة الزكاة وحدها تستحق التجربة. أستطيع الآن تتبع استثماراتي ومصروفاتي بعملات مختلفة دون أي تعقيد.", avatar: "أ" },
-        { name: "سارة جونسون", role: "محللة مالية، الإمارات العربية المتحدة", text: "ميزات تخطيط الميزانية وتتبع الأهداف رائعة للغاية. تمكنت من توفير ٣٠٪ أكثر كل شهر منذ بدأت استخدام FinTrack. الوضع المظلم جميل جداً أيضاً!", avatar: "س" },
+        { name: "أحمد الراشدي", role: "صاحب أعمال، المملكة العربية السعودية", text: "غيّر Wealthly طريقة إدارتي لأموالي. حاسبة الزكاة وحدها تستحق التجربة. أستطيع الآن تتبع استثماراتي ومصروفاتي بعملات مختلفة دون أي تعقيد.", avatar: "أ" },
+        { name: "سارة جونسون", role: "محللة مالية، الإمارات العربية المتحدة", text: "ميزات تخطيط الميزانية وتتبع الأهداف رائعة للغاية. تمكنت من توفير ٣٠٪ أكثر كل شهر منذ بدأت استخدام Wealthly. الوضع المظلم جميل جداً أيضاً!", avatar: "س" },
         { name: "محمد الفارسي", role: "رائد أعمال، قطر", text: "أخيراً تطبيق مالي يدعم العربية بشكل حقيقي! تخطيط RTL مثالي والتبديل بين اللغتين سلس جداً. أصبح فريقي كله يستخدمه الآن.", avatar: "م" },
       ],
     },
-    cta: { title: "ابدأ إدارة مالياتك اليوم", sub: "انضم إلى آلاف المستخدمين الذين يثقون بـ FinTrack للسيطرة على أموالهم.", button: "سجّل مجاناً" },
-    footer: { copy: "© ٢٠٢٦ FinTrack. جميع الحقوق محفوظة." },
+    cta: { title: "ابدأ إدارة مالياتك اليوم", sub: "انضم إلى آلاف المستخدمين الذين يثقون بـ Wealthly للسيطرة على أموالهم.", button: "سجّل مجاناً" },
+    footer: { copy: "© ٢٠٢٦ Wealthly. جميع الحقوق محفوظة." },
   },
 };
 
@@ -152,7 +152,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <LineChart className="w-4 h-4 text-white" />
               </div>
-              <span className="text-xl font-bold">FinTrack</span>
+              <span className="text-xl font-bold">Wealthly</span>
             </div>
           </Link>
 
@@ -248,7 +248,7 @@ export default function LandingPage() {
                     <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
                       <LineChart className="w-3.5 h-3.5 text-white" />
                     </div>
-                    <span className="font-bold text-sm">FinTrack</span>
+                    <span className="font-bold text-sm">Wealthly</span>
                   </div>
                   {[
                     { icon: LayoutDashboard, label: "Dashboard", active: true },
@@ -435,7 +435,7 @@ export default function LandingPage() {
             <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
               <LineChart className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-gray-900 dark:text-white">FinTrack</span>
+            <span className="font-bold text-gray-900 dark:text-white">Wealthly</span>
           </div>
           <p className="text-sm text-gray-400 dark:text-gray-500">{t.footer.copy}</p>
         </div>
