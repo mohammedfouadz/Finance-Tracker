@@ -314,6 +314,137 @@ export async function registerRoutes(
     res.json({ goldPricePerGram: null, silverPricePerGram: null, source: "manual" });
   });
 
+  // AI Smart Report — 24-hour server-side cache
+  const reportCache = new Map<string, { data: unknown; timestamp: number }>();
+  const REPORT_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+  app.post("/api/ai/report", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { language = "en", forceRefresh = false } = req.body as { language?: string; forceRefresh?: boolean };
+
+      const cached = reportCache.get(userId);
+      if (!forceRefresh && cached && Date.now() - cached.timestamp < REPORT_CACHE_TTL) {
+        return res.json({ ...cached.data, fromCache: true, cachedAt: new Date(cached.timestamp).toISOString() });
+      }
+
+      const now = new Date();
+      const curYear = now.getFullYear();
+      const curMonth = now.getMonth() + 1;
+      const prevMonth = curMonth === 1 ? 12 : curMonth - 1;
+      const prevYear = curMonth === 1 ? curYear - 1 : curYear;
+
+      const startOfCurMonth = new Date(curYear, curMonth - 1, 1).toISOString();
+      const startOfPrevMonth = new Date(prevYear, prevMonth - 1, 1).toISOString();
+      const endOfPrevMonth = new Date(curYear, curMonth - 1, 0, 23, 59, 59).toISOString();
+
+      const [curTx, prevTx, categories, goals, investments, assets, bankAccounts, debts] = await Promise.all([
+        storage.getTransactions(userId, { startDate: startOfCurMonth }),
+        storage.getTransactions(userId, { startDate: startOfPrevMonth, endDate: endOfPrevMonth }),
+        storage.getCategories(userId),
+        storage.getGoals(userId),
+        storage.getInvestments(userId),
+        storage.getAssets(userId),
+        storage.getBankAccounts(userId),
+        storage.getDebts(userId),
+      ]);
+
+      const curBudgets = await storage.getBudgets(userId, curMonth, curYear);
+      const prevBudgets = await storage.getBudgets(userId, prevMonth, prevYear);
+
+      const systemPrompt = `You are an expert bilingual (Arabic/English) personal finance AI analyst for FinTrack app.
+Analyze the user's complete financial data and return a detailed JSON report.
+The user's preferred language is "${language}". Prioritize that language in your summaries but include both.
+
+Current month: ${now.toLocaleString("en", { month: "long", year: "numeric" })}
+
+STRICT JSON RESPONSE FORMAT (no extra text, valid JSON only):
+{
+  "monthlyAnalysis": {
+    "summaryEn": "3-4 sentence English summary of overall financial health this month",
+    "summaryAr": "3-4 sentence Arabic summary of overall financial health this month",
+    "totalIncome": <number>,
+    "totalExpenses": <number>,
+    "prevMonthIncome": <number>,
+    "prevMonthExpenses": <number>,
+    "savingsRate": <percentage 0-100>,
+    "biggestExpenseCategory": "<category name>",
+    "biggestExpenseAmount": <number>,
+    "incomeChange": <percentage change from prev month, can be negative>,
+    "expenseChange": <percentage change from prev month, can be negative>
+  },
+  "spendingInsights": [
+    {
+      "type": "success|warning|danger",
+      "messageEn": "specific English insight with numbers",
+      "messageAr": "specific Arabic insight with numbers",
+      "icon": "trending-up|trending-down|alert|check|target|piggy-bank"
+    }
+  ],
+  "aiAdvice": [
+    {
+      "titleEn": "short English title",
+      "titleAr": "short Arabic title",
+      "descriptionEn": "specific actionable English advice with numbers from the data",
+      "descriptionAr": "specific actionable Arabic advice with numbers",
+      "category": "savings|investment|spending|debt|goals",
+      "potentialSavings": <number or null>
+    }
+  ],
+  "forecast": {
+    "nextMonthTotalExpenses": <predicted number based on trends>,
+    "confidence": "high|medium|low",
+    "messageEn": "brief English forecast explanation",
+    "messageAr": "brief Arabic forecast explanation",
+    "categoryForecasts": [
+      { "name": "<category>", "currentAmount": <number>, "forecastAmount": <number>, "trend": "up|down|stable" }
+    ]
+  },
+  "zakatReminder": {
+    "applicable": <boolean, true if total wealth > 5800 USD equivalent>,
+    "totalWealth": <sum of bank accounts + investments + assets - debts>,
+    "zakatAmount": <totalWealth * 0.025 if applicable>,
+    "messageEn": "English zakat message",
+    "messageAr": "Arabic zakat message"
+  }
+}
+
+Generate 4-6 spending insights, 3-5 advice items, and 3-6 category forecasts.
+Make insights specific to the actual data — use real numbers and category names.
+If data is limited, still provide meaningful analysis based on what's available.`;
+
+      const userContent = `FINANCIAL DATA:
+Current Month Transactions: ${JSON.stringify(curTx.map(t => ({ amount: t.amount, type: t.type, description: t.description, date: t.date, categoryId: t.categoryId })))}
+Previous Month Transactions: ${JSON.stringify(prevTx.map(t => ({ amount: t.amount, type: t.type, description: t.description, date: t.date, categoryId: t.categoryId })))}
+Categories: ${JSON.stringify(categories.map(c => ({ id: c.id, name: c.name, type: c.type })))}
+Current Month Budgets: ${JSON.stringify(curBudgets)}
+Previous Month Budgets: ${JSON.stringify(prevBudgets)}
+Goals: ${JSON.stringify(goals.map(g => ({ name: g.name, targetAmount: g.targetAmount, currentAmount: g.currentAmount, deadline: g.deadline })))}
+Investments: ${JSON.stringify(investments.map(i => ({ name: i.name, type: i.type, currentValue: i.currentValue, purchasePrice: i.purchasePrice })))}
+Assets: ${JSON.stringify(assets.map(a => ({ name: a.name, type: a.type, value: a.value })))}
+Bank Accounts: ${JSON.stringify(bankAccounts.map(b => ({ name: b.name, balance: b.balance, currency: b.currency })))}
+Debts: ${JSON.stringify(debts.map(d => ({ name: d.name, type: d.type, totalAmount: d.totalAmount, remainingAmount: d.remainingAmount })))}`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-5.1",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent }
+        ],
+        response_format: { type: "json_object" },
+        max_completion_tokens: 3000,
+      });
+
+      const reportData = JSON.parse(response.choices[0].message.content || "{}");
+      const result = { ...reportData, fromCache: false, generatedAt: new Date().toISOString() };
+      reportCache.set(userId, { data: result, timestamp: Date.now() });
+      return res.json(result);
+    } catch (error) {
+      console.error("AI Report Error:", error);
+      res.status(500).json({ message: "Failed to generate report" });
+    }
+  });
+
   // AI Insights
   app.post(api.ai.insights.path, isAuthenticated, async (req, res) => {
     try {

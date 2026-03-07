@@ -22,6 +22,7 @@ import AdminOverviewPage from "@/pages/admin/index";
 import AdminUsersPage from "@/pages/admin/users";
 import AdminUserDetailPage from "@/pages/admin/user-detail";
 import LandingPage from "@/pages/landing";
+import AiReportsPage from "@/pages/reports-ai";
 
 import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/lib/theme";
@@ -98,6 +99,7 @@ function Router() {
       <Route path="/goals">{() => <ProtectedPage component={GoalsPage} />}</Route>
       <Route path="/budget">{() => <ProtectedPage component={BudgetPage} />}</Route>
       <Route path="/reports">{() => <ProtectedPage component={ReportsPage} />}</Route>
+      <Route path="/reports/ai">{() => <ProtectedPage component={AiReportsPage} />}</Route>
       <Route path="/settings">{() => <ProtectedPage component={SettingsPage} />}</Route>
       <Route path="/zakat">{() => <ProtectedPage component={ZakatPage} />}</Route>
       <Route path="/admin">{() => <AdminPage component={AdminOverviewPage} />}</Route>
