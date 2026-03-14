@@ -1,0 +1,240 @@
+
+
+
+
+You are building the Financial Reports page for Wealthly, a personal finance tracking web app. The page currently shows two basic charts: an Expense Distribution donut chart and an Income vs Expenses bar chart. Expand this into a rich, interactive reporting dashboard.
+
+Tech Stack
+
+
+
+
+
+Frontend: React + Tailwind CSS + shadcn/ui
+
+
+
+Charts: Recharts (already used in the app)
+
+
+
+Backend/DB: Use whatever is already set up in this Replit project
+
+
+
+State: Existing app state/context
+
+Page Layout & Structure
+
+The page should have:
+
+
+
+
+
+Header Section
+
+
+
+
+
+Title: "Financial Reports" with subtitle
+
+
+
+Date range filter (This Month / Last 3 Months / Last 6 Months / This Year / Custom Range)
+
+
+
+Export button (PDF / CSV)
+
+
+
+Summary KPI Strip — 4 cards across the top:
+
+
+
+
+
+Total Income
+
+
+
+Total Expenses
+
+
+
+Net Savings
+
+
+
+Savings Rate (%)
+
+
+
+Each with a trend indicator (↑↓) vs previous period
+
+
+
+Row 1 — Core Charts (2 columns)
+
+
+
+
+
+Expense Distribution — Donut chart with a legend listing each category, its amount, and % share
+
+
+
+Income vs Expenses — Grouped bar chart by month (last 6 months), showing both bars side by side with a net savings line overlay
+
+
+
+Row 2 — Trend Analysis (full width)
+
+
+
+
+
+Cash Flow Over Time — Area chart showing monthly income, expenses, and cumulative savings over the selected period. Include a zero-line reference.
+
+
+
+Row 3 — Two columns
+
+
+
+
+
+Top Spending Categories — Horizontal bar chart ranked by spend, with budget limit markers if budgets exist
+
+
+
+Income Breakdown — Stacked bar or donut showing income by source (salary, freelance, investments, other)
+
+
+
+Row 4 — Two columns
+
+
+
+
+
+Monthly Budget vs Actual — For each budget category, show a progress bar with spent vs budget limit, color-coded (green < 80%, yellow 80–99%, red ≥ 100%)
+
+
+
+Savings Goals Progress — Card list of each goal with progress bar, target amount, current amount, and projected completion date
+
+
+
+Row 5 — Full width
+
+
+
+
+
+Transactions Table — Paginated table of all transactions in the period, sortable by date/amount/category, with a search/filter bar
+
+Data Requirements
+
+Pull real data from the existing data layer for:
+
+
+
+
+
+Transactions (date, amount, category, type: income/expense)
+
+
+
+Budgets (category, limit)
+
+
+
+Goals (name, target, current amount)
+
+
+
+Income sources
+
+If no data exists for a section, show a clean empty state with a helpful message (e.g., "Add your first transaction to see trends").
+
+Interactions & UX
+
+
+
+
+
+All charts update instantly when the date range filter changes
+
+
+
+Hovering chart elements shows a rich tooltip (value, %, change vs prior period)
+
+
+
+Clicking a donut segment or bar filters the transactions table below to that category
+
+
+
+The export button generates a report for the currently selected date range
+
+
+
+Charts animate on load and on filter change
+
+
+
+Mobile responsive — stack all columns to single column on small screens
+
+Visual Style
+
+Match the existing Wealthly design language:
+
+
+
+
+
+Primary blue: #2563EB
+
+
+
+Background: #F8FAFC (light gray-white)
+
+
+
+Cards: white with subtle shadow and rounded corners (rounded-2xl)
+
+
+
+Typography: existing font stack
+
+
+
+Keep the existing sidebar navigation unchanged
+
+
+
+Support the existing Dark Mode toggle
+
+Constraints
+
+
+
+
+
+Do not change the sidebar or top-level routing
+
+
+
+Reuse existing components (buttons, cards, modals) where they already exist in the project
+
+
+
+All chart colors should be consistent — use a defined palette: ['#2563EB', '#F97316', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444']
+
+
+
+Keep the existing "AI Reports" page separate — do not merge functionality
+
