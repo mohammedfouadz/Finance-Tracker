@@ -445,6 +445,53 @@ Debts: ${JSON.stringify(debts.map(d => ({ name: d.name, type: d.type, totalAmoun
     }
   });
 
+  // AI Chat endpoint — conversational assistant with full financial context
+  app.post("/api/ai/chat", isAuthenticated, async (req, res) => {
+    try {
+      const { message, history = [] } = req.body as { message: string; history: { role: string; content: string }[] };
+      const userId = getUserId(req);
+      const [transactions, goals, accounts, debts, investments, assets, categories] = await Promise.all([
+        storage.getTransactions(userId, { startDate: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString() }),
+        storage.getGoals(userId),
+        storage.getBankAccounts(userId),
+        storage.getDebts(userId),
+        storage.getInvestments(userId),
+        storage.getAssets(userId),
+        storage.getCategories(userId),
+      ]);
+      const now = new Date();
+      const systemPrompt = `You are Wealthly AI, a friendly and knowledgeable personal finance assistant. 
+Today is ${now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}.
+
+The user's financial snapshot:
+- Bank accounts: ${JSON.stringify(accounts)}
+- Investments: ${JSON.stringify(investments)}
+- Assets: ${JSON.stringify(assets)}
+- Debts: ${JSON.stringify(debts)}
+- Goals: ${JSON.stringify(goals)}
+- Recent transactions (90 days): ${JSON.stringify(transactions.slice(0, 50))}
+- Categories: ${JSON.stringify(categories)}
+
+Be conversational, warm, and specific. Use actual numbers from their data. Keep responses concise (2-4 sentences unless a detailed breakdown is asked for). If they ask for a calculation, show your work briefly.`;
+
+      const messages = [
+        { role: "system" as const, content: systemPrompt },
+        ...history.slice(-10).map((h: any) => ({ role: h.role as "user" | "assistant", content: h.content })),
+        { role: "user" as const, content: message },
+      ];
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4.1",
+        messages,
+        max_tokens: 500,
+      });
+      res.json({ reply: response.choices[0].message.content || "I couldn't process that. Try rephrasing your question." });
+    } catch (error) {
+      console.error("AI Chat Error:", error);
+      res.status(500).json({ reply: "I'm having trouble connecting right now. Please try again in a moment." });
+    }
+  });
+
   // AI Insights
   app.post(api.ai.insights.path, isAuthenticated, async (req, res) => {
     try {

@@ -1,0 +1,713 @@
+═══════════════════════════════════════════════════════════════════════════════
+PROJECT: Complete restructure and elevation of "Wealthly" — a comprehensive 
+wealth management web application with integrated AI financial intelligence.
+═══════════════════════════════════════════════════════════════════════════════
+
+You are tasked with transforming an existing financial management app from a 
+flat, disconnected collection of pages into a cohesive, intelligent, 
+premium-grade fintech product. The app must feel like a single unified 
+product where every page speaks the same visual language and every feature 
+connects to related features through live data.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 1 — GLOBAL DESIGN SYSTEM (apply to EVERY page, no exceptions)
+═══════════════════════════════════════════════════════════════════════════════
+
+COLOR PALETTE:
+- Primary Blue: #2563EB (active nav, primary CTAs, key accents)
+- Primary Blue Dark: #1D4ED8 (hover, pressed states)
+- Success Green: #10B981 (income, positive, safe, under budget)
+- Warning Amber: #F59E0B (approaching limits, caution)
+- Danger Red: #EF4444 (expenses, debts, over budget, alerts)
+- Accent Purple: #8B5CF6 (AI insights, secondary metrics)
+- Background Page: #F8FAFC (slate-50)
+- Background Card: #FFFFFF
+- Border Subtle: #E2E8F0 (slate-200)
+- Text Primary: #0F172A (slate-900)
+- Text Secondary: #64748B (slate-500)
+- Text Tertiary: #94A3B8 (slate-400)
+
+CATEGORY COLOR SYSTEM (use consistently across Budget, Expenses, Reports):
+- Housing: #EF4444 (red)
+- Food & Groceries: #F97316 (orange)
+- Transportation: #F59E0B (amber)
+- Utilities: #10B981 (emerald)
+- Healthcare: #14B8A6 (teal)
+- Savings: #8B5CF6 (purple)
+- Emergency Fund: #EC4899 (pink)
+- Entertainment: #F43F5E (rose)
+- Shopping: #D946EF (fuchsia)
+- Travel: #3B82F6 (blue)
+- Education: #6366F1 (indigo)
+- Personal: #A855F7 (purple)
+- Gold/Investments: #EAB308 (yellow)
+- Other: #64748B (slate)
+
+TYPOGRAPHY:
+- Font family: Inter (primary), with SF Pro / system fallback
+- H1: 30px / 700 weight
+- H2: 24px / 700
+- H3 / Section: 20px / 600
+- Card Title: 18px / 600
+- Body: 14-15px / 400-500
+- Labels: 12px / 500, uppercase, tracking-wide
+- Money: tabular-nums, weights 600-700
+- Dark mode: adjust text to slate-100/slate-300/slate-500
+
+COMPONENTS:
+- Cards: bg-white, rounded-2xl (16px), border border-slate-200, shadow-sm
+- Primary Button: bg-blue-600, text-white, rounded-xl, px-5 py-2.5, shadow-sm, 
+  hover:bg-blue-700
+- Secondary Button: outlined, border-slate-200, bg-white, text-slate-700
+- Ghost Button: no bg, text-slate-600, hover:bg-slate-100
+- Pills: rounded-full, px-3 py-1, soft tinted bg matching context
+- Icons: Lucide React, 1.5px stroke, 20px default size
+- Inputs: bg-white, border-slate-200, rounded-xl, focus:ring-2 focus:ring-blue-500
+
+LAYOUT:
+- Fixed left sidebar: 260px wide (collapsible to 72px icon-only)
+- Main content padding: 32-40px
+- Card gaps: 24px (gap-6)
+- Page max-width: responsive, no hard max
+
+MICRO-INTERACTIONS:
+- Card hover: translate-y-[-2px] transition-all duration-200 shadow-md
+- Number counters: animate count-up on mount
+- Progress bars: animate fill on mount
+- Charts: staggered fade-in
+- All transitions: 200ms ease-out default
+
+DARK MODE:
+- Background: #0F172A (slate-900)
+- Cards: #1E293B (slate-800)
+- Borders: #334155 (slate-700)
+- Must be supported throughout with a toggle in user profile menu
+
+RTL SUPPORT:
+- Full Arabic language support with layout mirroring
+- Toggle in user profile menu, not in sidebar
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 2 — RESTRUCTURED SIDEBAR (new information architecture)
+═══════════════════════════════════════════════════════════════════════════════
+
+Replace the current flat sidebar with a grouped, intelligent structure.
+Each group has a small uppercase label (text-xs, tracking-wider, text-slate-400).
+Groups are collapsible. Icons use category tinting (soft colored bg on hover/active).
+
+LOGO AREA (top)
+─────────────────────────────────────────────
+- Wealthly logo + name
+- Collapse toggle button
+
+GROUP 1 — OVERVIEW
+─────────────────────────────────────────────
+- 🏠 Home (renamed from Dashboard)
+- 📈 Net Worth                                    [NEW]
+
+GROUP 2 — MONEY FLOW
+─────────────────────────────────────────────
+- 💳 Transactions                                 [NEW — unified hub]
+    └─ Income (sub-route)
+    └─ Expenses (sub-route)
+- 🏦 Accounts (renamed from Bank Accounts)
+- 🔄 Recurring                                    [NEW]
+
+GROUP 3 — WEALTH
+─────────────────────────────────────────────
+- 📊 Investments
+- 🏢 Assets
+- 💳 Debts
+
+GROUP 4 — PLANNING
+─────────────────────────────────────────────
+- 🎯 Goals
+- 🥧 Budget
+- 🔮 Forecast                                     [NEW — optional phase 2]
+
+GROUP 5 — INSIGHTS & REPORTS
+─────────────────────────────────────────────
+- 📑 Reports (unified — see Part 3)
+
+GROUP 6 — OBLIGATIONS
+─────────────────────────────────────────────
+- 🕌 Zakat
+- 📋 Tax Center                                   [NEW]
+
+SIDEBAR FOOTER (bottom)
+─────────────────────────────────────────────
+- Quick action: [+ Add Transaction] primary button
+- User profile chip (avatar + name) → opens dropdown with:
+   - Profile settings
+   - Preferences (theme, language, currency)
+   - Dark mode toggle
+   - Language toggle (EN/AR)
+   - Sign out
+- If user is admin → "Admin" link appears subtly at bottom
+
+REMOVED FROM SIDEBAR:
+✗ AI Reports (intelligence distributed across pages + floating chat)
+✗ Dark Mode toggle (moved to profile menu)
+✗ Arabic toggle (moved to profile menu)
+✗ Admin Panel & Users (hidden unless user has admin role, then shown in footer)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 3 — AI DISTRIBUTION STRATEGY (critical architectural decision)
+═══════════════════════════════════════════════════════════════════════════════
+
+The old "AI Reports" standalone page is DELETED. AI intelligence is now 
+distributed in two complementary ways:
+
+A) CONTEXTUAL AI INSIGHTS (embedded in every relevant page)
+   Every major page has a "Smart Insights" section with sparkle icon (✨) 
+   and soft gradient background (blue→purple subtle). These appear where 
+   the data is, not in a separate location. Examples:
+   
+   • Home: "You're saving 23% more this month — on track for Q2 goals"
+   • Budget: "Entertainment exceeded 3 months in a row. Raise limit?"
+   • Expenses: "3 untagged subscriptions detected worth $67/mo"
+   • Debts: "Switch to Avalanche strategy to save $840 in interest"
+   • Investments: "Your portfolio is 78% tech — consider diversifying"
+   • Goals: "At current pace, Car goal finishes 2 months early ✨"
+   • Net Worth: "Your net worth grew 4.3% — above your 3.2% average"
+
+B) FLOATING AI CHAT (universal assistant)
+   A floating action button (bottom-right, 56px circle, blue-600 bg, 
+   sparkle icon, subtle glow) available on every page.
+   
+   Clicking opens a right-side drawer (480px wide on desktop, full-screen 
+   on mobile) containing:
+   
+   • Header: "Wealthly AI" + sparkle icon, close button, clear chat icon
+   • Welcome state: suggested prompts as chips
+     - "How much did I spend on food this month?"
+     - "Am I on track with my savings goals?"
+     - "What's my biggest expense category?"
+     - "Should I pay off debt or invest?"
+     - "Calculate my Zakat for this year"
+   • Chat history with user/AI messages
+   • AI responses can embed mini-charts, transaction lists, or action buttons
+     (e.g., "Apply this budget change")
+   • Input at bottom with mic icon for voice input
+   • Context-aware: when opened from Debts page, AI knows you're asking 
+     about debts
+   
+   This replaces the old AI Reports page entirely and is FAR more useful.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 4 — PAGE-BY-PAGE SPECIFICATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+▶ PAGE: HOME (Dashboard)
+─────────────────────────────────────────────
+Layout: existing structure preserved but refined.
+- Greeting header with time-aware message ("Good evening, [Name]")
+- 4 KPI cards: Total Wealth, Income This Month, Expenses This Month, Total Debt
+- Income vs Expenses bar chart (6M/1Y toggle)
+- Wealth Breakdown donut (Bank Accounts / Investments / Assets)
+- Recent Transactions table (last 5, with "View all →" to Transactions page)
+- Goals Progress widget (top 3 goals)
+- Smart Insights card with 2-3 AI-generated observations
+- Quick actions strip: [+ Add Income] [+ Add Expense] [+ Add Goal]
+- Budget health mini-widget if any category in warning/danger state
+
+▶ PAGE: NET WORTH (NEW)
+─────────────────────────────────────────────
+A dedicated page to track total wealth evolution.
+- Large hero: current net worth with month-over-month and year-over-year 
+  change percentages
+- Net Worth chart (area chart) over 1Y / 5Y / All Time, with the formula 
+  displayed: Assets + Investments + Bank Accounts − Debts
+- Breakdown cards showing each component with its own trend
+- "Biggest wins" list: top 5 drivers of net worth change this month
+- Projection line: "At current pace, net worth in 12 months: $X"
+- Milestones timeline: $10k, $50k, $100k, $500k, $1M markers
+- Smart Insights: personalized observations
+
+▶ PAGE: TRANSACTIONS (NEW UNIFIED HUB)
+─────────────────────────────────────────────
+Replaces separate Income and Expenses pages with one master view, with 
+sub-tabs at top:
+- Tabs: [All] [Income] [Expenses] [Transfers]
+- Shared filter bar: date range, account, category, search, sort
+- 4 KPI cards above: Total In, Total Out, Net, Transactions Count
+- Unified table with columns: Date, Description, Category, Account, Amount
+  (green for income, red for expenses, with appropriate sign)
+- Budget alert banner at top if any category is in warning/danger state 
+  (red flag icons on offending transactions)
+- Bulk actions: multi-select to categorize, delete, export
+- "Income" and "Expenses" become filtered views of this hub (sub-routes 
+  /transactions/income and /transactions/expenses)
+
+▶ PAGE: ACCOUNTS (renamed Bank Accounts)
+─────────────────────────────────────────────
+Premium bank-card aesthetic:
+- 4 KPI cards: Total Balance, Number of Accounts, Highest Balance, Monthly Change
+- Currency distribution banner (stacked bar showing currency split)
+- Account cards as premium bank cards with gradient headers by type:
+  Checking=blue, Savings=green, Credit=purple, Investment=amber
+- Each card shows: logo, masked account number with copy, balance with 
+  USD equivalent, 30-day sparkline, monthly in/out, action buttons
+- Support crypto wallets and cash accounts (not just banks)
+- Recent Activity section (unified transactions across all accounts)
+- Account Health sidebar with insights
+- "Add Account" modal: supports bank, credit, investment, crypto, cash
+
+▶ PAGE: RECURRING (NEW)
+─────────────────────────────────────────────
+Dedicated subscriptions and recurring payments tracker:
+- 3 KPI cards: Monthly Recurring, Annual Recurring, Potentially Unused
+- Calendar view showing upcoming charges in the month
+- Subscription cards grid: logo, name, amount, frequency, next charge, 
+  account, "Last used" indicator (for streaming services)
+- Categories: Streaming, Utilities, Memberships, Software, Insurance, Loans
+- Auto-detection: AI flags transactions that appear recurring but aren't 
+  tagged
+- Cost optimizer: "You could save $340/year by canceling unused subs"
+- Smart insights about subscription creep
+
+▶ PAGE: INVESTMENTS
+─────────────────────────────────────────────
+- 4 KPI cards: Total Value, Total Gain/Loss, YTD Return, Asset Allocation
+- Portfolio performance chart (1D, 1W, 1M, 3M, 1Y, ALL)
+- Holdings table with: symbol, name, shares, avg cost, current price, 
+  value, gain/loss $, gain/loss %, allocation %
+- Asset allocation donut (stocks / bonds / cash / crypto / other)
+- Sector breakdown bar chart
+- Top performers / worst performers mini-cards
+- Dividend calendar (if applicable)
+- Smart Insights about diversification and rebalancing
+
+▶ PAGE: ASSETS
+─────────────────────────────────────────────
+Clearly scoped to non-investment valuables:
+- Categories: Real Estate, Vehicles, Collectibles, Gold/Precious Metals, 
+  Valuables, Other
+- Asset cards with photo, name, category, current value, purchase price, 
+  appreciation/depreciation, ownership %, notes
+- Total assets value KPI with breakdown by category
+- Valuation history per asset (market updates)
+- "Add Asset" supports uploading photos and documents
+- Clear distinction from Investments: Assets = physical/tangible, 
+  Investments = financial instruments
+
+▶ PAGE: DEBTS
+─────────────────────────────────────────────
+Debt-crushing command center:
+- 4 KPI cards: Total Debt, Monthly Payment, Debt-Free Date, Interest Saved
+- Debt-Free Journey hero visualization
+- Payoff Strategy selector (Avalanche / Snowball / Custom)
+- Debt cards with: category, lender, original/remaining/paid split, 
+  thick progress bar, interest rate, monthly payment, next due, 
+  mini amortization chart, action buttons
+- Smart sidebar: Strategy card, Upcoming Payments, Extra Payment Calculator
+- Payment History timeline at bottom
+- Celebration modal when debt hits 0%
+
+▶ PAGE: GOALS
+─────────────────────────────────────────────
+- 4 KPI summary cards: Total Goals, Total Target, Total Saved, Avg Progress
+- Goal cards grid with: category icon, name, target date, circular progress 
+  ring, current/target amounts, linear progress bar, remaining amount, 
+  time remaining, contribution history expandable, action buttons
+- Filter: All / Active / Completed / Overdue
+- Completion celebration modal
+- Smart projections: "At current pace you'll finish 2 months early"
+- Connection to Budget: goals can be linked to savings categories
+
+▶ PAGE: BUDGET
+─────────────────────────────────────────────
+Active income-allocation center:
+- Income Allocation hero: donut + stats (income, budgeted, unallocated)
+- 4 KPI cards: Total Budgeted, Total Spent, Remaining, Categories at Risk
+- Overall Budget Health banner (on track / warning / danger)
+- Category rows with status-colored borders, thick progress bars with 
+  overflow rendering, inline editable limits, transaction counts
+- Monthly Spending Pace chart (expected vs actual pace lines)
+- Top Overspend Categories sidebar
+- Budget templates: 50/30/20, 70/20/10, Zero-based, Custom
+- Smart Insights about spending patterns
+
+▶ PAGE: REPORTS (unified hub — replaces Reports AND AI Reports)
+─────────────────────────────────────────────
+The single source of truth for all financial analysis. Tabbed interface:
+
+Tab 1 — Overview
+- Monthly/quarterly/annual summary
+- Key metrics evolution
+- Export as PDF
+
+Tab 2 — Cash Flow  
+- Sankey diagram of money flow (income sources → categories → savings/debt)
+- Monthly cash flow waterfall chart
+- Income vs expenses trends
+
+Tab 3 — Spending Analysis
+- Category breakdowns with time filters
+- Merchant analysis (top vendors by spend)
+- Spending heatmap (day of week × hour)
+- Location-based spending (if geo data available)
+
+Tab 4 — Net Worth History
+- Detailed net worth evolution with component breakdown
+- Year-over-year comparisons
+
+Tab 5 — Custom Reports
+- Drag-and-drop report builder
+- Save custom views
+- Schedule email reports (weekly/monthly)
+
+Tab 6 — Export Center
+- Download raw data as CSV/Excel
+- Generate PDF statements
+- Tax documents (links to Tax Center)
+
+Each tab has its own Smart Insights section at the top summarizing key 
+findings in that view.
+
+▶ PAGE: FORECAST (NEW — phase 2, can be placeholder)
+─────────────────────────────────────────────
+- AI-powered financial projections
+- "Where will I be in 6/12/24 months?"
+- Scenario modeling: "What if I save $200 more/month?"
+- Retirement projection calculator
+- Large purchase planner
+
+▶ PAGE: ZAKAT
+─────────────────────────────────────────────
+Enhanced with full Islamic finance intelligence:
+- Current Zakat year status (Hawl tracking)
+- Nisab threshold with live gold/silver prices
+- Zakatable assets calculator:
+  - Cash & bank balances
+  - Gold & silver holdings
+  - Investment portfolios (stocks, mutual funds)
+  - Business inventory
+  - Receivables
+  - Minus: debts and liabilities
+- Zakat due amount (2.5% calculated)
+- Payment tracking and history
+- Zakat recipient categories (8 asnaf) with suggested allocations
+- Educational tooltips explaining rulings
+- Export Zakat certificate for records
+- Reminder system for Hawl completion
+
+▶ PAGE: TAX CENTER (NEW)
+─────────────────────────────────────────────
+- Tax year selector
+- Taxable income summary (from Income page)
+- Deductible expenses tracker
+- Quarterly estimates (for freelancers/businesses)
+- Document vault: W-2s, 1099s, receipts, etc. (upload and organize)
+- Tax category tagging on transactions
+- Deadline reminders
+- Export tax-ready reports for accountants
+- Region-aware: adapts to user's country tax rules (US, UK, EU, Saudi, UAE)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 5 — ADMIN PANEL (complete redesign)
+═══════════════════════════════════════════════════════════════════════════════
+
+The Admin Panel is only visible to users with admin role. It's a separate 
+experience accessed via /admin route with its own layout (different sidebar 
+styling to visually distinguish from user app — darker theme, red/amber 
+accent instead of blue to signal "admin context").
+
+ADMIN SIDEBAR STRUCTURE:
+- 📊 Admin Dashboard
+- 👥 Users Management
+- 💰 Financial Overview (platform-wide)
+- 📈 Analytics
+- 🎛️ Feature Flags
+- 🛡️ Security & Audit
+- 💬 Support Tickets
+- 📧 Communications
+- ⚙️ System Settings
+- [← Back to App] link at bottom
+
+▶ ADMIN DASHBOARD
+─────────────────────────────────────────────
+- 6 KPI cards:
+  - Total Users (with growth %)
+  - Active Users Today / This Week / This Month
+  - New Signups (today/week/month)
+  - Total Transactions Processed
+  - Platform AUM (Assets Under Management, sum of all user wealth)
+  - Revenue (if SaaS model) or Active Subscriptions
+- User growth chart (line)
+- Activity heatmap (hourly user activity by day of week)
+- Top features used (bar chart)
+- Recent signups table
+- System health indicators (API status, DB status, uptime)
+- Active incidents/alerts banner at top if any
+
+▶ USERS MANAGEMENT
+─────────────────────────────────────────────
+- Powerful users table with: avatar, name, email, signup date, plan, 
+  status (active/suspended/deleted), last login, total wealth tracked, 
+  country, actions menu
+- Advanced filters: plan, status, country, signup date range, activity level
+- Bulk actions: message, export, suspend, delete
+- Per-user drawer showing:
+  - Full profile
+  - Login history
+  - Devices
+  - Financial summary (respecting privacy — aggregate only, never raw data)
+  - Support history
+  - Notes (internal)
+  - Actions: reset password, impersonate (with audit log), suspend, delete
+- "Add user" functionality
+- Export users to CSV
+
+▶ FINANCIAL OVERVIEW (platform-wide)
+─────────────────────────────────────────────
+- Aggregate anonymized insights across user base
+- Total platform wealth tracked
+- Geographic distribution map
+- Currency distribution
+- Most-used categories
+- Average user net worth by tier
+- Churn indicators
+
+▶ ANALYTICS
+─────────────────────────────────────────────
+- User behavior analytics: session duration, page views, feature adoption
+- Funnel analysis: signup → first transaction → first budget → retention
+- Cohort retention table
+- Feature usage heatmap
+- A/B test results (if integrated)
+
+▶ FEATURE FLAGS
+─────────────────────────────────────────────
+- Toggle features on/off per user, plan, or globally
+- Gradual rollout percentages
+- AI features toggles
+- Beta features management
+
+▶ SECURITY & AUDIT
+─────────────────────────────────────────────
+- Audit log: every admin action tracked
+- Failed login attempts
+- Suspicious activity flags
+- 2FA adoption rate
+- Session management
+- Permission management (role-based access control)
+
+▶ SUPPORT TICKETS
+─────────────────────────────────────────────
+- Ticket queue with priority, status, assigned admin
+- Ticket detail view with conversation thread
+- Canned responses
+- Escalation workflows
+- SLA tracking
+
+▶ COMMUNICATIONS
+─────────────────────────────────────────────
+- Send announcements to users (in-app, email, push)
+- Segment audiences
+- Email templates
+- Broadcast history
+- Engagement metrics
+
+▶ SYSTEM SETTINGS
+─────────────────────────────────────────────
+- Branding & theming
+- Supported currencies & exchange rate sources
+- Supported languages
+- Integration keys (Plaid, Stripe, AI providers)
+- Backup & restore
+- Maintenance mode toggle
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 6 — GLOBAL UX ENHANCEMENTS
+═══════════════════════════════════════════════════════════════════════════════
+
+COMMAND PALETTE (⌘K / Ctrl+K):
+Global search opens a Linear-style command palette with:
+- Quick navigation to any page
+- Quick actions (+ Add Transaction, + Add Goal, etc.)
+- Search across transactions, accounts, goals
+- Ask AI shortcut
+
+NOTIFICATIONS CENTER:
+Bell icon in top-right of every page, badge for unread count.
+- Budget alerts
+- Goal milestones
+- Recurring charge reminders
+- Security events
+- AI insights worth attention
+
+QUICK ADD:
+Floating "+" button (bottom-right, near AI chat) that expands to:
+- + Transaction
+- + Income
+- + Expense
+- + Goal
+- + Debt payment
+
+SMART ONBOARDING:
+First-time users see a guided flow:
+1. Welcome + profile setup
+2. Connect first account (or add manually)
+3. Set first budget (or use template)
+4. Set first goal
+5. Meet the AI assistant
+Tooltips appear contextually on feature discovery.
+
+KEYBOARD SHORTCUTS:
+- ⌘K: Command palette
+- ⌘/: Shortcuts help
+- G then H: Go to Home
+- G then T: Go to Transactions
+- N then T: New transaction
+- N then G: New goal
+- /: Focus search
+- ?: Show help
+
+RESPONSIVE DESIGN:
+- Desktop @ 1440px: full layout as designed
+- Tablet @ 768px: sidebar collapses to icons, cards restack
+- Mobile @ 375px: bottom nav bar (5 items: Home, Transactions, Budget, 
+  Goals, Menu), drawer for secondary nav, cards full-width, simplified 
+  charts
+
+ACCESSIBILITY:
+- WCAG AA compliance minimum
+- Full keyboard navigation
+- Screen reader friendly labels
+- Focus indicators visible
+- Reduced motion preference respected
+- Color is never the only indicator of state
+
+PRIVACY FEATURES:
+- Global balance hide toggle (eye icon in header) — masks all money values 
+  as "••••••" for shoulder-surfing protection
+- Auto-lock after inactivity (configurable)
+- Biometric unlock (mobile/PWA)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 7 — TECHNICAL STACK RECOMMENDATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+FRONTEND:
+- React 18 + TypeScript
+- Vite for build
+- Tailwind CSS for styling
+- shadcn/ui for base components
+- Lucide React for icons
+- Recharts or visx for charts
+- Framer Motion for animations
+- React Router for routing
+- TanStack Query for data fetching
+- Zustand or Jotai for state management
+
+BACKEND:
+- Node.js + Express OR Next.js API routes
+- PostgreSQL for primary data
+- Prisma ORM
+- Redis for caching/sessions
+- Plaid for bank integrations (optional)
+- OpenAI/Anthropic API for AI features
+
+AUTH:
+- NextAuth or Clerk
+- Support email/password, Google, Apple
+- 2FA via TOTP
+- Role-based access (user, admin, super-admin)
+
+DEPLOYMENT:
+- Ship on Replit initially
+- Environment variables for API keys
+- CI/CD with auto-deploy on main branch
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 8 — DELIVERY PRIORITIES (phased execution)
+═══════════════════════════════════════════════════════════════════════════════
+
+PHASE 1 — Foundation (ship first):
+1. Global design system tokens and components
+2. New sidebar structure with grouped navigation
+3. Home (Dashboard) refined
+4. Transactions unified hub
+5. Accounts redesigned
+6. Profile menu (dark mode, language, settings moved here)
+7. Floating AI Chat stub
+
+PHASE 2 — Core Features:
+1. Budget redesign with live expense integration
+2. Expenses page with budget alerts
+3. Goals redesign
+4. Debts redesign
+5. Net Worth new page
+6. AI Chat functional with OpenAI/Anthropic integration
+7. Contextual Smart Insights on all pages
+
+PHASE 3 — Depth:
+1. Investments redesign
+2. Assets redesign
+3. Recurring new page
+4. Reports unified hub with tabs
+5. Zakat enhanced
+6. Tax Center new
+
+PHASE 4 — Admin & Polish:
+1. Full Admin Panel redesign
+2. Command palette (⌘K)
+3. Notifications center
+4. Keyboard shortcuts
+5. Onboarding flow
+6. Mobile optimization
+7. Accessibility audit
+8. Performance optimization
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL EXECUTION RULES
+═══════════════════════════════════════════════════════════════════════════════
+
+1. EVERY page must use the same sidebar, same cards, same typography, same 
+   colors. Zero visual inconsistency between pages.
+
+2. Data must flow between pages in real-time:
+   - Adding an expense updates Budget, Reports, Net Worth instantly
+   - Adding income updates Budget "available to allocate"
+   - Paying a debt updates Net Worth and Debts simultaneously
+   - Editing a category renames it everywhere
+
+3. Empty states are opportunities, not dead ends. Every empty state has 
+   a friendly illustration, a clear explanation, and a primary CTA.
+
+4. Loading states use skeleton screens, not spinners.
+
+5. Error states are helpful and actionable, never blame the user.
+
+6. Every money value uses tabular-nums for perfect alignment.
+
+7. Every page must have:
+   - A Smart Insights section where relevant
+   - Access to the floating AI chat
+   - Consistent filter/search/export affordances
+   - Proper empty/loading/error states
+
+8. Admin features are completely isolated from user features — different 
+   route, different theme accent, different mental model.
+
+9. The app must feel like one product, not a collection of pages. Every 
+   interaction should feel like it belongs to a family of interactions.
+
+10. Reference aesthetic: Linear (clean, confident) × Copilot (intelligent) 
+    × Apple (warm, humane) × Monzo (colorful, approachable). Avoid 
+    spreadsheet-app aesthetics (Mint old), avoid overly corporate feel 
+    (Quicken), avoid childish gamification (some budget apps).
+
+═══════════════════════════════════════════════════════════════════════════════
+FINAL NOTE
+═══════════════════════════════════════════════════════════════════════════════
+
+Wealthly is not just an expense tracker — it's a financial intelligence 
+platform that helps users build wealth with clarity, confidence, and 
+cultural relevance (Zakat, Arabic support). Every design decision should 
+reinforce this positioning. Generic fintech UI is unacceptable. Each page 
+must feel intentional, each feature must feel researched, each interaction 
+must feel considered.
+
+Build it right, build it beautiful, build it connected.

@@ -1,0 +1,285 @@
+Redesign the "Expenses" page for a wealth management web app called 
+"Wealthly". The current page is mostly empty states and flat KPI cards with 
+zero visual storytelling. Transform it into a powerful spending intelligence 
+hub that integrates deeply with the Budget page — showing live budget alerts, 
+category spending velocity, and actionable insights — while matching the 
+existing dashboard's design system exactly.
+
+═══════════════════════════════════════════════════════════
+CORE INTEGRATION WITH BUDGET PAGE (CRITICAL)
+═══════════════════════════════════════════════════════════
+
+The Expenses page is the CONSUMPTION side of the Budget equation:
+
+1. Every expense entry is auto-categorized and counted against the Budget 
+   page's category limits
+2. Budget alerts appear prominently on this page:
+   - Sticky banner at top if any category is at WARNING (75-95%) or 
+     DANGER (≥95%) state
+   - Red flag icon next to individual transactions that pushed a category 
+     over its budget
+   - Category filter pills show real-time budget status with colored dots
+3. "Budget vs Actual" section is the page's hero, not an afterthought
+4. Sidebar "Expenses" nav item shows notification badge with count of 
+   categories in warning/danger state
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (must match existing Wealthly dashboard)
+═══════════════════════════════════════════════════════════
+
+Colors:
+- Primary blue: #2563EB (active nav, primary CTAs)
+- Success green: #10B981 (under budget, income remaining)
+- Warning amber: #F59E0B (approaching budget limit)
+- Danger red: #EF4444 (over budget, total expenses, alerts)
+- Accent purple: #8B5CF6 (insights, secondary metrics)
+- Category colors (consistent with Budget page):
+  Housing=red, Food=orange, Transportation=amber, Utilities=green,
+  Healthcare=teal, Entertainment=red-pink, Shopping=pink, Travel=blue,
+  Education=indigo, Personal=purple, Other=slate
+- Background: #F8FAFC (page), #FFFFFF (cards)
+- Borders: #E2E8F0 (1px subtle)
+- Text: #0F172A (primary), #64748B (secondary), #94A3B8 (tertiary)
+
+Typography:
+- Inter / SF Pro, sans-serif
+- H1 page title: 30px / bold 700
+- Section titles: 20px / semibold 600
+- Money values: tabular-nums, 28-32px KPIs, bold
+- Transaction amounts: tabular-nums, bold
+
+Components:
+- Cards: white, rounded-2xl (16px), shadow-sm, 1px slate-200 border
+- Fixed left sidebar 260px — "Expenses" active (solid blue, white text)
+- Main content padding: 32-40px
+- Icons: Lucide outline style, 1.5 stroke
+
+═══════════════════════════════════════════════════════════
+PAGE STRUCTURE — top to bottom
+═══════════════════════════════════════════════════════════
+
+1) BUDGET ALERT BANNER (conditional, sticky top — THE KEY INTEGRATION)
+   Appears when any category is in warning/danger state:
+   
+   Red-tinted gradient card (#FEF2F2 → #FEE2E2) with red-200 border:
+   • Left: alert icon (pulsing animation) + bold text
+     "🚨 2 budget alerts active this month"
+   • Middle: horizontal scroll of warned categories as chips:
+     [🔴 Entertainment · $36 over] [🟡 Food · 97% used] [🟡 Utilities · 95%]
+   • Right: [Review Budget →] button + dismiss × (collapses for session)
+   
+   When no alerts: shows green success banner (collapsed/subtle):
+   "✅ All categories within budget · keep it up!"
+
+2) HEADER ROW
+   • Left: "Expenses" title (30px bold) + subtitle 
+     "Track spending, monitor budgets, find patterns."
+   • Right cluster:
+     - Month dropdown: "April ▾" 
+     - Year dropdown: "2026 ▾"
+     - Search icon button (expands to search bar)
+     - Export button (outlined, download icon + "Export")
+     - Primary "+ Add Expense" button (blue, rounded-xl, shadow-sm)
+
+3) KPI STATS ROW — 4 cards (upgrade from 3)
+   
+   Card 1 — Monthly Income
+   • Soft green bg, wallet icon green
+   • Value: $3,794.18
+   • Caption: "Pulled from Income page"
+   
+   Card 2 — Total Spent
+   • Soft red bg, trending-down icon red
+   • Value: $1,710.67
+   • Caption: "45% of income · ↗ 12% vs last month"
+   • Tiny inline sparkline showing daily spending trend
+   
+   Card 3 — Remaining
+   • Soft blue bg, calculator icon blue
+   • Value: $2,083.51
+   • Caption: "$208/day available · 10 days left"
+   
+   Card 4 — Budget Health (NEW — replaces flat "Remaining")
+   • Soft amber bg (or green if all safe), shield icon
+   • Value: "2 Alerts" (or "All Clear" if none)
+   • Caption: "9 safe · 2 warning · 1 over"
+   • "View details ↓" scroll link
+
+4) BUDGET VS ACTUAL — MAJOR REDESIGN (hero section)
+   
+   Wide card with "Budget vs Actual (April 2026)" title + right-side 
+   toggle: Bars / Progress rings / Donut
+   
+   DEFAULT VIEW — horizontal progress bars per category:
+   
+   Each row (one per budgeted category):
+   • Left: colored category icon (40x40) + name
+   • Progress bar (thick, 16px height, rounded-full):
+     - Fill color by status: green / amber / red
+     - If over 100%: overflow rendered in darker red past the 100% mark
+     - Subtle 100% marker line on the bar
+   • Right end of bar: amount labels stacked
+     "$387 / $400" (spent / limit)
+     "97%" below in status color
+   • Right actions: three-dot menu (Edit limit · Filter transactions)
+   
+   Sort controls top-right: "Most used · Over budget first · Alphabetical"
+   
+   Include 10 realistic category rows:
+   1. Housing · $1,200 / $1,200 · 100% 🟡
+   2. Food & Groceries · $387 / $400 · 97% 🟡
+   3. Transportation · $145 / $200 · 72% 🟢
+   4. Utilities · $142 / $150 · 95% 🟡
+   5. Entertainment · $156 / $120 · 130% 🔴 OVER
+   6. Healthcare · $35 / $100 · 35% 🟢
+   7. Shopping · $89 / $150 · 59% 🟢
+   8. Personal · $42 / $80 · 53% 🟢
+   9. Education · $20 / $50 · 40% 🟢
+   10. Other · $18 / unset · ⚪ (ghost row, "Set a limit →")
+   
+   Below bars — summary strip:
+   "Total: $2,234 spent of $2,500 budgeted · 89% utilized · $266 remaining"
+
+5) SPENDING VISUALIZATION — 2-column section
+   
+   LEFT CARD (2/3 width) — "Daily Spending Trend"
+   • Combo chart:
+     - Bars: daily spending amounts for the month
+     - Line overlay: cumulative spending vs cumulative budget line
+     - Colored differently above/below budget line
+   • Hover tooltip shows date + amount + transactions count
+   • Annotation markers for large transactions (e.g., "Rent paid $1,200")
+   • Toggle chips: Daily / Weekly / Compare to last month
+   
+   RIGHT CARD (1/3 width) — "Category Breakdown"
+   • Interactive donut chart with center label showing total spent
+   • Hover segment → segment highlights + center updates to show that 
+     category amount + percentage
+   • Below donut: top 3 categories with bars
+     "Housing · $1,200 (54%)"
+     "Food · $387 (17%)"
+     "Entertainment · $156 (7%)"
+   • "View all →" link
+
+6) EXPENSE ENTRIES — transformed from empty state to full-featured table
+   
+   Section header:
+   • Title "Expense Entries (47 transactions)"
+   • Filter bar below title — horizontal scroll of category pills:
+     [All · 47] [🔴Housing · 2] [🟠Food · 18] [🟡Trans · 8] [🟣Shop · 6] ...
+     Each pill shows colored dot + category + count
+     Active pill has solid fill of category color
+   • Right cluster:
+     - Search input "Search transactions..."
+     - Date range picker "This month ▾"
+     - Sort dropdown: "Date · Amount · Category"
+     - View toggle: Table / Cards / Timeline
+   
+   TABLE VIEW (default) — clean, rich, scannable:
+   
+   Sticky header row, slate-50 bg, uppercase 12px labels:
+   Columns: Date · Description · Category · Account · Amount · Actions
+   
+   Each transaction row (56px tall, hover highlights slate-50):
+   • Date: "Apr 18" — bold if today
+   • Description: 
+     - Merchant name (bold slate-900, 15px)
+     - Sub-line: "Groceries · Whole Foods #812" in slate-500 12px
+     - 🚩 Red flag icon INLINE before name IF this transaction pushed the 
+       category over budget (critical budget integration)
+   • Category: colored rounded-full pill with dot (matches category color)
+   • Account: bank name + last 4 (e.g., "Chase ••8938" with tiny card icon)
+   • Amount: bold red "-$87.50" right-aligned, tabular-nums
+   • Actions (appear on hover): edit pencil · duplicate · delete (red)
+   
+   Visual markers on rows:
+   • Recurring transactions: small 🔄 icon next to amount
+   • Large transactions (>$200): subtle amber left-border accent
+   • Budget-breaking transactions: subtle red left-border accent
+   
+   Include ~15 sample rows with variety:
+   - Apr 18 · Whole Foods · Food · -$87.50
+   - Apr 17 · Netflix · Entertainment · -$15.99 🔄
+   - Apr 15 · Shell Gas · Transportation · -$52.30
+   - Apr 12 · Amazon · Shopping · -$124.99
+   - Apr 10 · Restaurant · Food · -$68.00 🚩 (pushed over)
+   - Apr 5 · Rent · Housing · -$1,200.00 (large transaction accent)
+   - Apr 3 · Electricity · Utilities · -$89.40
+   - Apr 1 · Spotify · Entertainment · -$9.99 🔄
+   ... etc
+   
+   Table footer:
+   • Left: "Showing 1-15 of 47"
+   • Right: pagination + page size selector
+   
+   CARDS VIEW (alternative) — for mobile-first aesthetic:
+   Grid of small cards, 3 per row, each with category color accent bar 
+   on left, amount large, merchant name, date.
+   
+   TIMELINE VIEW (alternative) — grouped by date:
+   Each day has a header with total "Apr 18 · $165.40 · 3 transactions"
+   Followed by indented transaction rows.
+
+7) SMART INSIGHTS FOOTER (NEW)
+   Soft gradient card (blue→purple) with AI sparkle icon.
+   
+   Three insight chips horizontally:
+   
+   📊 "You spent 40% more on Entertainment this month than your 6-month 
+       average. Top culprit: Streaming subscriptions."
+       [Review subscriptions →]
+   
+   💡 "3 recurring charges detected totaling $67/month that you haven't 
+       tagged as subscriptions."
+       [Tag them →]
+   
+   ⚡ "Tuesdays are your biggest spending days ($340 avg). 
+       Plan ahead to avoid impulse purchases."
+       [Learn more →]
+
+═══════════════════════════════════════════════════════════
+INTERACTIONS & MICRO-POLISH
+═══════════════════════════════════════════════════════════
+- Sticky alert banner only for warnings/dangers, subtle success state 
+  can be collapsed by default
+- Clicking a category pill filters transactions AND updates the budget 
+  vs actual section to highlight only that row
+- Clicking a budget bar scrolls to & filters transactions for that category
+- Red flag hover tooltip: "This transaction pushed Entertainment over 
+  budget by $36"
+- Over-budget categories have subtle pulse animation on their bars
+- Inline quick-add: press "+" key anywhere → add expense modal opens
+- Bulk actions: multi-select rows → categorize, delete, export selection
+- Smart autocomplete in Add Expense modal: remembers merchants, 
+  auto-suggests category based on merchant name
+- Receipt upload: drag & drop image → OCR extracts amount/merchant/date
+- Daily spending chart annotations draw in on scroll into view
+- Empty states: friendly illustrations, not just grey text
+- RTL support for Arabic
+
+═══════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════
+Provide:
+1. Desktop view @ 1440px — light mode (primary), showing realistic data 
+   with mix of safe/warning/danger budget states and active alert banner
+2. Desktop view @ 1440px — dark mode (slate-900 bg, slate-800 cards)
+3. Mobile view @ 375px — stacked, budget alerts prominent, category pills 
+   horizontal scroll, transactions as cards
+4. "Add Expense" modal — form with: amount, date (defaults today), 
+   category picker (with icons), merchant/description (autocomplete), 
+   account dropdown, recurring toggle, notes textarea, receipt upload 
+   (drag/drop zone), tags/labels, split transaction toggle
+5. Transaction detail drawer — slide-in from right showing: full receipt 
+   image, all metadata, category change dropdown, edit history, 
+   "similar transactions" section, delete button
+6. Over-budget notification toast — appears when user adds expense that 
+   pushes category over: "⚠️ This expense pushes Entertainment $36 over 
+   budget" with [View Budget] [Undo] [Dismiss]
+
+The page must feel like a vigilant financial assistant that keeps you 
+informed without shaming. Every overspend is context, not judgment. The 
+connection to Budget must be tangible everywhere — alerts, flags, 
+progress bars, pills. Maintain perfect visual consistency with the 
+Wealthly dashboard: same sidebar, same card language, same typography, 
+same spacing DNA. Think Mint meets Copilot meets Linear.

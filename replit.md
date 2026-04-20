@@ -4,7 +4,10 @@
 
 Wealthly is a comprehensive web-based personal financial management platform that helps users track income, manage expenses, set budgets, define savings goals, track investments, manage debts, monitor bank accounts and assets, and get AI-powered financial coaching. The app follows a monorepo structure with a React frontend, Express backend, and PostgreSQL database. Authentication is handled via Replit Auth (OpenID Connect).
 
-Key features:
+Key features (Phase 1 complete):
+- **Grouped Sidebar Navigation** — 6 organized groups (Overview, Money Flow, Wealth, Planning, Insights, Obligations) with profile dropdown replacing inline dark-mode/language toggles
+- **Floating AI Chat** — GPT-powered conversational assistant accessible on every page (bottom-right button), with full financial context, suggested prompts, and chat history
+- **Net Worth page** (`/net-worth`) — Real-time net worth calculation (banks+investments+assets−debts), area chart, component breakdown, milestone tracker ($10k→$1M), smart insights
 - **Multi-Currency Support** — Per-entry currency selection (USD, EUR, OMR, ILS, SAR), exchange rate to USD stored at entry time, all totals and analytics displayed in USD. Scalable architecture via `shared/currency.ts` module and reusable `CurrencyFields` component
 - **Income & Expense Tracking** — Log transactions with categories, tags, currency, and optional receipts
 - **Budget Allocation** — Automated budget distribution based on customizable percentage/fixed-amount rules (inspired by 50/30/20 rule)
