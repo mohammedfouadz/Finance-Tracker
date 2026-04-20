@@ -1,0 +1,197 @@
+Redesign the "Bank Accounts" page for a wealth management web app called 
+"Wealthly". The current page shows basic account cards but lacks visual 
+hierarchy, multi-currency intelligence, account activity context, and modern 
+bank-card aesthetics. Elevate it into a premium fintech experience while 
+matching the existing dashboard's design system exactly.
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (must match existing Wealthly dashboard)
+═══════════════════════════════════════════════════════════
+
+Colors:
+- Primary blue: #2563EB (active nav, primary CTAs, checking accounts)
+- Success green: #10B981 (savings accounts, positive balances, totals)
+- Accent purple: #8B5CF6 (investment/credit accounts, secondary accent)
+- Warning amber: #F59E0B (highest balance highlight, alerts)
+- Danger red: #EF4444 (delete actions, low balance warnings)
+- Background: #F8FAFC (page), #FFFFFF (cards)
+- Borders: #E2E8F0 (1px subtle)
+- Text: #0F172A (primary), #64748B (secondary), #94A3B8 (tertiary)
+
+Typography:
+- Inter / SF Pro, sans-serif
+- H1 page title: 30px / bold 700
+- Card bank name: 20px / bold 700
+- Money values: tabular-nums, 28-32px for KPIs, bold
+- Account number (masked): monospace 14px, tracking-wider
+- Labels: 12px uppercase tracking-wide for stat labels
+
+Components:
+- Cards: white, rounded-2xl (16px), shadow-sm, 1px slate-200 border
+- Fixed left sidebar 260px (identical to dashboard) — "Bank Accounts" item 
+  active (solid blue bg, white text, rounded-lg)
+- Main content padding: 32-40px
+- Icons: Lucide outline style, 1.5 stroke
+
+═══════════════════════════════════════════════════════════
+PAGE STRUCTURE — top to bottom
+═══════════════════════════════════════════════════════════
+
+1) HEADER ROW
+   • Left: "Bank Accounts" title (30px bold) + subtitle "Manage your bank 
+     accounts and balances across currencies."
+   • Right cluster:
+     - Currency display toggle: "Show in: USD ▾" (converts all values to 
+       selected currency)
+     - View toggle: Grid / List icons (segmented)
+     - Primary "+ Add Account" button (blue, white text, rounded-xl, shadow-sm)
+
+2) KPI STATS ROW — 4 cards (upgrade from 3)
+   Each card: soft tinted background, icon in rounded-xl square top-right, 
+   uppercase label, large bold value, descriptive caption below.
+   
+   Card 1 — Total Balance
+   • Soft green bg (#ECFDF5), wallet icon green
+   • Value: $21,500.00 USD
+   • Caption: "Across 2 accounts · 2 currencies"
+   • Tiny trend: ↗ +3.2% this month
+   
+   Card 2 — Number of Accounts
+   • Soft blue bg (#EFF6FF), hash icon blue
+   • Value: 2
+   • Caption: "1 Checking · 1 Savings"
+   
+   Card 3 — Highest Balance
+   • Soft amber bg (#FFFBEB), trending-up icon amber
+   • Value: $20,000.00
+   • Caption: "BOP · Savings"
+   
+   Card 4 — Monthly Change (NEW)
+   • Soft purple bg (#F5F3FF), activity icon purple
+   • Value: +$670.00
+   • Caption: "Net inflow this month"
+   • Mini sparkline showing 30-day balance trend
+
+3) CURRENCY DISTRIBUTION BANNER (NEW)
+   Slim horizontal card with segmented progress bar showing currency split:
+   • Visual: full-width horizontal stacked bar
+     - USD segment (blue) — 93% · $20,000
+     - ILS segment (green) — 7% · $1,500 (≈ $400 USD)
+   • Below: small legend chips with flag emojis + percentages
+   • Right side: "Exchange rates updated 2h ago 🔄" with refresh icon
+
+4) ACCOUNTS GRID — the centerpiece, reimagined as premium bank cards
+   
+   Grid: 3 columns on desktop (xl), 2 on tablet, 1 on mobile, gap-6
+   
+   Each AccountCard — styled like a modern bank card with depth:
+   • Size: taller than current (~320px), rounded-2xl
+   • TOP SECTION — colored gradient header (80px tall) based on account type:
+     - Checking: blue gradient (#2563EB → #3B82F6)
+     - Savings: green gradient (#10B981 → #34D399)
+     - Credit: purple gradient (#8B5CF6 → #A78BFA)
+     - Investment: amber gradient (#F59E0B → #FBBF24)
+   • Inside gradient header:
+     - Left: bank logo in white rounded-xl container (48x48)
+     - Right: small white pill showing account type ("Checking" / "Savings")
+     - Top-right corner: three-dot menu icon (white, subtle)
+   
+   • MAIN BODY (white bg):
+     - Bank name (bold 20px) + nickname in slate-500 italic below 
+       (e.g., "AIB — Main Checking")
+     - Masked account number in monospace with copy-icon button 
+       (e.g., "•••• •••• •••• 8938  📋")
+     - Large balance value (28px bold, tabular-nums) with currency code in 
+       smaller slate-500 next to it: "$1,500.00 ILS"
+     - USD equivalent below in slate-400: "≈ $400.50 USD"
+     
+     - Mini 30-day sparkline chart (80px tall) showing balance trend — 
+       colored to match account type
+     
+     - Meta row — 2 columns grid:
+       · Last Updated: "Feb 22, 2026"
+       · Last Activity: "2 hours ago"
+       · Monthly Inflow: green "+$2,000"
+       · Monthly Outflow: red "-$1,330"
+   
+   • FOOTER ROW (3 actions):
+     - "View Transactions" (outlined button, flex-1)
+     - Edit (icon button, pencil)
+     - Delete (icon button, red trash, muted until hover)
+   
+   Include 4 sample account cards (add 2 new ones for variety):
+   1. AIB — Checking · ****8938 · $1,500 ILS (existing)
+   2. BOP — Savings · ****4234 · $20,000 USD (existing)
+   3. Chase — Credit Card · ****1122 · -$1,240 USD (purple, negative balance 
+      shown in red)
+   4. Emirates NBD — Investment · ****7766 · $15,800 AED (amber gradient)
+   
+   Plus a "+ Add Account" ghost card at the end — dashed border, centered 
+   plus icon, same dimensions, matches the visual rhythm.
+
+5) RECENT ACTIVITY SECTION (NEW) — below the grid, 2-column layout
+   
+   LEFT CARD (2/3 width) — "Recent Transactions Across All Accounts"
+   Compact table with columns:
+   - Date · Description · Account (colored dot + short name) · Type pill 
+     (In/Out) · Amount (green/red)
+   Show 6-8 recent entries with variety.
+   Footer: "View all transactions →" link in blue
+   
+   RIGHT CARD (1/3 width) — "Account Health" (NEW)
+   Small insight card listing flags:
+   • ✅ All accounts synced
+   • 💡 BOP Savings: You could earn $180/year more in a 4.5% APY account
+   • ⚠️ AIB: No activity for 14 days
+   • 🔐 All accounts secured with 2FA
+   Each item has icon, one-line text, and optional "Learn more →" link.
+
+6) CONNECTED INSTITUTIONS ROW (NEW, optional) — at bottom
+   "Connected Banks" horizontal scroll showing bank logos with sync status 
+   dots (green=synced, amber=syncing, red=error) and "+ Connect new bank" 
+   at the end.
+
+═══════════════════════════════════════════════════════════
+INTERACTIONS & MICRO-POLISH
+═══════════════════════════════════════════════════════════
+- Card hover: translate-y -4px, shadow-lg transition (stronger lift than 
+  dashboard cards since these feel like physical bank cards)
+- Account number masking: click copy icon → toast "Copied ****8938"
+- Balance privacy toggle: eye icon in header to mask all balances as "••••••" 
+  for shoulder-surfing protection
+- Sparklines animate draw-in on load
+- Currency conversion: when user changes global currency toggle, all values 
+  smoothly animate to new values
+- Empty state: if no accounts — large friendly illustration + "Connect your 
+  first bank account" CTA
+- Negative balance (credit card): balance shown in red with warning icon
+- Low balance alert: if balance < threshold, small amber "Low balance" pill 
+  appears on card
+- RTL support: layout flips cleanly for Arabic
+
+═══════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════
+Provide:
+1. Desktop view @ 1440px — light mode (primary)
+2. Desktop view @ 1440px — dark mode (slate-900 bg, slate-800 cards, 
+   gradient headers glow slightly brighter)
+3. Mobile view @ 375px — stacked layout, cards full-width, KPIs in 
+   horizontal scroll
+4. "Add Account" modal — centered modal with form fields:
+   - Bank name (with autocomplete dropdown of popular banks)
+   - Account nickname
+   - Account type (segmented: Checking / Savings / Credit / Investment)
+   - Currency dropdown (with flags)
+   - Account number (masked input)
+   - Starting balance
+   - Color theme picker (4 preset gradients)
+   - Enable sync toggle
+   - Cancel / Save buttons
+5. Account detail modal/drawer — when user clicks a card, show full 
+   transaction history, balance chart (6M/1Y toggle), statements download
+
+The page must feel like a premium fintech product — Revolut meets Monzo meets 
+Linear. Bank cards should feel tactile and desirable, not like database rows. 
+Maintain perfect visual consistency with the Wealthly dashboard sidebar, 
+card language, typography, and spacing DNA.
