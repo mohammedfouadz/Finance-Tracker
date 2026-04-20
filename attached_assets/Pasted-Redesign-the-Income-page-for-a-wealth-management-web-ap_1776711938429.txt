@@ -1,0 +1,161 @@
+Redesign the "Income" page for a wealth management web app called "Wealthly". 
+The current page is functional but flat — tables feel sparse, stat cards lack 
+hierarchy, and there's no visualization. Elevate it to match the polished 
+dashboard aesthetic while keeping the same design system.
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (must match existing Wealthly dashboard)
+═══════════════════════════════════════════════════════════
+
+Colors:
+- Primary blue: #2563EB (active nav, primary CTA, key totals)
+- Success green: #10B981 (positive income, amount values, salary badges)
+- Accent purple: #8B5CF6 (monthly average, secondary metrics)
+- Soft blue tint: #EFF6FF (info cards backgrounds)
+- Background: #F8FAFC (page), #FFFFFF (cards)
+- Borders: #E2E8F0 (1px subtle)
+- Text: #0F172A (primary), #64748B (secondary), #94A3B8 (tertiary)
+- Danger red: #EF4444 (delete icons)
+
+Typography:
+- Inter / SF Pro, sans-serif
+- H1 page title: 30px / bold 700
+- Card titles: 18-20px / semibold 600
+- Money values: tabular-nums, 28-32px for KPIs, bold
+- Table body: 14px / medium
+- Labels: 12px uppercase tracking-wide for stat card labels
+
+Components:
+- Cards: white, rounded-2xl (16px), shadow-sm, 1px slate-200 border
+- Fixed left sidebar 260px (identical to dashboard) — "Income" item active 
+  (solid blue bg, white text, rounded-lg)
+- Main content padding: 32-40px
+- Icons: Lucide outline style, 1.5 stroke
+
+═══════════════════════════════════════════════════════════
+PAGE STRUCTURE — top to bottom
+═══════════════════════════════════════════════════════════
+
+1) HEADER ROW
+   • Left: "Income" title (30px bold) + subtitle "Track and manage your income 
+     sources."
+   • Right cluster (aligned right):
+     - Year selector dropdown (2026 ▾) — rounded-xl, outlined, white bg
+     - Category filter multi-select ("All categories ▾")
+     - Export button (outlined, download icon + "Export")
+     - Primary "+ Add Income" button (blue, white text, rounded-xl, shadow-sm)
+
+2) KPI STATS ROW — 4 cards (upgrade from 3)
+   Each card: soft tinted background matching accent color, icon in rounded-xl 
+   square top-right, uppercase label, large bold value, tiny trend pill below.
+   
+   Card 1 — Total Income (2026)
+   • Soft green bg (#ECFDF5), dollar icon green
+   • Value: $10,361.00
+   • Trend pill: ↗ +12.4% vs 2025
+   
+   Card 2 — This Month
+   • Soft blue bg (#EFF6FF), calendar-dollar icon blue
+   • Value: $0.00
+   • Trend pill: ↘ Below avg by $863
+   
+   Card 3 — Monthly Average
+   • Soft purple bg (#F5F3FF), bar-chart icon purple
+   • Value: $863.42
+   • Caption: "Based on 12 months"
+   
+   Card 4 — Top Source (NEW)
+   • Soft amber bg (#FFFBEB), star icon amber
+   • Value: "WalaPlus Salary"
+   • Caption: "$5,407 · 52% of total"
+
+3) INCOME TRENDS SECTION — 2-column layout
+   
+   LEFT CARD (2/3 width) — "Monthly Income Overview (2026)"
+   • Replace the plain table with an interactive bar chart + mini table hybrid
+   • Bar chart: 12 months on x-axis, income on y-axis, bars in emerald green 
+     with soft gradient, hover shows tooltip with exact amount and entries count
+   • Above chart: toggle chips "Chart · Table" to switch views
+   • Below chart: tiny summary row — "Highest: Feb · $5,407" · "Lowest: Mar · 
+     $2,000" · "Total: $10,361"
+   
+   RIGHT CARD (1/3 width) — "Income by Category" (NEW)
+   • Donut chart showing breakdown:
+     - Salary (blue) — 68%
+     - Freelance (green) — 19%
+     - Investments (purple) — 8%
+     - Other (gray) — 5%
+   • Legend below with amounts and percentages
+   • Center of donut: "$10,361" total
+
+4) SMART INSIGHTS BANNER (NEW, optional row)
+   Thin horizontal card with soft gradient background (blue → purple, very 
+   subtle), sparkle icon, AI-style insight text:
+   "💡 Your freelance income grew 40% this quarter. Consider logging it as a 
+   recurring source to forecast better." 
+   With "Dismiss" × and "Learn more →" links on the right.
+
+5) INCOME ENTRIES TABLE — major polish
+   
+   Header row above table:
+   • Left: "Income Entries" title + count badge "(24 entries)"
+   • Right: search input with icon "Search entries…", category filter pills 
+     (All · Salary · Freelance · Investments · Other), sort dropdown
+   
+   Table styling:
+   • Sticky header row with slate-50 bg, uppercase 12px labels, sort arrows
+   • Row hover: slate-50 bg, subtle highlight
+   • Zebra striping OFF (cleaner look)
+   • Row height: 56px, comfortable padding
+   
+   Columns:
+   - Date (e.g., "Mar 7, 2026") — slate-700
+   - Description — bold slate-900 + tiny source/account below in slate-500 
+     (e.g., "Wala" with "via Chase Checking" beneath)
+   - Category — colored pill (Salary=green, Freelance=blue, Investment=purple, 
+     Other=gray), rounded-full, soft bg with matching text color
+   - Amount — bold green, right-aligned, tabular-nums (e.g., "+$2,000.00")
+   - USD Value — slate-500, right-aligned
+   - Actions — icon trio on hover: edit (pencil), duplicate, delete (red 
+     trash) — muted by default, colored on hover
+   
+   Include 8-10 realistic sample rows with variety across categories.
+   
+   Table footer:
+   • Left: "Showing 1–10 of 24" with page size selector
+   • Right: pagination (← 1 2 3 →)
+
+6) RECURRING INCOME CARD (NEW, at bottom or right-aligned)
+   Small card listing expected recurring income:
+   • "Upcoming Recurring Income"
+   • List with icon, name, next date, amount:
+     - 🔄 WalaPlus Salary · Apr 27 · $1,985
+     - 🔄 Galaxy Way · Apr 27 · $1,818
+   • "Manage recurring →" link at bottom
+
+═══════════════════════════════════════════════════════════
+INTERACTIONS & MICRO-POLISH
+═══════════════════════════════════════════════════════════
+- Card hover: translate-y -2px, shadow-md transition
+- Number counters animate on page load (count up from 0)
+- Category pills use consistent color system across all pages
+- Empty state for "This Month $0": show encouraging message "No income logged 
+  this month yet. + Add your first entry"
+- Table rows subtly animate in (stagger fade) on load
+- All money values tabular-nums for alignment
+- RTL support: layout flips cleanly for Arabic (العربية toggle in sidebar)
+
+═══════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════
+Provide:
+1. Desktop view @ 1440px — light mode
+2. Desktop view @ 1440px — dark mode (slate-900 bg, slate-800 cards)
+3. Mobile view @ 375px — stacked layout, KPIs scroll horizontally, table 
+   converts to card list
+4. "Add Income" modal mockup — centered modal with form fields: amount, 
+   currency, category dropdown, date picker, description, source account, 
+   recurring toggle, notes textarea, Cancel / Save buttons
+
+The page must feel like a native sibling of the Wealthly dashboard — same 
+sidebar, same card language, same typography rhythm, same spacing DNA.
