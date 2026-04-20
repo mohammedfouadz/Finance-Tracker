@@ -508,8 +508,7 @@ function ZakatJourney({ snapshots }: { snapshots: any[] }) {
             const paid = s.hawlMet && s.nisabMet;
             return (
               <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 group" data-testid={`snapshot-row-${s.id}`}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: paid ? "#ECFDF5" : "#F1F5F9" }}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${paid ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-slate-100 dark:bg-slate-700"}`}>
                   {paid ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Clock className="w-4 h-4 text-gray-400" />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -564,7 +563,7 @@ function DeleteSnapshotBtn({ id }: { id: number }) {
   });
   return (
     <button onClick={() => del.mutate(id)}
-      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all ml-1"
+      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all ml-1"
       data-testid={`button-delete-snapshot-${id}`}>
       <Trash2 className="w-3.5 h-3.5" />
     </button>

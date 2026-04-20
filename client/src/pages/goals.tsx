@@ -456,7 +456,7 @@ function SummaryStrip({ goals }: { goals: any[] }) {
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map(({ label, val, fmt, color, bg, Icon }, i) => (
         <Card key={i} className="border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
-          <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}CC, transparent)` }}>
+          <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}22, transparent)` }}>
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{label}</p>
               <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}22` }}>

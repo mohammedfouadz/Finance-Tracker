@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -174,21 +175,21 @@ export default function ExpensesPage() {
 
         {/* ── BUDGET ALERT BANNER ── */}
         {!alertDismissed && atRisk > 0 && (
-          <div className="rounded-2xl p-4 flex items-center justify-between border bg-red-50 border-red-200 dark:border-red-900/30">
+          <div className="rounded-2xl p-4 flex items-center justify-between border bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30">
             <div className="flex items-center gap-3 min-w-0">
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <div className="min-w-0">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   🚨 {atRisk} budget alert{atRisk > 1 ? "s" : ""} active
                 </p>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   {dangerCats.slice(0, 3).map(d => (
-                    <span key={d.cat.id} className="text-[11px] px-2 py-0.5 bg-red-100 text-red-700 rounded-full font-medium">
+                    <span key={d.cat.id} className="text-[11px] px-2 py-0.5 bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 rounded-full font-medium">
                       🔴 {d.cat.name} {d.spent > d.limit ? `·$${(d.spent - d.limit).toFixed(0)} over` : `·${d.pct.toFixed(0)}% used`}
                     </span>
                   ))}
                   {warnCats.slice(0, 2).map(d => (
-                    <span key={d.cat.id} className="text-[11px] px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full font-medium">
+                    <span key={d.cat.id} className="text-[11px] px-2 py-0.5 bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 rounded-full font-medium">
                       🟡 {d.cat.name} ·{d.pct.toFixed(0)}% used
                     </span>
                   ))}
@@ -271,7 +272,7 @@ export default function ExpensesPage() {
                           <span>Spent {formatAmount(spent)}</span>
                           {limit > 0 && <span>Limit {formatAmount(limit)}</span>}
                         </div>
-                        <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#F1F5F9" }}>
+                        <div className="h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
                           {limit > 0 ? (
                             <div className="h-full rounded-full transition-all duration-700" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
                           ) : (
@@ -375,14 +376,14 @@ export default function ExpensesPage() {
               {/* category filter pills */}
               <div className="flex gap-1.5 flex-wrap">
                 <button onClick={() => setCatFilter("all")}
-                  className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                  style={catFilter === "all" ? { backgroundColor: BRAND, color: "#fff" } : { backgroundColor: "#F1F5F9", color: "#64748B" }}>
+                  className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium transition-all", catFilter !== "all" && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}
+                  style={catFilter === "all" ? { backgroundColor: BRAND, color: "#fff" } : {}}>
                   All ({expenseTx.length})
                 </button>
                 {catData.filter(d => d.txCount > 0).slice(0, 5).map(d => (
                   <button key={d.cat.id} onClick={() => setCatFilter(catFilter === d.cat.id ? "all" : d.cat.id)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium transition-all"
-                    style={catFilter === d.cat.id ? { backgroundColor: d.cat.color || BRAND, color: "#fff" } : { backgroundColor: "#F1F5F9", color: "#64748B" }}>
+                    className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium transition-all", catFilter !== d.cat.id && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}
+                    style={catFilter === d.cat.id ? { backgroundColor: d.cat.color || BRAND, color: "#fff" } : {}}>
                     {d.cat.name} ({d.txCount})
                   </button>
                 ))}
@@ -455,26 +456,26 @@ export default function ExpensesPage() {
 
         {/* ── SMART INSIGHTS ── */}
         <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-5" style={{ background: "linear-gradient(135deg, #F5F3FF, #EEF4FF)" }}>
+          <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
-              <h3 className="font-semibold text-gray-900 text-base">Smart Insights</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {dangerCats.length > 0 ? (
                 <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                  <p className="font-semibold text-gray-700 mb-1">📊 Over-budget alert</p>
+                  <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📊 Over-budget alert</p>
                   <p className="text-gray-500">{dangerCats[0].cat.name} exceeded budget by {formatAmount(dangerCats[0].spent - dangerCats[0].limit)}. Consider adjusting your limit or reducing spending.</p>
                   <a href="/budget" className="mt-2 font-semibold text-blue-600 flex items-center gap-0.5">Review <ChevronRight className="w-3 h-3" /></a>
                 </div>
               ) : (
                 <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                  <p className="font-semibold text-gray-700 mb-1">✅ On budget</p>
+                  <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">✅ On budget</p>
                   <p className="text-gray-500">All categories are within their limits this month. Great financial discipline!</p>
                 </div>
               )}
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">💡 Spending pace</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">💡 Spending pace</p>
                 <p className="text-gray-500">
                   {totalExpenses > 0 && daysLeft > 0
                     ? `At ${formatAmount(totalExpenses / Math.max(1, dayOfMonth))}/day, you'll spend ${formatAmount((totalExpenses / Math.max(1, dayOfMonth)) * daysInMonth)} by month end.`
@@ -482,7 +483,7 @@ export default function ExpensesPage() {
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">⚡ Top category</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">⚡ Top category</p>
                 <p className="text-gray-500">
                   {donutData.length > 0
                     ? `${donutData[0].name} is your biggest spend at ${formatAmount(donutData[0].value)} (${totalExpenses > 0 ? ((donutData[0].value / totalExpenses) * 100).toFixed(0) : 0}% of total).`

@@ -42,9 +42,9 @@ function getStatus(spent: number, limit: number): BudgetStatus {
 }
 
 const STATUS_STYLE = {
-  safe:    { bar: MINT,   border: "#E2E8F0",  bg: "transparent",  label: "On Track",         pill: "bg-emerald-50 text-emerald-700" },
-  warning: { bar: AMBER,  border: "#FCD34D",  bg: "#FFFBEB80",    label: "Approaching Limit", pill: "bg-amber-50 text-amber-700" },
-  danger:  { bar: DANGER, border: "#FCA5A5",  bg: "#FEF2F280",    label: "Over Budget",       pill: "bg-red-50 text-red-600" },
+  safe:    { bar: MINT,   border: "#E2E8F0",  darkBorder: "#1E3A2F", bg: "transparent",  rowClass: "",                                                    label: "On Track",         pill: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" },
+  warning: { bar: AMBER,  border: "#FCD34D",  darkBorder: "#7C5A00", bg: "#FFFBEB80",    rowClass: "bg-amber-50/50 dark:bg-amber-950/20",                  label: "Approaching Limit", pill: "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" },
+  danger:  { bar: DANGER, border: "#FCA5A5",  darkBorder: "#7C1F1F", bg: "#FEF2F280",    rowClass: "bg-red-50/50 dark:bg-red-950/20",                      label: "Over Budget",       pill: "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400" },
 };
 
 /* ── KPI card ── */
@@ -54,7 +54,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, extra }: {
 }) {
   return (
     <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}88, transparent)` }}>
+      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}44, transparent)` }}>
         <div className="flex items-start justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</p>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}22` }}>
@@ -85,8 +85,8 @@ function BudgetRow({
 
   return (
     <div
-      className="rounded-xl p-4 border transition-all hover:-translate-y-px hover:shadow-sm"
-      style={{ borderColor: ss.border, backgroundColor: ss.bg }}
+      className={`rounded-xl p-4 border transition-all hover:-translate-y-px hover:shadow-sm ${ss.rowClass}`}
+      style={{ borderColor: ss.border }}
       data-testid={`budget-row-${category.id}`}>
       <div className="flex items-center gap-4">
 
@@ -111,7 +111,7 @@ function BudgetRow({
             <span className="text-gray-500">Spent <strong className="text-gray-700 dark:text-gray-300">{formatAmount(spent)}</strong></span>
             <span className="text-gray-500">Limit <strong className="text-gray-700 dark:text-gray-300">{limit > 0 ? formatAmount(limit) : "—"}</strong></span>
           </div>
-          <div className="h-3.5 rounded-full overflow-hidden" style={{ backgroundColor: "#F1F5F9" }}>
+          <div className="h-3.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
             {limit > 0 && (
               <div
                 className="h-full rounded-full transition-all duration-700"
@@ -353,13 +353,13 @@ export default function BudgetPage() {
           </div>
           {/* month navigator */}
           <div className="flex items-center gap-2">
-            <button onClick={prevMonth} className="w-8 h-8 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 transition-colors" data-testid="button-prev-month">
+            <button onClick={prevMonth} className="w-8 h-8 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" data-testid="button-prev-month">
               <ChevronLeft className="w-4 h-4 text-gray-500" />
             </button>
             <span className="font-semibold text-sm text-gray-900 dark:text-white min-w-[130px] text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-xl" data-testid="text-month-year">
               {MONTH_NAMES[month - 1]} {year}
             </span>
-            <button onClick={nextMonth} className="w-8 h-8 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 transition-colors" data-testid="button-next-month">
+            <button onClick={nextMonth} className="w-8 h-8 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" data-testid="button-next-month">
               <ChevronRight className="w-4 h-4 text-gray-500" />
             </button>
           </div>
@@ -367,7 +367,7 @@ export default function BudgetPage() {
 
         {/* ── INCOME ALLOCATION HERO ── */}
         <Card className="border border-blue-100 dark:border-blue-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-6" style={{ background: "linear-gradient(135deg, #EEF4FF 0%, #F5F3FF 100%)" }}>
+          <CardContent className="p-6 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
             <div className="flex flex-col lg:flex-row gap-6">
               {/* left section */}
               <div className="flex-1">
@@ -493,9 +493,9 @@ export default function BudgetPage() {
         {/* ── HEALTH BANNER ── */}
         {!dismissHealth && totalBudgeted > 0 && (
           <div className={`rounded-2xl p-4 flex items-center justify-between border ${
-            dangerCats.length > 0 ? "bg-red-50 border-red-200 dark:border-red-900/30" :
-            warningCats.length > 0 ? "bg-amber-50 border-amber-200 dark:border-amber-900/30" :
-            "bg-emerald-50 border-emerald-100 dark:border-emerald-900/30"
+            dangerCats.length > 0 ? "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-900/30" :
+            warningCats.length > 0 ? "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/30" :
+            "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30"
           }`}>
             <div className="flex items-center gap-3">
               {dangerCats.length > 0
@@ -528,7 +528,7 @@ export default function BudgetPage() {
           <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-gray-900 dark:text-white text-base">Category Budgets</h2>
-              <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+              <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
                 {expCats.length} categories{atRisk > 0 ? ` · ${atRisk} need attention` : ""}
               </span>
             </div>
@@ -636,7 +636,7 @@ export default function BudgetPage() {
                             {pct.toFixed(0)}%
                           </span>
                         </div>
-                        <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: "#F1F5F9" }}>
+                        <div className="h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
                           <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: barColor }} />
                         </div>
                         {spent > limit && limit > 0 && (
@@ -656,10 +656,10 @@ export default function BudgetPage() {
         {/* ── SMART INSIGHTS ── */}
         {categoryData.some(d => d.spent > 0 || d.limit > 0) && (
           <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-            <CardContent className="p-5" style={{ background: "linear-gradient(135deg, #F5F3FF, #EEF4FF)" }}>
+            <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
               <div className="flex items-center gap-2 mb-4">
                 <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
-                <h3 className="font-semibold text-gray-900 text-base">Smart Insights</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* underspend insight */}

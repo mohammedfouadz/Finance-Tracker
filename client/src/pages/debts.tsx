@@ -59,7 +59,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, trend, trendUp }: {
 }) {
   return (
     <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl hover:-translate-y-0.5 hover:shadow-md transition-all duration-200">
-      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}88, transparent)` }}>
+      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}22, transparent)` }}>
         <div className="flex items-start justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400">{label}</p>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${color}22` }}>
@@ -116,14 +116,14 @@ function JourneyBar({ debts }: { debts: any[] }) {
           </div>
 
           {/* track */}
-          <div className="relative h-4 rounded-full overflow-hidden" style={{ backgroundColor: "#F1F5F9" }}>
+          <div className="relative h-4 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
             <div
               className="h-full rounded-full transition-all duration-700 ease-out"
               style={{ width: `${Math.max(pct, 1)}%`, background: `linear-gradient(90deg, ${BRAND}, ${MINT})` }}
             />
             {/* current position dot */}
             <div
-              className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white border-2 shadow-md flex items-center justify-center text-[8px] font-bold"
+              className="absolute top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white dark:bg-gray-200 border-2 shadow-md flex items-center justify-center text-[8px] font-bold"
               style={{ left: `calc(${Math.max(pct, 3)}% - 10px)`, borderColor: BRAND, color: BRAND }}>
               ●
             </div>
@@ -243,7 +243,7 @@ function DebtCard({
           </div>
           <div className="flex items-center gap-1.5">
             {/* status pill */}
-            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaid ? "bg-emerald-50 text-emerald-700" : isOverdue ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-700"}`}
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaid ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : isOverdue ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"}`}
               data-testid={`badge-status-${debt.id}`}>
               {isPaid ? "Paid ✅" : isOverdue ? "Overdue ⚠" : "Active"}
             </span>
@@ -297,7 +297,7 @@ function DebtCard({
               {pct.toFixed(1)}% paid off
             </span>
           </div>
-          <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: "#F1F5F9" }}>
+          <div className="h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
             <div
               className="h-full rounded-full transition-all duration-700"
               style={{ width: `${Math.max(pct, 0.5)}%`, background: pct >= 75 ? `linear-gradient(90deg, ${BRAND}, ${MINT})` : `linear-gradient(90deg, ${BRAND}, ${AMBER})` }}
@@ -774,7 +774,7 @@ export default function DebtsPage() {
         {allDebts.length === 0 ? (
           <Card className="border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
             <CardContent className="p-16 flex flex-col items-center gap-4 text-center">
-              <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#F0FDF9" }}>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-emerald-50 dark:bg-emerald-950/30">
                 <CheckCircle className="w-8 h-8" style={{ color: MINT }} />
               </div>
               <div>
@@ -826,7 +826,7 @@ export default function DebtsPage() {
 
               {/* payoff strategy card */}
               <Card className="border border-blue-100 dark:border-blue-900/30 rounded-2xl overflow-hidden">
-                <CardContent className="p-4" style={{ background: "linear-gradient(135deg, #EEF4FF, #F5F3FF)" }}>
+                <CardContent className="p-4 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
                   <div className="flex items-center gap-2 mb-2">
                     <Flame className="w-4 h-4 text-orange-500" />
                     <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">Payoff Strategy</span>
@@ -930,10 +930,10 @@ export default function DebtsPage() {
 
               {/* AI debt coach teaser */}
               <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-                <CardContent className="p-4" style={{ background: "linear-gradient(135deg, #F5F3FF, #EEF4FF)" }}>
+                <CardContent className="p-4 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
-                    <span className="font-semibold text-sm text-gray-900">AI Debt Coach</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white">AI Debt Coach</span>
                   </div>
                   <p className="text-xs text-gray-500 mb-3">
                     {avgRate > 0

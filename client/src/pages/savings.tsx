@@ -139,7 +139,7 @@ export default function SavingsPage() {
                 <p className="text-sm font-medium text-[#666] dark:text-gray-400 mb-2">This Month</p>
                 <h3 className="text-2xl font-bold text-[#1a1a1a] dark:text-white" data-testid="text-monthly-savings">{formatAmount(totalMonthlySavings)}</h3>
               </div>
-              <div className="p-4 rounded-xl bg-blue-50"><PiggyBank className="w-6 h-6 text-blue-600" /></div>
+              <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/30"><PiggyBank className="w-6 h-6 text-blue-600" /></div>
             </div>
           </CardContent>
         </Card>
@@ -150,7 +150,7 @@ export default function SavingsPage() {
                 <p className="text-sm font-medium text-[#666] dark:text-gray-400 mb-2">% of Income</p>
                 <h3 className="text-2xl font-bold text-[#1a1a1a] dark:text-white">{savingsPct.toFixed(1)}%</h3>
               </div>
-              <div className="p-4 rounded-xl bg-green-50"><PiggyBank className="w-6 h-6 text-green-600" /></div>
+              <div className="p-4 rounded-xl bg-green-50 dark:bg-green-950/30"><PiggyBank className="w-6 h-6 text-green-600" /></div>
             </div>
           </CardContent>
         </Card>
@@ -161,7 +161,7 @@ export default function SavingsPage() {
                 <p className="text-sm font-medium text-[#666] dark:text-gray-400 mb-2">All-Time Savings</p>
                 <h3 className="text-2xl font-bold text-[#1a1a1a] dark:text-white">{formatAmount(totalAllTimeSavings)}</h3>
               </div>
-              <div className="p-4 rounded-xl bg-purple-50"><Building2 className="w-6 h-6 text-purple-600" /></div>
+              <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-950/30"><Building2 className="w-6 h-6 text-purple-600" /></div>
             </div>
           </CardContent>
         </Card>
@@ -236,7 +236,7 @@ export default function SavingsPage() {
                         <td className="py-3 px-4 font-medium">{t.description}</td>
                         <td className="py-3 px-4 text-right font-bold text-blue-600">{formatAmount(Number(t.amount))}</td>
                         <td className="py-3 px-4 text-center">
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
                             onClick={() => deleteTransaction.mutateAsync(t.id).then(() => toast({ title: "Deleted" }))}
                             data-testid={`button-delete-${t.id}`}>
                             <Trash2 className="w-4 h-4" />

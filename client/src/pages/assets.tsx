@@ -92,7 +92,7 @@ function AssetCard({ asset, onEdit, onDelete, formatAmount }: {
       {/* hero image / gradient placeholder */}
       <div className="relative h-36 flex items-end p-3" style={{ background: GRADIENT_PLACEHOLDERS[asset.type] || GRADIENT_PLACEHOLDERS["Other"] }}>
         <div className="absolute top-3 left-3">
-          <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-white/80 backdrop-blur-sm text-gray-700 flex items-center gap-1">
+          <span className="text-[11px] font-bold px-2 py-1 rounded-full bg-white/80 dark:bg-gray-800/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 flex items-center gap-1">
             <Icon className="w-3 h-3" style={{ color: typeConf.color }} /> {asset.type}
           </span>
         </div>
@@ -317,7 +317,7 @@ export default function AssetsPage() {
         {filteredAssets.length === 0 ? (
           <Card className="border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
             <CardContent className="p-16 flex flex-col items-center gap-4 text-center">
-              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{ backgroundColor: "#EEF4FF" }}>
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-blue-50 dark:bg-blue-950/30">
                 <Building2 className="w-7 h-7" style={{ color: BRAND }} />
               </div>
               <div>
@@ -407,7 +407,7 @@ export default function AssetsPage() {
                             {a.monthlyIncome ? formatAmount(Number(a.monthlyIncome)) : "—"}
                           </td>
                           <td className="py-3 px-3">
-                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${a.status === "Owned" ? "bg-emerald-50 text-emerald-700" : a.status === "Rented" ? "bg-amber-50 text-amber-700" : "bg-gray-100 text-gray-500"}`}>
+                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${a.status === "Owned" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : a.status === "Rented" ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" : "bg-gray-100 text-gray-500"}`}>
                               {a.status}
                             </span>
                           </td>
@@ -423,11 +423,11 @@ export default function AssetsPage() {
 
         {/* smart insights */}
         <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-5" style={{ background: "linear-gradient(135deg, #F5F3FF, #EEF4FF)" }}>
-            <div className="flex items-center gap-2 mb-4"><Sparkles className="w-4 h-4" style={{ color: PURPLE }} /><h3 className="font-semibold text-gray-900 text-base">Smart Insights</h3></div>
+          <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
+            <div className="flex items-center gap-2 mb-4"><Sparkles className="w-4 h-4" style={{ color: PURPLE }} /><h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">🏠 Portfolio overview</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">🏠 Portfolio overview</p>
                 <p className="text-gray-500">
                   {allAssets.length === 0
                     ? "No assets tracked yet. Add your properties, vehicles, and valuables."
@@ -435,7 +435,7 @@ export default function AssetsPage() {
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">💡 Income opportunity</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">💡 Income opportunity</p>
                 <p className="text-gray-500">
                   {totalMonthlyIncome > 0
                     ? `Generating ${formatAmount(totalMonthlyIncome)}/month in asset income — that's ${formatAmount(totalMonthlyIncome * 12)}/year.`
@@ -443,7 +443,7 @@ export default function AssetsPage() {
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">📋 Valuation tip</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📋 Valuation tip</p>
                 <p className="text-gray-500">
                   {allAssets.length > 0
                     ? "Update your asset valuations regularly for accurate net worth tracking. Real estate values change year over year."

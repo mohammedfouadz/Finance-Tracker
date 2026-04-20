@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { cn } from "@/lib/utils";
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +50,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, trend }: {
 }) {
   return (
     <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}88, transparent)` }}>
+      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}22, transparent)` }}>
         <div className="flex items-start justify-between mb-3">
           <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</p>
           <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}22` }}>
@@ -59,7 +60,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, trend }: {
         <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{value}</p>
         {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
         {trend && (
-          <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${trend.up ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+          <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${trend.up ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
             {trend.up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
             {trend.label}
           </div>
@@ -229,7 +230,7 @@ export default function InvestmentsPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-base">Portfolio Performance</h3>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${totalGainLoss >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${totalGainLoss >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
                   {totalGainLoss >= 0 ? "+" : ""}{gainLossPct.toFixed(1)}%
                 </span>
               </div>
@@ -295,7 +296,7 @@ export default function InvestmentsPage() {
                     <span className="text-xs text-gray-400 ml-1">/ 100</span>
                   </div>
                 </div>
-                <div className="h-2 rounded-full overflow-hidden mb-3" style={{ backgroundColor: "#F1F5F9" }}>
+                <div className="h-2 rounded-full overflow-hidden mb-3 bg-slate-100 dark:bg-slate-700">
                   <div className="h-full rounded-full transition-all duration-700" style={{ width: `${divScore}%`, backgroundColor: divScore >= 70 ? MINT : divScore >= 40 ? AMBER : DANGER }} />
                 </div>
                 <div className="space-y-1 text-xs text-gray-500">
@@ -339,8 +340,8 @@ export default function InvestmentsPage() {
               <div className="flex gap-1.5">
                 {(["all","active","sold"] as const).map(f => (
                   <button key={f} onClick={() => setStatusFilter(f)}
-                    className="px-2.5 py-1 rounded-full text-[11px] font-medium capitalize transition-all"
-                    style={statusFilter === f ? { backgroundColor: BRAND, color: "#fff" } : { backgroundColor: "#F1F5F9", color: "#64748B" }}>
+                    className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium capitalize transition-all", statusFilter !== f && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}
+                    style={statusFilter === f ? { backgroundColor: BRAND, color: "#fff" } : {}}>
                     {f}
                   </button>
                 ))}
@@ -376,7 +377,7 @@ export default function InvestmentsPage() {
                         <tr key={inv.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 group transition-colors" data-testid={`row-investment-${inv.id}`}>
                           <td className="py-3 px-3 font-semibold text-gray-900 dark:text-white text-sm" data-testid={`text-name-${inv.id}`}>{inv.name}</td>
                           <td className="py-3 px-3">
-                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: typeInfo ? `${typeInfo.color}22` : "#F1F5F9", color: typeInfo?.color || "#64748B" }} data-testid={`badge-type-${inv.id}`}>
+                            <span className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full", !typeInfo && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")} style={typeInfo ? { backgroundColor: `${typeInfo.color}22`, color: typeInfo.color } : {}} data-testid={`badge-type-${inv.id}`}>
                               {inv.type}
                             </span>
                           </td>
@@ -385,7 +386,7 @@ export default function InvestmentsPage() {
                           <td className="py-3 px-3 text-right font-bold tabular-nums text-gray-900 dark:text-white">{formatAmount(curUsd)}</td>
                           <td className="py-3 px-3 text-right font-bold tabular-nums" style={{ color: gl >= 0 ? MINT : DANGER }}>{gl >= 0 ? "+" : ""}{formatAmount(gl)}</td>
                           <td className="py-3 px-3 text-right">
-                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${glPct >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>{glPct >= 0 ? "+" : ""}{glPct.toFixed(1)}%</span>
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${glPct >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>{glPct >= 0 ? "+" : ""}{glPct.toFixed(1)}%</span>
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1.5">
@@ -396,7 +397,7 @@ export default function InvestmentsPage() {
                             </div>
                           </td>
                           <td className="py-3 px-3">
-                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${inv.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-500"}`}>{inv.status}</span>
+                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${inv.status === "active" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-gray-100 text-gray-500"}`}>{inv.status}</span>
                           </td>
                           <td className="py-3 px-3 text-right">
                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -414,7 +415,7 @@ export default function InvestmentsPage() {
                       <td className="py-2.5 px-3 text-right text-sm font-bold tabular-nums text-gray-900 dark:text-white">{formatAmount(totalValue)}</td>
                       <td className="py-2.5 px-3 text-right text-sm font-bold tabular-nums" style={{ color: totalGainLoss >= 0 ? MINT : DANGER }}>{totalGainLoss >= 0 ? "+" : ""}{formatAmount(Math.abs(totalGainLoss))}</td>
                       <td className="py-2.5 px-3 text-right">
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${gainLossPct >= 0 ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>{gainLossPct >= 0 ? "+" : ""}{gainLossPct.toFixed(1)}%</span>
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${gainLossPct >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>{gainLossPct >= 0 ? "+" : ""}{gainLossPct.toFixed(1)}%</span>
                       </td>
                       <td colSpan={3} />
                     </tr>
@@ -427,19 +428,19 @@ export default function InvestmentsPage() {
 
         {/* smart insights */}
         <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-5" style={{ background: "linear-gradient(135deg, #F5F3FF, #EEF4FF)" }}>
-            <div className="flex items-center gap-2 mb-4"><Sparkles className="w-4 h-4" style={{ color: PURPLE }} /><h3 className="font-semibold text-gray-900 text-base">Smart Insights</h3></div>
+          <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
+            <div className="flex items-center gap-2 mb-4"><Sparkles className="w-4 h-4" style={{ color: PURPLE }} /><h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">🎯 Diversification</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">🎯 Diversification</p>
                 <p className="text-gray-500">{divScore < 40 ? `Portfolio concentration is high (score: ${divScore}/100). Consider adding different asset types to reduce risk.` : `Diversification score: ${divScore}/100. ${divScore >= 70 ? "Good spread across asset types." : "Adding bonds or real estate could improve stability."}`}</p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">📊 Performance</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📊 Performance</p>
                 <p className="text-gray-500">{best ? `Your best performer is ${best.name} at +${best.gainPct.toFixed(1)}%${worst && worst.id !== best.id ? `, while ${worst.name} is at ${worst.gainPct.toFixed(1)}%` : ""}.` : "Add investments to see performance insights."}</p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">✨ Portfolio value</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">✨ Portfolio value</p>
                 <p className="text-gray-500">{totalGainLoss >= 0 ? `Your portfolio gained ${formatAmount(totalGainLoss)} (+${gainLossPct.toFixed(1)}%) since purchase. Strong performance!` : `Portfolio is down ${formatAmount(Math.abs(totalGainLoss))} (${gainLossPct.toFixed(1)}%). Stay patient with long-term holdings.`}</p>
               </div>
             </div>

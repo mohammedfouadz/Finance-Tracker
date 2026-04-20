@@ -36,7 +36,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, change }: {
         <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{value}</p>
         {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
         {change !== undefined && (
-          <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${positive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-600"}`}>
+          <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${positive ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
             {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
             {Math.abs(change).toFixed(1)}% vs last month
           </div>
@@ -141,7 +141,7 @@ export default function NetWorthPage() {
 
         {/* NET WORTH HERO */}
         <Card className="border border-blue-100 dark:border-blue-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-6" style={{ background: "linear-gradient(135deg, #EEF4FF, #F5F3FF)" }}>
+          <CardContent className="p-6 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
             <div className="flex flex-col lg:flex-row gap-6 items-start">
               {/* left */}
               <div className="flex-1">
@@ -162,13 +162,13 @@ export default function NetWorthPage() {
 
                 {/* formula */}
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="bg-blue-50 border border-blue-100 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: BRAND }}>{formatAmount(bankTotal)} banks</span>
+                  <span className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: BRAND }}>{formatAmount(bankTotal)} banks</span>
                   <span className="text-gray-400">+</span>
-                  <span className="bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: MINT }}>{formatAmount(invTotal)} investments</span>
+                  <span className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: MINT }}>{formatAmount(invTotal)} investments</span>
                   <span className="text-gray-400">+</span>
-                  <span className="bg-amber-50 border border-amber-100 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: AMBER }}>{formatAmount(assetTotal)} assets</span>
+                  <span className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: AMBER }}>{formatAmount(assetTotal)} assets</span>
                   <span className="text-gray-400">−</span>
-                  <span className="bg-red-50 border border-red-100 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: DANGER }}>{formatAmount(debtTotal)} debts</span>
+                  <span className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: DANGER }}>{formatAmount(debtTotal)} debts</span>
                   <span className="text-gray-400">=</span>
                   <span className="rounded-xl px-3 py-1.5 font-bold tabular-nums text-white" style={{ backgroundColor: isPositive ? BRAND : DANGER }}>
                     {netWorth < 0 ? "−" : ""}{formatAmount(Math.abs(netWorth))}
@@ -187,7 +187,7 @@ export default function NetWorthPage() {
                     </PieChart>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
                       <span className="text-[10px] text-gray-400">assets</span>
-                      <span className="text-xs font-bold text-gray-800 tabular-nums">{formatAmount(totalAssets)}</span>
+                      <span className="text-xs font-bold text-gray-800 dark:text-gray-100 tabular-nums">{formatAmount(totalAssets)}</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
@@ -223,8 +223,8 @@ export default function NetWorthPage() {
                   <p className="text-xs text-gray-400 mt-0.5">6-month trajectory</p>
                 </div>
                 {isPositive
-                  ? <span className="text-xs font-bold px-2 py-1 bg-emerald-50 text-emerald-700 rounded-full flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Growing</span>
-                  : <span className="text-xs font-bold px-2 py-1 bg-red-50 text-red-600 rounded-full flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Declining</span>}
+                  ? <span className="text-xs font-bold px-2 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-full flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Growing</span>
+                  : <span className="text-xs font-bold px-2 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-full flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Declining</span>}
               </div>
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={chartData}>
@@ -265,7 +265,7 @@ export default function NetWorthPage() {
                           {item.value < 0 ? "−" : ""}{formatAmount(Math.abs(item.value))}
                         </span>
                       </div>
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#F1F5F9" }}>
+                      <div className="h-1.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
                         {totalAssets > 0 && item.value > 0 && (
                           <div className="h-full rounded-full" style={{ width: `${(Math.abs(item.value) / totalAssets) * 100}%`, backgroundColor: item.color }} />
                         )}
@@ -300,7 +300,7 @@ export default function NetWorthPage() {
                   <div key={m.label} className="flex-1 flex flex-col items-center gap-1.5">
                     <div className={cn(
                       "w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all",
-                      reached ? "text-white border-transparent" : isNext ? "border-blue-400 text-blue-500 bg-blue-50" : "border-gray-200 text-gray-300 bg-gray-50"
+                      reached ? "text-white border-transparent" : isNext ? "border-blue-400 text-blue-500 bg-blue-50 dark:bg-blue-950/30" : "border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 bg-gray-50 dark:bg-gray-800"
                     )}
                       style={reached ? { backgroundColor: MINT, borderColor: MINT } : {}}>
                       {reached ? "✓" : i + 1}
@@ -325,14 +325,14 @@ export default function NetWorthPage() {
 
         {/* smart insights */}
         <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-5" style={{ background: "linear-gradient(135deg, #F5F3FF, #EEF4FF)" }}>
+          <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
-              <h3 className="font-semibold text-gray-900 text-base">Smart Insights</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   {isPositive ? "✅ Positive net worth" : "⚠️ Negative net worth"}
                 </p>
                 <p className="text-gray-500">
@@ -342,7 +342,7 @@ export default function NetWorthPage() {
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">📊 Asset allocation</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📊 Asset allocation</p>
                 <p className="text-gray-500">
                   {totalAssets > 0
                     ? `Banks: ${((bankTotal / totalAssets) * 100).toFixed(0)}% · Investments: ${((invTotal / totalAssets) * 100).toFixed(0)}% · Assets: ${((assetTotal / totalAssets) * 100).toFixed(0)}%`
@@ -350,7 +350,7 @@ export default function NetWorthPage() {
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 mb-1">
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">
                   {nextMilestone ? `🎯 Next milestone: ${nextMilestone.label}` : "🏆 Millionaire milestone achieved!"}
                 </p>
                 <p className="text-gray-500">

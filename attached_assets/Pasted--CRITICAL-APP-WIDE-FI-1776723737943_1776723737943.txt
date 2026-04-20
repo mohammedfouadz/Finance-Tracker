@@ -1,0 +1,619 @@
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL APP-WIDE FIX: Dark Mode is BROKEN across every page of Wealthly.
+
+Across all pages built recently (Home, Net Worth, Income, Expenses, Accounts, 
+Investments, Assets, Debts, Goals, Budget, Reports, Zakat, Settings, and 
+every other page), dark mode implementation has systemic issues making the 
+app unusable and unprofessional in dark theme.
+
+This is a FULL APPLICATION AUDIT AND REWRITE of dark mode, not a single-page 
+fix.
+═══════════════════════════════════════════════════════════════════════════════
+
+SYMPTOMS OBSERVED ACROSS THE APP:
+❌ KPI cards appear as ghostly transparent boxes — text barely visible
+❌ Hero/banner cards remain pure WHITE in dark mode (blinding)
+❌ Cards use glass/blur effects that fail against dark backgrounds
+❌ Text labels use dark gray invisible on dark backgrounds
+❌ Progress bars have white/light-gray tracks that don't invert
+❌ Input fields, dropdowns stay light-themed
+❌ AI insight cards keep their light gradient backgrounds
+❌ Status pills, badges have insufficient contrast
+❌ Chart grid lines, axis labels unreadable
+❌ Modals and drawers flash white when opened
+❌ Tooltips unreadable
+❌ Empty states keep light backgrounds
+
+ROOT CAUSE:
+1. Over-reliance on alpha transparency (bg-white/10, backdrop-blur)
+2. Missing `dark:` variants on countless elements
+3. Hardcoded light colors instead of semantic tokens
+4. No systematic dark mode testing during development
+5. Copy-pasted light-mode card patterns without dark adaptation
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 1 — ESTABLISH DESIGN TOKENS (do this FIRST before fixing pages)
+═══════════════════════════════════════════════════════════════════════════════
+
+Create a centralized theme token system. Use Tailwind CSS variables or 
+define in `tailwind.config.js`:
+
+```css
+:root {
+  /* Backgrounds */
+  --bg-page: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-card-elevated: #FFFFFF;
+  --bg-card-hover: #F8FAFC;
+  --bg-input: #FFFFFF;
+  --bg-muted: #F1F5F9;
+  
+  /* Borders */
+  --border-default: #E2E8F0;
+  --border-hover: #CBD5E1;
+  --border-strong: #94A3B8;
+  
+  /* Text */
+  --text-primary: #0F172A;
+  --text-secondary: #64748B;
+  --text-tertiary: #94A3B8;
+  --text-muted: #CBD5E1;
+  --text-inverse: #FFFFFF;
+  
+  /* Accents (core brand) */
+  --accent-blue: #2563EB;
+  --accent-blue-hover: #1D4ED8;
+  --accent-green: #10B981;
+  --accent-amber: #F59E0B;
+  --accent-red: #EF4444;
+  --accent-purple: #8B5CF6;
+  
+  /* Tinted backgrounds for KPI cards (SOLID, not transparent) */
+  --tint-blue-bg: #EFF6FF;
+  --tint-green-bg: #ECFDF5;
+  --tint-amber-bg: #FFFBEB;
+  --tint-red-bg: #FEF2F2;
+  --tint-purple-bg: #F5F3FF;
+}
+
+[data-theme="dark"], .dark {
+  /* Backgrounds — ALL SOLID, no transparency */
+  --bg-page: #0B1120;
+  --bg-card: #1A2332;
+  --bg-card-elevated: #212B3C;
+  --bg-card-hover: #212B3C;
+  --bg-input: #0F1729;
+  --bg-muted: #1E293B;
+  
+  /* Borders */
+  --border-default: #2A3648;
+  --border-hover: #3D4B63;
+  --border-strong: #475569;
+  
+  /* Text */
+  --text-primary: #F1F5F9;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
+  --text-muted: #64748B;
+  --text-inverse: #0F172A;
+  
+  /* Accents (brighter for dark bg) */
+  --accent-blue: #3B82F6;
+  --accent-blue-hover: #60A5FA;
+  --accent-green: #34D399;
+  --accent-amber: #FBBF24;
+  --accent-red: #F87171;
+  --accent-purple: #A78BFA;
+  
+  /* Tinted backgrounds — deep solid tints, NOT transparent */
+  --tint-blue-bg: #0F1F3D;
+  --tint-green-bg: #0F2F22;
+  --tint-amber-bg: #2A1F0A;
+  --tint-red-bg: #2A1515;
+  --tint-purple-bg: #1F1A3D;
+}
+```
+
+Then use these tokens via Tailwind classes like:
+`bg-[var(--bg-card)]` or define custom Tailwind color names mapped to vars.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 2 — SEARCH & DESTROY PATTERNS (app-wide find-and-replace)
+═══════════════════════════════════════════════════════════════════════════════
+
+Do a codebase-wide search for these ANTI-PATTERNS and fix EVERY occurrence:
+
+ANTI-PATTERN 1: Transparent white backgrounds
+FIND: `bg-white/10`, `bg-white/20`, `bg-white/5`, `bg-white/[0-9]+`
+REPLACE: Use solid tinted backgrounds from tokens above
+
+ANTI-PATTERN 2: Backdrop blur on primary cards
+FIND: `backdrop-blur-*` on KPI cards, stat cards, content cards
+REPLACE: Remove backdrop-blur, use solid `bg-card` token
+
+ANTI-PATTERN 3: Missing dark variants on bg-white
+FIND: `className="... bg-white ..."` without `dark:bg-*`
+REPLACE: Add `dark:bg-[#1A2332]` or use token
+
+ANTI-PATTERN 4: Missing dark variants on text
+FIND: `text-slate-900`, `text-gray-900`, `text-black` without dark:
+REPLACE: Add `dark:text-slate-100`
+
+ANTI-PATTERN 5: Hardcoded light gradients
+FIND: `bg-gradient-to-* from-blue-50 to-purple-50` etc. without dark:
+REPLACE: Add `dark:from-[#1A1F3D] dark:to-[#2A1F3D]`
+
+ANTI-PATTERN 6: Light borders without dark variants
+FIND: `border-slate-200`, `border-gray-200` without dark:
+REPLACE: Add `dark:border-[#2A3648]`
+
+ANTI-PATTERN 7: Soft pastel KPI backgrounds
+FIND: `bg-green-50`, `bg-blue-50`, `bg-amber-50`, `bg-red-50`, `bg-purple-50`
+REPLACE: Add dark variants:
+- `bg-green-50 dark:bg-[#0F2F22]`
+- `bg-blue-50 dark:bg-[#0F1F3D]`
+- `bg-amber-50 dark:bg-[#2A1F0A]`
+- `bg-red-50 dark:bg-[#2A1515]`
+- `bg-purple-50 dark:bg-[#1F1A3D]`
+
+ANTI-PATTERN 8: Light progress bar tracks
+FIND: `bg-slate-200`, `bg-gray-200` on progress bar tracks
+REPLACE: Add `dark:bg-slate-700`
+
+ANTI-PATTERN 9: Light input backgrounds
+FIND: inputs with `bg-white border-slate-200`
+REPLACE: Add `dark:bg-[#0F1729] dark:border-slate-700 dark:text-slate-100`
+
+ANTI-PATTERN 10: Light modal backgrounds
+FIND: Modal/Dialog with hardcoded white
+REPLACE: Add `dark:bg-[#1A2332] dark:border-slate-700`
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 3 — PAGE-BY-PAGE AUDIT (fix each, verify each)
+═══════════════════════════════════════════════════════════════════════════════
+
+Go through EVERY page and fix dark mode. Treat each as a checklist:
+
+🔲 HOME / DASHBOARD
+  □ Greeting hero card: dark variant added
+  □ 4 KPI cards: solid bg, readable text
+  □ Income vs Expenses chart: axis labels, grid lines, bars adapted
+  □ Wealth Breakdown donut: segments vibrant, center text readable
+  □ Recent Transactions table: proper row colors, text contrast
+  □ Goals Progress widgets: progress bars, labels
+  □ Smart Insights card: dark gradient variant
+  □ Quick action buttons: proper styling
+
+🔲 NET WORTH
+  □ Large net worth hero: no white bg
+  □ Trend chart: grid lines visible, line colors vibrant
+  □ Component breakdown cards: all readable
+  □ Milestones timeline: proper dark styling
+  □ Projection card: readable
+
+🔲 INCOME
+  □ 4 KPI cards (Total, This Month, Avg, Top Source): SOLID bg, not ghost
+  □ Monthly chart: bars, axis, labels all adapted
+  □ By Category donut: legend text readable
+  □ Portfolio Insight card: NOT white in dark mode
+  □ Income Entries table: proper contrast
+  □ Pills/filters: dark variants
+  □ Search input: dark variant
+
+🔲 EXPENSES
+  □ Budget Alert Banner: proper dark danger styling
+  □ 4 KPI cards: solid bg
+  □ Budget vs Actual bars: visible tracks, proper fills
+  □ Daily Spending chart: all chart elements adapted
+  □ Category Breakdown donut: adapted
+  □ Expense Entries table: dark rows, readable text
+  □ Category filter pills: dark variants
+  □ Smart Insights cards: dark gradient
+
+🔲 ACCOUNTS
+  □ 4 KPI cards: solid
+  □ Currency Distribution banner: adapted
+  □ Account cards with gradient headers: headers stay colorful, body dark
+  □ Recent Activity table: proper
+  □ Account Health sidebar cards: adapted
+  □ Account card sparklines: visible against dark
+
+🔲 INVESTMENTS
+  □ 4 KPI cards: solid bg — currently ghostly
+  □ Portfolio Performance chart: fully adapted
+  □ Asset Allocation donut: readable
+  □ Diversification Score card: adapted
+  □ 6 Asset Type cards: solid bg, icons visible
+  □ Holdings table: proper
+  □ Transactions History: proper
+
+🔲 ASSETS
+  □ 4 KPI cards: solid
+  □ Category Strip cards: adapted
+  □ Asset Grid cards: image overlays work in dark, text readable
+  □ Appreciation Chart: grid/axis/lines adapted
+  □ Valuation History timeline: readable
+  □ Documents grid: adapted
+
+🔲 DEBTS
+  □ 4 KPI cards: solid
+  □ Debt-Free Journey hero: NOT white
+  □ Strategy selector dropdown: dark
+  □ Debt cards: progress bars, amortization charts adapted
+  □ Smart sidebar cards (Strategy, Upcoming, Calculator, AI Coach): all dark
+  □ Payment History timeline: proper
+
+🔲 GOALS
+  □ 4 KPI cards: solid
+  □ Goal cards: progress rings visible, text readable
+  □ Progress bars: dark track, vibrant fill
+  □ Filter tabs: dark variants
+  □ Empty state card: dashed border visible in dark
+
+🔲 BUDGET (MOST BROKEN currently)
+  □ Budget Planning hero card: NO LONGER WHITE, proper dark gradient
+  □ "Monthly Income / Total Budgeted / Unallocated" labels: readable
+  □ Progress bar in hero: dark track, vibrant fill
+  □ 4 KPI cards: SOLID bg (currently ghost)
+  □ Budget Health banner: dark variant
+  □ Category Budget rows: all text visible, borders proper
+  □ Progress bars on each category: visible
+  □ "Set limit" buttons: proper dark styling
+  □ Input fields: dark bg
+  □ Status pills (On Track): proper contrast
+  □ Filter pills at top: dark variants
+  □ Spending Pace chart: adapted
+  □ Top Overspend sidebar: adapted
+
+🔲 REPORTS
+  □ Tab navigation: active/inactive dark variants
+  □ All charts across tabs: adapted
+  □ Sankey diagram colors: visible on dark
+  □ Export button: dark variant
+  □ Tables on each tab: dark
+
+🔲 ZAKAT
+  □ Hero welcome card: dark variant preserving reverent feel
+  □ Stepper: active/completed/upcoming all visible
+  □ Nisab/Hawl cards in Step 1: dark with preserved accents
+  □ Countdown card: readable
+  □ Asset category cards: dark, expandable states work
+  □ Running total display: readable
+  □ Final calculation hero: dark gradient (emerald/gold preserved)
+  □ Asnaf grid: dark with preserved category feel
+  □ Charity partner cards: dark
+  □ AI Scholar chat: dark variant
+
+🔲 SETTINGS
+  □ Sub-navigation sidebar: dark styling
+  □ All form cards: dark bg
+  □ Toggle switches: proper dark on/off states
+  □ Input fields in all sections: dark
+  □ Category tables (Categories section): dark rows, text, borders
+  □ Color pickers: work in dark
+  □ Icon pickers: work in dark
+  □ Danger Zone: preserves red accent in dark
+
+🔲 MODALS & DRAWERS (across all pages)
+  □ Add Transaction modal: dark bg
+  □ Add Expense / Income modals: dark
+  □ Add Goal modal: dark
+  □ Add Debt modal: dark
+  □ Add Investment modal: dark
+  □ Add Asset modal: dark
+  □ Add Account modal: dark
+  □ Edit modals: dark
+  □ Detail drawers (slide-in from right): dark bg
+  □ AI Chat drawer: dark
+
+🔲 AI CHAT FLOATING
+  □ Button glow proper in dark
+  □ Opened drawer fully dark themed
+  □ Message bubbles: user vs AI distinguishable
+  □ Input area: dark
+  □ Suggested prompt chips: dark
+
+🔲 SIDEBAR (main navigation)
+  □ Sidebar bg slightly different from page
+  □ Group labels readable
+  □ Active item (blue): stays vibrant
+  □ Inactive items: proper hover states
+  □ User profile chip at bottom: dark
+  □ Sidebar dividers: subtle but visible
+
+🔲 TOP BAR / HEADER (if exists)
+  □ Bell icon for notifications: dark
+  □ Search bar: dark
+  □ User avatar menu: dark
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 4 — SPECIFIC COMPONENT FIXES (reusable patterns)
+═══════════════════════════════════════════════════════════════════════════════
+
+Create/fix these reusable components ONCE, use everywhere:
+
+COMPONENT: KPICard
+```jsx
+<div className="
+  bg-white dark:bg-[#1A2332]
+  border border-slate-200 dark:border-[#2A3648]
+  rounded-2xl p-6
+  hover:shadow-md transition-all
+">
+  <div className="flex justify-between items-start mb-3">
+    <span className="text-xs font-semibold uppercase tracking-wide 
+                     text-slate-500 dark:text-slate-400">
+      {label}
+    </span>
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center
+                    bg-${color}-50 dark:bg-[${darkTint}]`}>
+      <Icon className={`text-${color}-600 dark:text-${color}-400`} />
+    </div>
+  </div>
+  <div className="text-3xl font-bold tabular-nums
+                  text-slate-900 dark:text-slate-100">
+    {value}
+  </div>
+  {caption && (
+    <p className="text-sm mt-2 text-slate-500 dark:text-slate-400">
+      {caption}
+    </p>
+  )}
+</div>
+```
+
+COMPONENT: HeroCard (for Budget Planning banner etc.)
+```jsx
+<div className="
+  rounded-2xl p-8
+  bg-gradient-to-br 
+  from-blue-50 to-purple-50
+  dark:from-[#1A2332] dark:to-[#212B3C]
+  border border-slate-200 dark:border-[#2A3648]
+">
+  ...
+</div>
+```
+
+COMPONENT: InsightCard (AI insights)
+```jsx
+<div className="
+  rounded-2xl p-6
+  bg-gradient-to-br
+  from-blue-50/50 to-purple-50/50
+  dark:from-[#1A1F3D] dark:to-[#2A1F3D]
+  border border-purple-200/50 dark:border-purple-500/30
+">
+  <div className="w-10 h-10 rounded-xl
+                  bg-purple-100 dark:bg-purple-500/20
+                  flex items-center justify-center">
+    <SparkleIcon className="text-purple-600 dark:text-purple-400" />
+  </div>
+  <h3 className="font-semibold text-slate-900 dark:text-slate-100 mt-3">
+    {title}
+  </h3>
+  <p className="text-slate-600 dark:text-slate-300 mt-1">
+    {body}
+  </p>
+</div>
+```
+
+COMPONENT: ProgressBar
+```jsx
+<div className="h-3 rounded-full overflow-hidden
+                bg-slate-200 dark:bg-slate-700">
+  <div 
+    className={`h-full rounded-full bg-${color}-500`}
+    style={{ width: `${percent}%` }}
+  />
+</div>
+```
+
+COMPONENT: Input
+```jsx
+<input className="
+  w-full px-4 py-2.5 rounded-xl
+  bg-white dark:bg-[#0F1729]
+  border border-slate-200 dark:border-slate-700
+  text-slate-900 dark:text-slate-100
+  placeholder-slate-400 dark:placeholder-slate-500
+  focus:ring-2 focus:ring-blue-500 focus:border-transparent
+  transition-all
+"/>
+```
+
+COMPONENT: StatusPill
+```jsx
+{/* Success */}
+<span className="px-3 py-1 rounded-full text-xs font-medium
+  bg-green-50 text-green-700 border border-green-200
+  dark:bg-green-500/15 dark:text-green-400 dark:border-green-500/30">
+  On Track
+</span>
+
+{/* Warning */}
+<span className="... bg-amber-50 text-amber-700 border-amber-200
+  dark:bg-amber-500/15 dark:text-amber-400 dark:border-amber-500/30">
+  Approaching
+</span>
+
+{/* Danger */}
+<span className="... bg-red-50 text-red-700 border-red-200
+  dark:bg-red-500/15 dark:text-red-400 dark:border-red-500/30">
+  Over Budget
+</span>
+```
+
+COMPONENT: Table
+```jsx
+<table className="w-full">
+  <thead className="bg-slate-50 dark:bg-[#0F1729]">
+    <tr>
+      <th className="text-xs font-semibold uppercase tracking-wide
+                     text-slate-500 dark:text-slate-400 p-3 text-left">
+        {header}
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr className="
+      border-b border-slate-200 dark:border-slate-800
+      hover:bg-slate-50 dark:hover:bg-[#212B3C]
+      transition-colors
+    ">
+      <td className="p-3 text-slate-900 dark:text-slate-100">
+        {cell}
+      </td>
+    </tr>
+  </tbody>
+</table>
+```
+
+Use these patterns consistently. Never reinvent per page.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 5 — CHART LIBRARIES DARK MODE CONFIG
+═══════════════════════════════════════════════════════════════════════════════
+
+For Recharts (if used):
+```jsx
+const chartTheme = {
+  light: {
+    grid: '#E2E8F0',
+    axis: '#64748B',
+    tooltip: { bg: '#FFFFFF', border: '#E2E8F0' }
+  },
+  dark: {
+    grid: '#2A3648',
+    axis: '#94A3B8',
+    tooltip: { bg: '#1A2332', border: '#2A3648' }
+  }
+};
+
+// Apply to CartesianGrid, XAxis, YAxis, Tooltip components
+```
+
+For Chart.js (if used):
+```jsx
+const darkModeOptions = {
+  scales: {
+    x: { grid: { color: '#2A3648' }, ticks: { color: '#94A3B8' } },
+    y: { grid: { color: '#2A3648' }, ticks: { color: '#94A3B8' } }
+  },
+  plugins: {
+    legend: { labels: { color: '#CBD5E1' } }
+  }
+};
+```
+
+Read user's theme preference and conditionally apply configs.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 6 — TESTING PROTOCOL
+═══════════════════════════════════════════════════════════════════════════════
+
+After all fixes, execute this testing protocol:
+
+TEST 1: Visual audit
+Open every single page in dark mode and screenshot.
+Compare to light mode screenshots.
+Every element that was visible in light mode must be equally visible in dark.
+
+TEST 2: Interaction audit
+On each page in dark mode, test:
+- Hover states on all buttons/cards
+- Focus states on inputs
+- Active states on toggles
+- Dropdown menus opening
+- Modals opening
+- Tooltips appearing
+
+TEST 3: Contrast audit
+Use browser DevTools accessibility checker on each page in dark mode.
+Every text element must pass WCAG AA (4.5:1 minimum for normal text).
+
+TEST 4: Theme toggle audit
+Toggle between light/dark 10 times on each page.
+No elements should "stick" in wrong theme.
+No white flashes or transitions.
+
+TEST 5: Mobile audit
+Test dark mode on mobile viewport (375px).
+All pages must work equally well.
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 7 — PREVENTION (don't let this happen again)
+═══════════════════════════════════════════════════════════════════════════════
+
+Set up safeguards:
+
+1. LINTER RULE: Create an ESLint rule (or use Tailwind Shepherd plugin) 
+   that flags any `bg-white` without `dark:` variant.
+
+2. COMPONENT LIBRARY: All new UI components MUST be built with dark mode 
+   from day one. Use the patterns in Part 4 as templates.
+
+3. STORYBOOK: If using Storybook, add a dark mode toggle to every story 
+   so components are tested in both modes during development.
+
+4. CI CHECK: Add an automated visual regression test that screenshots 
+   every page in both modes on every PR.
+
+5. CODE REVIEW: Never merge a new page or component without verifying 
+   dark mode works.
+
+═══════════════════════════════════════════════════════════════════════════════
+EXECUTION INSTRUCTIONS FOR THE DEV
+═══════════════════════════════════════════════════════════════════════════════
+
+Execute this fix in the following order to avoid breaking things:
+
+STAGE 1 (30 min): Set up token system
+  - Create/update Tailwind config with semantic tokens
+  - Add CSS variables to global styles
+  - Create utility classes for common patterns
+
+STAGE 2 (1 hour): Fix the reusable components
+  - KPICard, HeroCard, InsightCard, ProgressBar, Input, StatusPill, Table
+  - Refactor these in the codebase to use tokens
+  - This fixes ~70% of issues automatically since these are everywhere
+
+STAGE 3 (2 hours): Page-by-page audit
+  - Go through the 14 page checklist in Part 3
+  - Fix issues specific to each page
+  - Commit after each page passes
+
+STAGE 4 (30 min): Modals, drawers, overlays
+  - Fix every modal, slide-in panel, popover
+  - Test open/close in dark mode
+
+STAGE 5 (30 min): Charts
+  - Update chart theming config
+  - Apply to all chart instances
+
+STAGE 6 (30 min): Final testing
+  - Run the 5 tests in Part 6
+  - Screenshot comparison
+  - Fix any remaining issues
+
+TOTAL ESTIMATED TIME: 4-5 hours for complete app-wide fix
+
+═══════════════════════════════════════════════════════════════════════════════
+FINAL ACCEPTANCE CRITERIA
+═══════════════════════════════════════════════════════════════════════════════
+
+The fix is complete when:
+
+✅ Every page looks intentional and polished in dark mode
+✅ No white elements remain on any page in dark mode
+✅ No ghost/transparent cards anywhere
+✅ All text passes WCAG AA contrast
+✅ All interactive elements have proper dark states
+✅ Charts fully adapted with proper axis/grid colors
+✅ Modals, drawers, tooltips all work properly in dark
+✅ Dark mode feels like a first-class citizen, not an afterthought
+✅ Toggle between light/dark is seamless
+✅ Reference: Linear's dark mode quality (clean, readable, intentional)
+
+DO NOT SKIP ANY PAGE. Fix them all. This is a systemic issue requiring 
+a systemic fix.

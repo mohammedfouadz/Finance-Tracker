@@ -21,6 +21,7 @@ Key features (Phase 1 complete):
 - **AI Financial Coach** — Chat interface powered by OpenAI for personalized financial advice, with voice input/output support
 - **Multi-category system** — System-seeded default categories plus user-defined custom categories with subcategory support
 - **Zakat Calculator** — Full Islamic Zakat system: rich Hawl Setup Card (Fixed Annual Date vs. Track Nisab Date Precisely), Hijri calendar conversion, Hawl Countdown Card with circular progress ring, color-coded urgency states, ICS calendar export with reminders, Zakat Journey multi-year history, urgency banner. Dashboard widget appears when within 30 days. Sidebar badge shows day countdown when within 14 days. Schema: `zakatSettings` has `hawlDate`, `hawlDateType`, `hawlStartDate`. Pure calc logic in `shared/zakatCalculator.ts`.
+- **Comprehensive Dark Mode** — All 15 app pages fully dark-mode adapted: hardcoded light CSS gradients replaced with Tailwind `dark:` variants; all badge/pill pastel backgrounds have dark counterparts (`dark:bg-*-950/30`); progress bar tracks use `dark:bg-slate-700`; AI Chat component completely rewritten for dark mode (bubbles, header, input, panel); Smart Insights cards use `dark:from-[#1A1630] dark:to-[#0F1A30]`; filter buttons use `cn()` with conditional dark classes; alert banners have `dark:bg-*-950/20`; all `text-gray-900` headings carry `dark:text-white`.
 
 ## User Preferences
 

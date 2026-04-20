@@ -112,7 +112,7 @@ function ProfileSection({ user }: { user: any }) {
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-400">{user?.email || "No email set"}</p>
             <div className="flex gap-2 mt-2">
-              <button className="text-xs font-medium px-3 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">Change photo</button>
+              <button className="text-xs font-medium px-3 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">Change photo</button>
               <button className="text-xs font-medium px-3 py-1 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">Remove</button>
             </div>
           </div>
@@ -126,7 +126,7 @@ function ProfileSection({ user }: { user: any }) {
             <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Email</label>
             <div className="relative">
               <Input value={user?.email || ""} readOnly className="pr-16 bg-gray-50 dark:bg-gray-800" />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Verified</span>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">Verified</span>
             </div>
           </div>
           <div>
@@ -455,7 +455,7 @@ function CategoriesSection({ user }: { user: any }) {
               </div>
               <div className="flex items-center gap-3">
                 <SavedIndicator state={savingState} />
-                <div className={`text-xs font-bold px-2.5 py-1 rounded-full ${totalAllocation > 100 ? "bg-red-50 text-red-600" : totalAllocation >= 95 ? "bg-amber-50 text-amber-700" : "bg-emerald-50 text-emerald-700"}`}>
+                <div className={`text-xs font-bold px-2.5 py-1 rounded-full ${totalAllocation > 100 ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400" : totalAllocation >= 95 ? "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400" : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"}`}>
                   {totalAllocation.toFixed(1)}% allocated
                 </div>
                 <Button onClick={() => { setFormData(p => ({ ...p, type: "expense" })); setShowForm(true); }} className="gap-1.5 rounded-xl h-8 text-xs" style={{ backgroundColor: BRAND }} data-testid="button-add-category">
@@ -494,7 +494,7 @@ function CategoriesSection({ user }: { user: any }) {
                           </div>
                         </td>
                         <td className="py-2.5 px-3">
-                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${cat.isSystem ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"}`}>
+                          <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${cat.isSystem ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400" : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400"}`}>
                             {cat.isSystem ? "System" : "Custom"}
                           </span>
                         </td>
@@ -509,14 +509,14 @@ function CategoriesSection({ user }: { user: any }) {
                             />
                             <span className="text-xs text-gray-400">%</span>
                             {isEditing && (
-                              <button onClick={() => handleSaveAlloc(cat.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-emerald-600 hover:bg-emerald-50 transition-colors" data-testid={`button-save-alloc-${cat.id}`}>
+                              <button onClick={() => handleSaveAlloc(cat.id)} className="w-6 h-6 rounded-md flex items-center justify-center text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors" data-testid={`button-save-alloc-${cat.id}`}>
                                 <Check className="w-3.5 h-3.5" />
                               </button>
                             )}
                           </div>
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          <button onClick={() => handleDelete(cat.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all ml-auto" data-testid={`button-delete-${cat.id}`}>
+                          <button onClick={() => handleDelete(cat.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all ml-auto" data-testid={`button-delete-${cat.id}`}>
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>
@@ -558,10 +558,10 @@ function CategoriesSection({ user }: { user: any }) {
                     <tr key={cat.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 group">
                       <td className="py-2.5 px-3 font-medium text-gray-900 dark:text-white">{cat.name}</td>
                       <td className="py-2.5 px-3"><div className="w-5 h-5 rounded-full" style={{ backgroundColor: cat.color || "#94A3B8" }} /></td>
-                      <td className="py-2.5 px-3"><span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${cat.isSystem ? "bg-blue-50 text-blue-700" : "bg-purple-50 text-purple-700"}`}>{cat.isSystem ? "System" : "Custom"}</span></td>
+                      <td className="py-2.5 px-3"><span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${cat.isSystem ? "bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400" : "bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-400"}`}>{cat.isSystem ? "System" : "Custom"}</span></td>
                       <td className="py-2.5 px-3 text-right">
                         {!cat.isSystem && (
-                          <button onClick={() => handleDelete(cat.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all ml-auto">
+                          <button onClick={() => handleDelete(cat.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-all ml-auto">
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
@@ -820,7 +820,7 @@ function DataSection() {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             {["CSV","Excel","JSON","PDF"].map(f => (
-              <button key={f} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors">{f}</button>
+              <button key={f} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">{f}</button>
             ))}
           </div>
           <Button className="gap-2 rounded-xl" style={{ backgroundColor: BRAND }}>
@@ -967,12 +967,12 @@ function BillingSection() {
   return (
     <div>
       <SectionCard title="Current Plan">
-        <div className="flex items-center justify-between p-4 rounded-xl mb-4" style={{ background: "linear-gradient(135deg, #EEF4FF, #F5F3FF)" }}>
+        <div className="flex items-center justify-between p-4 rounded-xl mb-4 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
           <div>
             <p className="text-xs text-gray-500 mb-1">Active Plan</p>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-gray-900 dark:text-white">Free</span>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">Current</span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">Current</span>
             </div>
             <p className="text-xs text-gray-400 mt-1">50 transactions used of 50 limit this month</p>
           </div>
@@ -1024,7 +1024,7 @@ function DevicesSection() {
                 <div>
                   <div className="flex items-center gap-2">
                     <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">{d.name}</p>
-                    {d.current && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">Current</span>}
+                    {d.current && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">Current</span>}
                   </div>
                   <p className="text-[10px] text-gray-400">{d.location} · {d.last}</p>
                 </div>
@@ -1063,13 +1063,13 @@ function HelpSection() {
 
       <SectionCard title="Contact Support">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <a href="mailto:support@wealthly.app" className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center"><Info className="w-4 h-4 text-blue-600" /></div>
-            <div><p className="text-xs font-semibold text-gray-800">Email Support</p><p className="text-[10px] text-gray-400">Response within 24 hours</p></div>
+          <a href="mailto:support@wealthly.app" className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex items-center justify-center"><Info className="w-4 h-4 text-blue-600" /></div>
+            <div><p className="text-xs font-semibold text-gray-800 dark:text-gray-200">Email Support</p><p className="text-[10px] text-gray-400">Response within 24 hours</p></div>
           </a>
-          <button className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 transition-colors">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center"><Zap className="w-4 h-4 text-purple-600" /></div>
-            <div className="text-left"><p className="text-xs font-semibold text-gray-800">Live Chat</p><p className="text-[10px] text-gray-400">Currently offline</p></div>
+          <button className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/30 flex items-center justify-center"><Zap className="w-4 h-4 text-purple-600" /></div>
+            <div className="text-left"><p className="text-xs font-semibold text-gray-800 dark:text-gray-200">Live Chat</p><p className="text-[10px] text-gray-400">Currently offline</p></div>
           </button>
         </div>
       </SectionCard>
@@ -1107,7 +1107,7 @@ function DangerZoneSection() {
               <h3 className="font-semibold text-red-700 dark:text-red-400 text-base">Reset All Data</h3>
               <p className="text-xs text-gray-500 mt-1">Clears all transactions, budgets, goals, investments. Your account remains active.</p>
             </div>
-            <Button variant="outline" onClick={() => setConfirmReset(true)} className="border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-xs h-8 shrink-0">
+            <Button variant="outline" onClick={() => setConfirmReset(true)} className="border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl text-xs h-8 shrink-0">
               Reset Data
             </Button>
           </div>
@@ -1131,7 +1131,7 @@ function DangerZoneSection() {
               <h3 className="font-semibold text-red-700 dark:text-red-400 text-base">Delete Account Permanently</h3>
               <p className="text-xs text-gray-500 mt-1">Exports all your data, then permanently deletes your account and all associated data. This action is irreversible.</p>
             </div>
-            <Button variant="outline" onClick={() => setConfirmDelete(true)} className="border-red-200 text-red-600 hover:bg-red-50 rounded-xl text-xs h-8 shrink-0">
+            <Button variant="outline" onClick={() => setConfirmDelete(true)} className="border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl text-xs h-8 shrink-0">
               Delete Account
             </Button>
           </div>
@@ -1189,7 +1189,7 @@ export default function SettingsPage() {
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{int.name}</p>
                   <p className="text-[10px] text-gray-400">{int.desc}</p>
                 </div>
-                <button className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
+                <button className="text-xs font-semibold px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                   {int.status ? "Connected" : "Connect"}
                 </button>
               </div>

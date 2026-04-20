@@ -540,14 +540,13 @@ export default function IncomePage() {
 
         {/* ── SMART INSIGHTS BANNER ── */}
         {!insightDismiss && yearIncome.length > 0 && (
-          <div className="rounded-2xl p-4 flex items-start justify-between gap-4 border border-blue-100 dark:border-blue-900/40"
-            style={{ background: "linear-gradient(135deg, #EEF4FF, #F5F3FF)" }}>
+          <div className="rounded-2xl p-4 flex items-start justify-between gap-4 border border-blue-100 dark:border-blue-900/40 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: `${BRAND}22` }}>
                 <Sparkles className="w-4 h-4" style={{ color: BRAND }} />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900">Portfolio Insight</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Portfolio Insight</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                   {topSource
                     ? `Your top income source is ${topSource.name} (${totalIncome > 0 ? ((topSource.value / totalIncome) * 100).toFixed(0) : 0}% of total). Consider diversifying to reduce dependency on a single source.`
@@ -568,7 +567,7 @@ export default function IncomePage() {
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-base">Income Entries</h3>
-                <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+                <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
                   {tableRows.length} entries
                 </span>
               </div>
