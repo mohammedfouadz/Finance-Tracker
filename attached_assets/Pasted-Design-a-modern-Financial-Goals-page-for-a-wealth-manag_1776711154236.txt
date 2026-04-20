@@ -1,0 +1,116 @@
+Design a modern "Financial Goals" page for a wealth management web app called 
+"Wealthly". The design must match an existing dashboard's visual language 
+exactly.
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (match existing dashboard)
+═══════════════════════════════════════════════════════════
+
+Brand & Colors:
+- Primary brand: vibrant blue (#2563EB / blue-600) — used for active nav, 
+  primary CTAs, and progress accents
+- Success/Positive: emerald green (#10B981) — for achieved goals, positive 
+  progress, monetary targets
+- Warning/Accent: amber-orange (#F59E0B) — for goals behind schedule
+- Danger: red (#EF4444) — for overdue goals
+- Background: very light cool gray (#F8FAFC / slate-50)
+- Card background: pure white (#FFFFFF)
+- Borders: subtle gray (#E2E8F0 / slate-200)
+- Primary text: near-black (#0F172A / slate-900)
+- Secondary text: medium gray (#64748B / slate-500)
+
+Typography:
+- Sans-serif font family (Inter or similar)
+- Page title: 28-32px, bold (700)
+- Card titles: 18-20px, semibold (600)
+- Monetary values: tabular nums, bold, larger scale
+- Body/meta text: 14px, regular to medium
+
+Layout:
+- Fixed left sidebar (260px wide) — white background with Wealthly logo at top,
+  nav items with icons on the left. "Goals" item is the ACTIVE state (solid 
+  blue background, white text, rounded-lg)
+- Main content area with generous padding (32-40px)
+- Cards: white background, rounded-2xl (16px radius), subtle shadow 
+  (shadow-sm), 1px slate-200 border
+- Grid: responsive — 3 columns on desktop (xl), 2 on tablet, 1 on mobile
+- Generous whitespace between cards (gap-6)
+
+═══════════════════════════════════════════════════════════
+PAGE STRUCTURE
+═══════════════════════════════════════════════════════════
+
+1) HEADER ROW
+   - Left: "Financial Goals" title + subtitle "Track your progress towards 
+     your dreams."
+   - Right: Primary blue "+ Add Goal" button (rounded-xl, white text, 
+     subtle shadow)
+
+2) SUMMARY STRIP (4 stat cards in a row, similar to dashboard KPI cards)
+   - Total Goals (count) — blue accent icon
+   - Total Target Amount ($) — green accent
+   - Total Saved ($) — green accent with % of target
+   - Average Progress (%) — amber accent
+   Each card: soft tinted background matching its accent, icon in top-right, 
+   label in uppercase small caps, large bold value below, tiny trend indicator.
+
+3) FILTER / SORT BAR
+   - Segmented tabs: "All · Active · Completed · Overdue"
+   - Right-side: sort dropdown ("Sort by: Deadline / Progress / Amount")
+   - Search input with icon (optional)
+
+4) GOALS GRID — the core of the page
+   Each GoalCard contains:
+   • Top row: category icon in a soft tinted square (rounded-xl, 48x48), 
+     category tag pill (e.g., "Vehicle", "Home", "Travel", "Emergency", 
+     "Education"), and a three-dot menu icon on the far right
+   • Goal title (bold, 20px) + target date with small calendar icon
+   • Large circular progress ring on the right side showing % — ring color 
+     shifts based on progress (red <25%, amber 25-75%, green >75%)
+   • Amount row: "Current" label with $ value in bold, "Target" label with 
+     $ value in green bold — separated by a subtle divider
+   • Linear progress bar (gradient from blue to green, rounded-full, height 8px)
+   • Meta row: "$X,XXX left" on the left, "Y months remaining" on the right, 
+     both in slate-500 text-sm
+   • Footer with two buttons: outlined "+ Add Contribution" (flex-1) and 
+     an outlined icon button with chevron-down to expand history
+   
+   Include 6 sample goals with realistic variety:
+   - Car (Vehicle, 0%, Dec 2026, $0 / $10,000) — the existing one
+   - Dream Home Down Payment (Home, 45%, Jun 2028, $67,500 / $150,000)
+   - Emergency Fund (Emergency, 80%, ongoing, $16,000 / $20,000) — nearly done
+   - Hajj Pilgrimage (Travel, 100%, completed) — show completion badge
+   - Kids' Education Fund (Education, 28%, Sep 2030, $14,000 / $50,000)
+   - New MacBook Pro (Tech, 62%, Aug 2026, $1,860 / $3,000)
+
+5) EXPANDED GOAL STATE (show one card expanded as an example)
+   When expanded, reveal below the footer:
+   • Mini contribution history: list of last 3-5 contributions with date, 
+     amount, and source account
+   • Tiny area chart showing contribution growth over time
+   • "Projected completion" line — e.g., "At current pace, you'll reach 
+     this goal 2 months early ✨"
+
+6) EMPTY / MOTIVATIONAL CARD at the end of the grid
+   Dashed border card inviting "Start a new goal" with a plus icon — same 
+   dimensions as goal cards for visual rhythm.
+
+═══════════════════════════════════════════════════════════
+INTERACTION & POLISH
+═══════════════════════════════════════════════════════════
+- Hover state on cards: slight lift (translate-y -2px) + shadow-md
+- Progress rings use smooth SVG stroke-dasharray
+- Completed goals get a small green checkmark badge over the icon
+- Overdue goals show a red pill "Overdue by X days"
+- All monetary figures use tabular numerals
+- Icons from Lucide / Heroicons style (outline, 1.5px stroke)
+- Overall feel: clean, confident, aspirational — fintech meets wellness app
+- Include both LIGHT MODE (primary) and DARK MODE variant
+
+═══════════════════════════════════════════════════════════
+DELIVERABLE
+═══════════════════════════════════════════════════════════
+Output a responsive, pixel-perfect desktop view (1440px) plus a mobile view 
+(375px) of the same page. The page should feel like a native extension of 
+the existing Wealthly dashboard — identical sidebar, identical card styling, 
+identical typography hierarchy.

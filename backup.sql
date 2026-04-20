@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 41entMCXbdiaCAfENBqWCk6FVkFMxJo4onAhNqptWPTYOujDzdPRkC182Zfk5FK
+\restrict zv10ApuaCM6uh9rhsINoVpgRWF45dGahDhdQzL79m3ZVseCRvBFtNK8G95fhZyK
 
 -- Dumped from database version 16.10
 -- Dumped by pg_dump version 16.10
@@ -635,7 +635,9 @@ CREATE TABLE public.users (
     password character varying,
     currency character varying DEFAULT 'USD'::character varying,
     language character varying DEFAULT 'en'::character varying,
-    theme character varying DEFAULT 'light'::character varying
+    theme character varying DEFAULT 'light'::character varying,
+    is_admin boolean DEFAULT false,
+    is_active boolean DEFAULT true
 );
 
 
@@ -1006,9 +1008,7 @@ COPY public.messages (id, conversation_id, role, content, created_at) FROM stdin
 --
 
 COPY public.sessions (sid, sess, expire) FROM stdin;
-WMU1C8QI3b5P2hZmaRIRG-GP_iqpPhXJ	{"cookie": {"path": "/", "secure": true, "expires": "2026-03-06T13:16:18.696Z", "httpOnly": true, "originalMaxAge": 604800000}, "passport": {"user": {"claims": {"aud": "b05eda9e-d001-4c03-b350-7cf4e4e6be19", "exp": 1772201778, "iat": 1772198178, "iss": "https://test-mock-oidc.replit.app/", "jti": "bdb376bf34c441172022b6c7422ce6dc", "sub": "testuser-mc1", "email": "testmc@example.com", "auth_time": 1772198178, "last_name": "User", "first_name": "Test"}, "expires_at": 1772201778, "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ijc4MDgyZTlmZjVhOTA1YjIifQ.eyJpc3MiOiJodHRwczovL3Rlc3QtbW9jay1vaWRjLnJlcGxpdC5hcHAvIiwiaWF0IjoxNzcyMTk4MTc4LCJleHAiOjE3NzIyMDE3NzgsInN1YiI6InRlc3R1c2VyLW1jMSIsImVtYWlsIjoidGVzdG1jQGV4YW1wbGUuY29tIiwiZmlyc3RfbmFtZSI6IlRlc3QiLCJsYXN0X25hbWUiOiJVc2VyIn0.VROvzFGC6c_gqH4gveehb7r7LJJn5P-2LPaq_oWfjAgQoMjvb3rjUHLSCPuD-DlZRLK4-xWsbLJnxpOyVkxo6Q4bA9rYO7OQYPSGG1UmXYxhCp1AL4chcsg37oJkwDDsG_4Xliiz8oUeRI1tq_zcNluyWGtccj8-m3sAa2Ek6PPSM_glqVGj_FfH4LR22c-gLEoPsy7AOa9N3HjOnESYfZzqsaHUm_RLVUPuTfrvdIY2W0QH0FusY9oC9ZpQz7PACjoUxkhrJbJPG0Fv24IcoQF0hzphD9NrGQIoLAAQi5yXEYEiTXPM6BtF5j-kWpd6Fztfy8Zk4Q7hu0bSvhajJQ", "refresh_token": "eyJzdWIiOiJ0ZXN0dXNlci1tYzEiLCJlbWFpbCI6InRlc3RtY0BleGFtcGxlLmNvbSIsImZpcnN0X25hbWUiOiJUZXN0IiwibGFzdF9uYW1lIjoiVXNlciJ9"}}}	2026-03-06 13:18:54
-KfkiQ61KWIrm7gmdZp8h8G73j7oFPSPp	{"cookie": {"path": "/", "secure": true, "expires": "2026-03-06T23:41:30.186Z", "httpOnly": true, "originalMaxAge": 604800000}, "passport": {"user": {"claims": {"aud": "b05eda9e-d001-4c03-b350-7cf4e4e6be19", "exp": 1772239290, "iat": 1772235690, "iss": "https://test-mock-oidc.replit.app/", "jti": "fe95f8c9e27c8c7020cc9ff935d028b6", "sub": "testuser-cat1", "email": "testcat@example.com", "auth_time": 1772235690, "last_name": "User", "first_name": "Test"}, "expires_at": 1772239290, "access_token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6Ijc4MDgyZTlmZjVhOTA1YjIifQ.eyJpc3MiOiJodHRwczovL3Rlc3QtbW9jay1vaWRjLnJlcGxpdC5hcHAvIiwiaWF0IjoxNzcyMjM1NjkwLCJleHAiOjE3NzIyMzkyOTAsInN1YiI6InRlc3R1c2VyLWNhdDEiLCJlbWFpbCI6InRlc3RjYXRAZXhhbXBsZS5jb20iLCJmaXJzdF9uYW1lIjoiVGVzdCIsImxhc3RfbmFtZSI6IlVzZXIifQ.uUL472i9KkQs5xq0GOWnRsJyTY8InMe_TDSV67bT3i8WoEfYeGfenQ-PfyKTCn04bcYKFnArgzfoZE1QLGK-f1H-Z0VlCW1gCp2Amim9s6xYNWGbhR9VIFx4m94pCEumfFroHg7SWgAlMRFyP8r9qVzJQdOoCnshCB5__gQyqCpiuEbEd2Fxm4SBuBhvWFXtkAZ0vBHYbRVkEFDvo931WrQEgfVNHcZ_pat9QxxIFrbQS36Wg8FM-inApvscIT8cXALXmhfdlgxZCmuGPUZazQDIZAiHTDUFrumbywzKrWEi5SrVQjG7zvTKTCv2OE1py-jVvcKqpByYNRvI9KG-dQ", "refresh_token": "eyJzdWIiOiJ0ZXN0dXNlci1jYXQxIiwiZW1haWwiOiJ0ZXN0Y2F0QGV4YW1wbGUuY29tIiwiZmlyc3RfbmFtZSI6IlRlc3QiLCJsYXN0X25hbWUiOiJVc2VyIn0"}}}	2026-03-06 23:42:12
-FEZReBgbNIkMW9ripXtzC7LQuRxtEAIo	{"cookie": {"path": "/", "secure": true, "expires": "2026-03-02T11:31:29.529Z", "httpOnly": true, "originalMaxAge": 604800000}, "passport": {"user": {"claims": {"aud": "b05eda9e-d001-4c03-b350-7cf4e4e6be19", "exp": 1771849889, "iat": 1771846289, "iss": "https://replit.com/oidc", "sub": "54893882", "email": "mohammedfalzaq@gmail.com", "at_hash": "k-IUR7AYE2ZzAAWkDDtL1Q", "username": "mohammedfalzaq", "auth_time": 1771282733, "last_name": "Fouad", "first_name": "Mohammed", "email_verified": true}, "expires_at": 1771849889, "access_token": "uzO_wW5KEvDuDM1fzNvWPZMMeORD9fVy1JaEedXe0CW", "refresh_token": "zGBdFsSJhhilOKg9vZJvKiIUBXknj8_zI9-DBZOvAEa"}}}	2026-03-09 09:49:01
+haf8_ZPdluTuhAOXz7WhjIPfeRkH6qJ5	{"cookie": {"path": "/", "secure": false, "expires": "2026-04-24T11:13:13.757Z", "httpOnly": true, "originalMaxAge": 604800000}, "userId": "54893882"}	2026-04-27 17:56:57
 \.
 
 
@@ -1042,6 +1042,8 @@ COPY public.transactions (id, user_id, category_id, amount, date, description, i
 27	54893882	5	22	2026-02-28 00:00:00	food	f	\N	\N	\N	2026-02-28 00:25:21.041405	USD	1
 28	54893882	7	444	2026-02-28 00:00:00	test	f	\N	\N	\N	2026-02-28 00:25:38.887619	USD	1
 29	54893882	5	4000	2026-02-28 00:00:00	NEO	f	\N	\N	\N	2026-02-28 00:47:47.307523	USD	0.2667
+30	54893882	18	1000	2026-03-07 00:00:00	Rental	f	\N	\N	\N	2026-03-07 19:02:32.859532	USD	1
+31	54893882	2	2000	2026-03-07 00:00:00	Wala	f	\N	\N	\N	2026-03-07 19:02:58.270623	USD	1
 \.
 
 
@@ -1049,14 +1051,14 @@ COPY public.transactions (id, user_id, category_id, amount, date, description, i
 -- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.users (id, email, first_name, last_name, profile_image_url, created_at, updated_at, phone, country, password, currency, language, theme) FROM stdin;
-test-user-finance-1	fintest@example.com	Finance	Tester	\N	2026-02-22 01:47:12.847078	2026-02-22 01:47:12.847078	\N	\N	\N	USD	en	light
-test-user-fin-2	fintest2@example.com	Finance	Tester	\N	2026-02-22 01:48:59.684397	2026-02-22 01:48:59.684397	\N	\N	\N	USD	en	light
-testuser-mc1	testmc@example.com	Test	User	\N	2026-02-27 13:16:18.65924	2026-02-27 13:16:18.65924	\N	\N	\N	USD	en	light
-testuser-cat1	testcat@example.com	Test	User	\N	2026-02-27 23:41:30.118732	2026-02-27 23:41:30.118732	\N	\N	\N	USD	en	light
-043d45b3-8307-4e75-ab40-a2e52de21cad	testuser_mI9VcV@example.com	TestUser	FinTrack	\N	2026-02-22 02:29:45.323783	2026-02-22 02:30:27.825	+15551234567	United States	$2b$10$2RPkSTeA4qCpGlB3ugXWJ.0ifiNk5kIswC9ic6YsNXd6IdzaVVywa	USD	en	light
-test-mudabbir-OD2Y7f	testuser-yIczc@example.com	Test	User	\N	2026-02-22 03:14:08.374809	2026-02-22 03:14:08.374809	\N	\N	\N	USD	en	light
-54893882	mohammedfalzaq@gmail.com	Mohammed	Fouad	\N	2026-02-16 22:58:53.788851	2026-02-28 16:24:43.835	\N	\N	\N	EUR	en	light
+COPY public.users (id, email, first_name, last_name, profile_image_url, created_at, updated_at, phone, country, password, currency, language, theme, is_admin, is_active) FROM stdin;
+test-user-finance-1	fintest@example.com	Finance	Tester	\N	2026-02-22 01:47:12.847078	2026-02-22 01:47:12.847078	\N	\N	\N	USD	en	light	f	t
+test-user-fin-2	fintest2@example.com	Finance	Tester	\N	2026-02-22 01:48:59.684397	2026-02-22 01:48:59.684397	\N	\N	\N	USD	en	light	f	t
+testuser-mc1	testmc@example.com	Test	User	\N	2026-02-27 13:16:18.65924	2026-02-27 13:16:18.65924	\N	\N	\N	USD	en	light	f	t
+testuser-cat1	testcat@example.com	Test	User	\N	2026-02-27 23:41:30.118732	2026-02-27 23:41:30.118732	\N	\N	\N	USD	en	light	f	t
+54893882	mohammedfalzaq@gmail.com	Mohammed	Fouad	\N	2026-02-16 22:58:53.788851	2026-04-17 12:37:56.359	\N	\N	$2b$10$Oah9vwMQKVWgB/8.aC0kseYeUpz9thZb4JqGqQQ0/4JPhy0jCMQGm	EUR	en	light	t	t
+043d45b3-8307-4e75-ab40-a2e52de21cad	testuser_mI9VcV@example.com	TestUser	FinTrack	\N	2026-02-22 02:29:45.323783	2026-02-22 02:30:27.825	+15551234567	United States	$2b$10$2RPkSTeA4qCpGlB3ugXWJ.0ifiNk5kIswC9ic6YsNXd6IdzaVVywa	USD	en	light	f	t
+test-mudabbir-OD2Y7f	testuser-yIczc@example.com	Test	User	\N	2026-02-22 03:14:08.374809	2026-02-22 03:14:08.374809	\N	\N	\N	USD	en	light	f	t
 \.
 
 
@@ -1171,7 +1173,7 @@ SELECT pg_catalog.setval('public.messages_id_seq', 1, false);
 -- Name: transactions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.transactions_id_seq', 29, true);
+SELECT pg_catalog.setval('public.transactions_id_seq', 31, true);
 
 
 --
@@ -1407,5 +1409,5 @@ ALTER TABLE ONLY public.transactions
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 41entMCXbdiaCAfENBqWCk6FVkFMxJo4onAhNqptWPTYOujDzdPRkC182Zfk5FK
+\unrestrict zv10ApuaCM6uh9rhsINoVpgRWF45dGahDhdQzL79m3ZVseCRvBFtNK8G95fhZyK
 
