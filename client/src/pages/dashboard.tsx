@@ -1,4 +1,5 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,13 +17,13 @@ import {
   DollarSign, TrendingUp, TrendingDown, Gem, Building2,
   LineChart, HandCoins, Target, Plus, ArrowUpRight, ArrowDownRight,
   RefreshCw, Sparkles, ChevronRight, AlertCircle, Clock, Wallet,
-  Receipt,
+  Receipt, Star, Moon, Bell, Calendar,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart as ReLineChart, Line,
 } from "recharts";
-import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { format, subMonths, startOfMonth, endOfMonth, isWithinInterval, differenceInDays, addDays, isBefore } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
@@ -65,6 +66,37 @@ export default function Dashboard() {
   const isAr = lang === "ar";
   const aiInsights = useAIInsights();
   const createContribution = useCreateGoalContribution();
+
+  const { data: zakatSettings } = useQuery({
+    queryKey: ["/api/zakat/settings"],
+    queryFn: async () => {
+      const r = await fetch("/api/zakat/settings", { credentials: "include" });
+      if (!r.ok) return null;
+      return r.json();
+    },
+  });
+
+  const zakatCountdown = useMemo(() => {
+    if (!zakatSettings?.hawlDate && !zakatSettings?.hawlStartDate) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const hawlDate = zakatSettings.hawlDate || "";
+    const hawlDateType = zakatSettings.hawlDateType || "fixed";
+    const hawlStartDate = zakatSettings.hawlStartDate || "";
+    let nextDate: Date | null = null;
+    if (hawlDateType === "tracking" && hawlStartDate) {
+      const start = new Date(hawlStartDate);
+      let next = addDays(start, 354);
+      while (isBefore(next, today)) next = addDays(next, 354);
+      nextDate = next;
+    } else if (hawlDate) {
+      const base = new Date(hawlDate);
+      let next = new Date(today.getFullYear(), base.getMonth(), base.getDate());
+      if (isBefore(next, today)) next = new Date(today.getFullYear() + 1, base.getMonth(), base.getDate());
+      nextDate = next;
+    }
+    if (!nextDate) return null;
+    return { days: differenceInDays(nextDate, today), nextDate };
+  }, [zakatSettings]);
 
   const [txFilter, setTxFilter] = useState<TxFilter>("all");
   const [chartRange, setChartRange] = useState<ChartRange>("6M");
@@ -350,6 +382,49 @@ export default function Dashboard() {
             </Card>
           </Link>
         </div>
+      )}
+
+      {/* ── ZAKAT COUNTDOWN WIDGET (shows when Hawl date is set and within 30 days) ── */}
+      {zakatCountdown && zakatCountdown.days <= 30 && (
+        <Link href="/zakat">
+          <div className="mb-6 cursor-pointer group" data-testid="card-zakat-countdown">
+            <div className="rounded-2xl border overflow-hidden transition-all duration-200 group-hover:shadow-md"
+              style={{
+                borderColor: zakatCountdown.days <= 7 ? "#FCA5A5" : zakatCountdown.days <= 14 ? "#FED7AA" : "#FDE68A",
+                background: zakatCountdown.days <= 7
+                  ? "linear-gradient(135deg, #FEF2F2, #FFF5F5)"
+                  : zakatCountdown.days <= 14
+                  ? "linear-gradient(135deg, #FFF7ED, #FFFBF5)"
+                  : "linear-gradient(135deg, #FFFBEB, #FFFFF5)",
+              }}>
+              <div className="p-4 flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
+                  style={{
+                    backgroundColor: zakatCountdown.days <= 7 ? "#FEE2E2" : zakatCountdown.days <= 14 ? "#FED7AA" : "#FEF3C7",
+                  }}>
+                  <Moon className="w-6 h-6" style={{ color: zakatCountdown.days <= 7 ? "#DC2626" : zakatCountdown.days <= 14 ? "#EA580C" : "#D97706" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold" style={{ color: zakatCountdown.days <= 7 ? "#991B1B" : zakatCountdown.days <= 14 ? "#9A3412" : "#92400E" }}>
+                    {zakatCountdown.days === 0 ? "🎉 Today is your Zakat day!" : `Zakat due in ${zakatCountdown.days} day${zakatCountdown.days !== 1 ? "s" : ""}`}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: zakatCountdown.days <= 7 ? "#DC2626" : "#B45309" }}>
+                    {format(zakatCountdown.nextDate, "EEEE, MMMM d, yyyy")}
+                    {zakatCountdown.days <= 7 ? " · Begin distributing to eligible recipients" : " · Review and finalize your calculation"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-semibold px-3 py-1.5 rounded-xl" style={{
+                    backgroundColor: zakatCountdown.days <= 7 ? "#DC2626" : zakatCountdown.days <= 14 ? "#EA580C" : "#D97706",
+                    color: "#fff",
+                  }}>
+                    {zakatCountdown.days === 0 ? "Pay now" : "View →"}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Link>
       )}
 
       {/* ── INCOME VS EXPENSES CHART ── */}

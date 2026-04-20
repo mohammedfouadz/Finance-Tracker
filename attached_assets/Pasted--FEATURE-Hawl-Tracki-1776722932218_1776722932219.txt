@@ -1,0 +1,318 @@
+═══════════════════════════════════════════════════════════════════════════════
+FEATURE: Hawl Tracking & Zakat Reminder System
+═══════════════════════════════════════════════════════════════════════════════
+
+Add a comprehensive Hawl tracking and smart reminder system to the Zakat 
+page and overall app notifications.
+
+───────────────────────────────────────────────────────────────────────────
+PART 1 — HAWL SETUP (in Step 1 of Zakat wizard)
+───────────────────────────────────────────────────────────────────────────
+
+Replace the current simple "Hawl Confirmed" toggle with a rich setup card:
+
+CARD: "Set Your Zakat Anniversary Date"
+Subtitle: "Choose when to calculate and pay your Zakat each year"
+
+Two clear options presented as radio cards:
+
+OPTION A (recommended): "Fixed Annual Date" 
+- Large visual card with moon/calendar icon
+- Description: "Choose a memorable Islamic date to calculate Zakat every 
+  year. Most practical for regular Muslims."
+- Date picker with Hijri calendar:
+  - Dropdown suggestions: "1 Ramadan", "1 Muharram", "15 Shaban", 
+    "Day of Arafah", "1 Dhul-Hijjah", "Custom date"
+  - Custom date: full Hijri date picker with Gregorian equivalent shown
+- Preview: "You'll pay Zakat every year on 1 Ramadan (≈ March 2, 2026 
+  this year)"
+
+OPTION B: "Track My Nisab Date Precisely"
+- Card with scales icon
+- Description: "I know the exact date my wealth first exceeded Nisab. 
+  Calculate based on 354-day lunar cycle."
+- Date picker: "When did your wealth first exceed Nisab?"
+  - Both Hijri and Gregorian date pickers
+  - "I'm not sure" option → falls back to Option A with education
+- Preview: "Your Hawl completes on [date] · Zakat due: [amount]"
+
+Behavior:
+- Once set, the date is saved to user profile
+- Can be changed anytime from Settings → Zakat Preferences
+- First-time setup triggers onboarding modal explaining options
+
+───────────────────────────────────────────────────────────────────────────
+PART 2 — COUNTDOWN & LIVE TRACKING
+───────────────────────────────────────────────────────────────────────────
+
+ON ZAKAT PAGE (in sticky results panel):
+
+HAWL COUNTDOWN CARD:
+Prominent card with warm gradient (emerald → gold subtle):
+
+- Title: "Next Zakat Date"
+- Large countdown display:
+  - 67 days remaining
+  - Or: "3 months · 12 days" for clarity
+- Hijri + Gregorian date display:
+  - "1 Ramadan 1447"
+  - "March 2, 2026"
+  - "Monday" (day of week)
+- Circular progress ring:
+  - Fills gradually through the year
+  - Shows percentage of Hawl elapsed
+  - "287 / 354 days complete (81%)"
+- Action buttons:
+  - "📅 Add to Calendar" (exports .ics file for Google/Apple/Outlook)
+  - "🔔 Customize Reminders"
+  - "📤 Share with family" (for household Zakat)
+
+Countdown states:
+- >60 days: calm emerald color, "Plenty of time"
+- 30-60 days: amber warning tone, "Prepare soon"
+- 14-30 days: orange alert, "Start preparing"
+- 7-14 days: soft red, "Final preparations"
+- 0-7 days: prominent red with urgency, "Zakat due soon"
+- Day of: full celebration, "Today is your Zakat day"
+- Past due: persistent reminder, "Your Zakat is overdue by X days"
+
+ON HOME (DASHBOARD):
+Small Zakat widget card appears when:
+- Within 30 days of Hawl completion
+- Shows: "Your Zakat is due in 21 days"
+- Estimated amount based on current wealth
+- "Start preparing →" button
+
+ON EVERY PAGE:
+- Subtle notification badge on sidebar "Zakat" item when within 14 days
+- Soft glow animation in final 7 days
+
+───────────────────────────────────────────────────────────────────────────
+PART 3 — MULTI-STAGE NOTIFICATION SYSTEM
+───────────────────────────────────────────────────────────────────────────
+
+Default notification schedule (fully customizable in Settings):
+
+📬 90 DAYS BEFORE: "Awareness Ping"
+Title: "Your Zakat is due in 3 months"
+Body: "Start gathering records and reviewing your wealth. No action needed yet."
+Tone: Calm, informative
+Channels: Email (digest), in-app only
+
+📬 60 DAYS BEFORE: "Preparation Reminder"
+Title: "Zakat preparation begins"
+Body: "In 2 months, your Hawl completes. Review your assets and investments now."
+Tone: Encouraging
+Channels: Email + in-app
+Action: "Review assets now →"
+
+📬 30 DAYS BEFORE: "Month Ahead"
+Title: "One month until Zakat"
+Body: "Your estimated Zakat based on current wealth: $2,302.50"
+Tone: Focused
+Channels: Email + push + in-app
+Action: "Open calculator →"
+
+📬 14 DAYS BEFORE: "Two Weeks Reminder"
+Title: "Zakat due in 14 days — finalize your calculation"
+Body: "Review your debts, gold holdings, and investments for accuracy."
+Tone: Active
+Channels: Email + push + in-app + optional SMS
+Action: "Complete calculation →"
+
+📬 7 DAYS BEFORE: "Final Week"
+Title: "Your Zakat is due in one week"
+Body: "Begin distributing to eligible recipients (Asnaf)."
+Tone: Urgent but warm
+Channels: All channels
+Action: "Pay Zakat now →"
+
+📬 3 DAYS BEFORE: "Three Days Left"
+Title: "3 days until your Zakat date"
+Body: "Ensure you've planned distribution to charities or recipients."
+Channels: All channels
+Action: "View distribution plan →"
+
+📬 1 DAY BEFORE: "Tomorrow"
+Title: "Your Zakat is due tomorrow"
+Body: "May Allah accept your Zakat. Final reminder to complete payment."
+Channels: All channels (high priority)
+
+📬 DAY OF: "Today is Your Zakat Day"
+Title: "Today: Pay your Zakat"
+Body: "[Hijri date] — Your Zakat of $X,XXX is due today"
+Channels: All channels (highest priority)
+Multiple check-ins throughout the day if not paid
+
+📬 DAY AFTER: "Gentle Follow-up" (only if not paid)
+Title: "Reminder: Complete your Zakat payment"
+Body: "Your Zakat was due yesterday. Complete it today to fulfill this 
+pillar."
+Tone: Gentle, non-judgmental
+Channels: Email + in-app
+
+📬 7 DAYS AFTER: "Overdue Check-in" (only if not paid)
+Title: "Zakat still pending"
+Body: "Is everything okay? Need help with distribution?"
+Action: "Get help →" (links to AI scholar or support)
+
+───────────────────────────────────────────────────────────────────────────
+PART 4 — CUSTOMIZATION IN SETTINGS
+───────────────────────────────────────────────────────────────────────────
+
+Settings → Notifications → Zakat Reminders section:
+
+Master toggle: "Enable Zakat reminders"
+
+Customize timing (checkboxes for each):
+☑ 90 days before
+☑ 60 days before  
+☑ 30 days before
+☑ 14 days before
+☑ 7 days before
+☑ 3 days before
+☑ 1 day before
+☑ Day of
+☑ Follow-up if unpaid
+
+Per reminder, choose channels:
+[Email] [Push] [SMS] [In-app only]
+
+Quiet hours:
+- From time - To time
+- "No Zakat reminders during quiet hours unless critical (day-of)"
+
+Family sharing:
+- "Also notify my spouse"
+- Email addresses of family members to include
+
+Preferred language for notifications:
+- English / Arabic / Urdu / etc.
+
+Islamic occasion reminders:
+☑ Also remind me about Zakat al-Fitr (before Eid)
+☑ Laylat al-Qadr reminder (spiritual context)
+☑ Ramadan preparation
+
+───────────────────────────────────────────────────────────────────────────
+PART 5 — SMART CONTEXTUAL INTELLIGENCE
+───────────────────────────────────────────────────────────────────────────
+
+The system gets smarter beyond just dates:
+
+WEALTH DROP DETECTION:
+If user's wealth drops below Nisab during the year:
+- Alert: "Your wealth fell below Nisab on [date]"
+- Explanation: "Per most scholars, Hawl resets if wealth drops below 
+  Nisab. Would you like to reset your Zakat date?"
+- Options: "Reset Hawl" / "Keep current date (some schools allow)"
+
+SIGNIFICANT WEALTH CHANGES:
+- If wealth grows significantly mid-year:
+  "Your wealth increased 40% — your Zakat estimate updated to $X,XXX"
+- If wealth decreased:
+  "Your estimated Zakat has decreased to $X,XXX based on recent changes"
+
+RAMADAN DETECTION:
+- When Ramadan begins:
+  "Ramadan Mubarak! Many Muslims pay Zakat in Ramadan for extra reward. 
+   Would you like to adjust your Zakat date to 1 Ramadan?"
+- Zakat al-Fitr activation:
+  "Don't forget Zakat al-Fitr before Eid prayer"
+
+LIFE EVENTS:
+- Large purchase detected (new car, house):
+  "Remember to update your Zakat calculation after major purchases"
+- New income stream:
+  "Congratulations! New income may affect your Zakat"
+
+TRAVEL CONSIDERATIONS:
+- If user's location changes:
+  "Traveling during your Zakat date? You can still pay online or schedule"
+
+───────────────────────────────────────────────────────────────────────────
+PART 6 — CALENDAR INTEGRATION
+───────────────────────────────────────────────────────────────────────────
+
+CALENDAR EXPORT:
+- Export Hawl date as recurring annual event to:
+  - Google Calendar
+  - Apple Calendar
+  - Outlook
+  - Any .ics compatible calendar
+- Event details include: estimated amount, preparation reminders as 
+  sub-events
+
+CALENDAR DISPLAY:
+- In-app mini calendar view showing:
+  - Zakat anniversary date (highlighted)
+  - Hijri dates alongside Gregorian
+  - Ramadan dates
+  - Islamic holidays
+  - Past Zakat payment dates
+
+WIDGETS:
+- Home page Zakat widget always shows days remaining
+- Optional iOS/Android home screen widget (if mobile app):
+  "🕌 Zakat in 67 days"
+
+───────────────────────────────────────────────────────────────────────────
+PART 7 — MULTI-YEAR PLANNING
+───────────────────────────────────────────────────────────────────────────
+
+YEAR-OVER-YEAR VIEW:
+"Your Zakat Journey" timeline:
+- 1444 AH: $1,640 · Paid ✓ (2 Ramadan 1444)
+- 1445 AH: $1,890 · Paid ✓ (1 Ramadan 1445)
+- 1446 AH: $2,127 · Paid ✓ (1 Ramadan 1446)
+- 1447 AH: $2,302 · Upcoming (1 Ramadan 1447, 67 days)
+- 1448 AH: projected ~$2,500 based on growth trend
+
+TOTAL LIFETIME ZAKAT:
+Celebration card: "You've paid $7,959 in Zakat across 3 years · 
+May Allah accept it all"
+
+PLANNING AHEAD:
+- "Set aside monthly for next year's Zakat"
+  Recommendation: "Save $191.88/month to have 2026 Zakat ready"
+- Auto-transfer suggestion to savings account earmarked for Zakat
+
+───────────────────────────────────────────────────────────────────────────
+PART 8 — SPECIAL CASES HANDLING
+───────────────────────────────────────────────────────────────────────────
+
+MULTIPLE HAWL DATES:
+Some users have different Hawl for different assets (e.g., gold bought 
+later than cash savings). Advanced option:
+- "Track separate Hawl per asset type"
+- Each asset type has its own anniversary
+- Consolidated view or individual tracking
+
+EARLY PAYMENT:
+- "Pay Zakat early for extra reward" option
+- Track pre-paid Zakat amounts
+- Deducts from next year's obligation
+
+DELAYED PAYMENT (with reason):
+- Legitimate delay tracking (cash flow, recipient availability)
+- Doesn't mark as "overdue" if user marks as "scheduled distribution"
+
+HOUSEHOLD MANAGEMENT:
+- Primary account holder manages family Zakat
+- Individual Hawl dates per family member
+- Combined view for household planning
+
+───────────────────────────────────────────────────────────────────────────
+PART 9 — EDUCATIONAL SUPPORT
+───────────────────────────────────────────────────────────────────────────
+
+When user receives reminder, they can:
+- Tap "Why this reminder?" → brief explanation of Hawl
+- Tap "Ask scholar" → opens AI scholar chat with context
+- Tap "Change my date" → quick access to modify anniversary
+
+Knowledge base articles accessible from reminders:
+- "What if I miss my Hawl date?"
+- "Can I pay Zakat early?"
+- "How do I know my exact Nisab date?"
+- "What if my wealth changes mid-year?"

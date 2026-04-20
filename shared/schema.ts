@@ -191,6 +191,10 @@ export const zakatSettings = pgTable("zakat_settings", {
   realEstateMode: text("real_estate_mode").notNull().default("exempt"),
   // Hawl: user confirms wealth has been above nisab for one full lunar year (354 days)
   hawlMet: boolean("hawl_met").notNull().default(false),
+  // Hawl date tracking
+  hawlDate: text("hawl_date"),           // ISO "YYYY-MM-DD" — the annual Zakat anniversary date
+  hawlDateType: text("hawl_date_type").default("fixed"), // "fixed" | "tracking"
+  hawlStartDate: text("hawl_start_date"), // ISO date when wealth first exceeded Nisab (tracking mode)
   // Precious metal prices (USD per gram) — user-entered or fetched from API
   goldPricePerGram: numeric("gold_price_per_gram").default("60"),
   silverPricePerGram: numeric("silver_price_per_gram").default("0.75"),

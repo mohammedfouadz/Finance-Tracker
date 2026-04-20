@@ -10,8 +10,52 @@ import {
   Settings, User, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useQuery } from "@tanstack/react-query";
+import { addDays, differenceInDays, isBefore } from "date-fns";
+
+function useZakatDaysLeft() {
+  const { data } = useQuery({
+    queryKey: ["/api/zakat/settings"],
+    queryFn: async () => {
+      const r = await fetch("/api/zakat/settings", { credentials: "include" });
+      if (!r.ok) return null;
+      return r.json();
+    },
+    staleTime: 60 * 1000,
+  });
+  return useMemo(() => {
+    if (!data?.hawlDate && !data?.hawlStartDate) return null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let nextDate: Date | null = null;
+    if (data.hawlDateType === "tracking" && data.hawlStartDate) {
+      let next = addDays(new Date(data.hawlStartDate), 354);
+      while (isBefore(next, today)) next = addDays(next, 354);
+      nextDate = next;
+    } else if (data.hawlDate) {
+      const base = new Date(data.hawlDate);
+      let next = new Date(today.getFullYear(), base.getMonth(), base.getDate());
+      if (isBefore(next, today)) next = new Date(today.getFullYear() + 1, base.getMonth(), base.getDate());
+      nextDate = next;
+    }
+    if (!nextDate) return null;
+    return differenceInDays(nextDate, today);
+  }, [data]);
+}
+
+function ZakatBadge({ isActive }: { isActive: boolean }) {
+  const days = useZakatDaysLeft();
+  if (days === null || days > 14) return null;
+  const color = days <= 7 ? "#DC2626" : days <= 14 ? "#EA580C" : "#D97706";
+  return (
+    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+      style={{ backgroundColor: isActive ? "rgba(255,255,255,0.3)" : color, color: isActive ? "#fff" : "#fff" }}
+      data-testid="badge-zakat-countdown">
+      {days === 0 ? "!" : `${days}d`}
+    </span>
+  );
+}
 
 function WealthlyLogo({ size = 32 }: { size?: number }) {
   return (
@@ -68,7 +112,7 @@ const NAV_GROUPS = [
   },
 ];
 
-function NavItem({ item, isActive, onClick }: { item: { label: string; href: string; icon: any }; isActive: boolean; onClick?: () => void }) {
+function NavItem({ item, isActive, onClick, badge }: { item: { label: string; href: string; icon: any }; isActive: boolean; onClick?: () => void; badge?: React.ReactNode }) {
   return (
     <Link href={item.href}>
       <div
@@ -82,7 +126,8 @@ function NavItem({ item, isActive, onClick }: { item: { label: string; href: str
         onClick={onClick}
       >
         <item.icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-white" : "text-[#94A3B8] dark:text-[#64748B] group-hover:text-[#1B4FE4] dark:group-hover:text-[#4F8EF7]")} />
-        <span className="font-medium text-[14px]">{item.label}</span>
+        <span className="font-medium text-[14px] flex-1">{item.label}</span>
+        {badge}
       </div>
     </Link>
   );
@@ -196,13 +241,17 @@ export function Sidebar() {
         {NAV_GROUPS.map(group => (
           <div key={group.label}>
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-3 mb-1">{group.label}</p>
-            {group.items.map(item => (
-              <NavItem
-                key={item.href}
-                item={item}
-                isActive={location === item.href || (item.href === "/dashboard" && location === "/")}
-              />
-            ))}
+            {group.items.map(item => {
+              const active = location === item.href || (item.href === "/dashboard" && location === "/");
+              return (
+                <NavItem
+                  key={item.href}
+                  item={item}
+                  isActive={active}
+                  badge={item.href === "/zakat" ? <ZakatBadge isActive={active} /> : undefined}
+                />
+              );
+            })}
           </div>
         ))}
       </nav>
@@ -250,11 +299,14 @@ export function MobileHeader() {
             {NAV_GROUPS.map(group => (
               <div key={group.label}>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-2 mb-1">{group.label}</p>
-                {group.items.map(item => (
-                  <NavItem key={item.href} item={item}
-                    isActive={location === item.href || (item.href === "/dashboard" && location === "/")}
-                    onClick={() => setOpen(false)} />
-                ))}
+                {group.items.map(item => {
+                  const active = location === item.href || (item.href === "/dashboard" && location === "/");
+                  return (
+                    <NavItem key={item.href} item={item} isActive={active}
+                      onClick={() => setOpen(false)}
+                      badge={item.href === "/zakat" ? <ZakatBadge isActive={active} /> : undefined} />
+                  );
+                })}
               </div>
             ))}
             {isAdmin && (

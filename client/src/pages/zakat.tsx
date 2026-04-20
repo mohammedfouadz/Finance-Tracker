@@ -12,13 +12,132 @@ import { toUsd } from "@/lib/currency";
 import { calculateZakat, type ZakatAssets, type ZakatCalculatorSettings, type ZakatPrices } from "@shared/zakatCalculator";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle2, XCircle, RefreshCw, Save, Trash2, ChevronDown, ChevronUp, Info } from "lucide-react";
-import { format } from "date-fns";
+import { useLocation } from "wouter";
+import {
+  CheckCircle2, XCircle, RefreshCw, Save, Trash2, ChevronDown, ChevronUp, Info,
+  Calendar, Bell, Moon, Star, Clock, Download, ExternalLink, ArrowRight,
+  TrendingUp, CheckCheck, AlertTriangle, Sparkles, Target,
+} from "lucide-react";
+import { format, differenceInDays, addDays, isToday, isBefore } from "date-fns";
 
-// ---------------------------------------------------------------------------
-// Hooks for zakat-specific endpoints
-// ---------------------------------------------------------------------------
+/* ── palette ── */
+const BRAND  = "#1B4FE4";
+const MINT   = "#00C896";
+const AMBER  = "#F59E0B";
+const DANGER = "#EF4444";
+const PURPLE = "#8B5CF6";
+const GOLD   = "#D97706";
 
+/* ── Hijri month names ── */
+const HIJRI_MONTHS = [
+  "Muharram","Safar","Rabi' al-Awwal","Rabi' al-Thani",
+  "Jumada al-Awwal","Jumada al-Thani","Rajab","Sha'ban",
+  "Ramadan","Shawwal","Dhu al-Qa'dah","Dhu al-Hijjah",
+];
+
+/* ── Gregorian → Hijri conversion (Kuwaiti algorithm) ── */
+function toHijri(date: Date): { year: number; month: number; day: number; monthName: string } {
+  const d = date.getDate(), m = date.getMonth() + 1, y = date.getFullYear();
+  const jd =
+    Math.floor((1461 * (y + 4800 + Math.floor((m - 14) / 12))) / 4) +
+    Math.floor((367 * (m - 2 - 12 * Math.floor((m - 14) / 12))) / 12) -
+    Math.floor((3 * Math.floor((y + 4900 + Math.floor((m - 14) / 12)) / 100)) / 4) +
+    d - 32075;
+  let l = jd - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  l = l - 10631 * n + 354;
+  const j =
+    Math.floor((10985 - l) / 5316) * Math.floor((50 * l) / 17719) +
+    Math.floor(l / 5670) * Math.floor((43 * l) / 15238);
+  l =
+    l -
+    Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) -
+    Math.floor(j / 16) * Math.floor((15238 * j) / 43) +
+    29;
+  const hm = Math.floor((24 * l) / 709);
+  const hd = l - Math.floor((709 * hm) / 24);
+  const hy = 30 * n + j - 30;
+  return { year: hy, month: hm, day: hd, monthName: HIJRI_MONTHS[hm - 1] ?? "" };
+}
+
+/* ── Next Hawl date computation ── */
+function getNextHawlDate(hawlDate: string, hawlDateType: string, hawlStartDate?: string): Date | null {
+  if (!hawlDate) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  if (hawlDateType === "tracking" && hawlStartDate) {
+    // Hawl completes 354 days after start, then repeats every 354 days
+    const start = new Date(hawlStartDate);
+    let next = addDays(start, 354);
+    while (isBefore(next, today)) next = addDays(next, 354);
+    return next;
+  }
+  // Fixed annual: same month/day every year
+  const base = new Date(hawlDate);
+  let next = new Date(today.getFullYear(), base.getMonth(), base.getDate());
+  if (isBefore(next, today) && !isToday(next)) {
+    next = new Date(today.getFullYear() + 1, base.getMonth(), base.getDate());
+  }
+  return next;
+}
+
+function getLastHawlDate(hawlDate: string, hawlDateType: string, hawlStartDate?: string): Date | null {
+  const next = getNextHawlDate(hawlDate, hawlDateType, hawlStartDate);
+  if (!next) return null;
+  if (hawlDateType === "tracking") return addDays(next, -354);
+  return new Date(next.getFullYear() - 1, next.getMonth(), next.getDate());
+}
+
+/* ── Countdown color state ── */
+function countdownState(days: number): { color: string; bg: string; label: string; urgent: boolean } {
+  if (days < 0)  return { color: "#DC2626", bg: "#FEF2F2", label: `${Math.abs(days)} days overdue`, urgent: true };
+  if (days === 0) return { color: "#059669", bg: "#ECFDF5", label: "Today is your Zakat day! 🎉", urgent: true };
+  if (days <= 7)  return { color: "#DC2626", bg: "#FEF2F2", label: "Zakat due very soon",  urgent: true  };
+  if (days <= 14) return { color: "#EA580C", bg: "#FFF7ED", label: "Final preparations",    urgent: true  };
+  if (days <= 30) return { color: AMBER,    bg: "#FFFBEB", label: "Start preparing",        urgent: false };
+  if (days <= 60) return { color: AMBER,    bg: "#FFFBEB", label: "Prepare soon",           urgent: false };
+  return            { color: MINT,    bg: "#ECFDF5", label: "Plenty of time",          urgent: false };
+}
+
+/* ── ICS calendar export ── */
+function exportToICS(nextDate: Date, zakatAmount: number) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const y = nextDate.getFullYear(), m = nextDate.getMonth() + 1, d = nextDate.getDate();
+  const dt = `${y}${pad(m)}${pad(d)}`;
+  const ics = `BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//Wealthly//ZakatReminder//EN\r\nCALSCALE:GREGORIAN\r\nBEGIN:VEVENT\r\nDTSTART;VALUE=DATE:${dt}\r\nSUMMARY:Zakat Due — $${zakatAmount.toFixed(2)}\r\nDESCRIPTION:Your annual Zakat is due today.\\nEstimated amount: $${zakatAmount.toFixed(2)}\\nMay Allah accept your Zakat.\r\nRRULE:FREQ=YEARLY\r\nBEGIN:VALARM\r\nTRIGGER:-P30D\r\nACTION:DISPLAY\r\nDESCRIPTION:Zakat due in 30 days\r\nEND:VALARM\r\nBEGIN:VALARM\r\nTRIGGER:-P7D\r\nACTION:DISPLAY\r\nDESCRIPTION:Zakat due in 7 days\r\nEND:VALARM\r\nEND:VEVENT\r\nEND:VCALENDAR`;
+  const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a"); a.href = url; a.download = "zakat-reminder.ics"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+/* ── Circular SVG Progress Ring ── */
+function ProgressRing({ percent, size = 96, stroke = 7, color = MINT }: { percent: number; size?: number; stroke?: number; color?: string }) {
+  const r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ * (1 - Math.min(Math.max(percent, 0), 100) / 100);
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: "rotate(-90deg)" }}>
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#E2E8F0" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+        strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round"
+        style={{ transition: "stroke-dashoffset 1.5s ease" }} />
+    </svg>
+  );
+}
+
+/* ── Small helpers ── */
+const fmt = (v: number) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+function InfoRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <div className="flex justify-between items-center py-1.5 border-b last:border-0 dark:border-gray-800">
+      <span className={`text-sm ${strong ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{label}</span>
+      <span className={`text-sm font-mono ${strong ? "font-bold text-foreground" : ""}`}>{value}</span>
+    </div>
+  );
+}
+
+/* ── Hooks ── */
 function useZakatSettings() {
   return useQuery({
     queryKey: ["/api/zakat/settings"],
@@ -35,10 +154,8 @@ function useSaveZakatSettings() {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       const r = await fetch("/api/zakat/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data), credentials: "include",
       });
       if (!r.ok) throw new Error("Failed to save settings");
       return r.json();
@@ -63,10 +180,8 @@ function useSaveSnapshot() {
   return useMutation({
     mutationFn: async (data: Record<string, any>) => {
       const r = await fetch("/api/zakat/snapshots", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: "include",
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data), credentials: "include",
       });
       if (!r.ok) throw new Error("Failed to save snapshot");
       return r.json();
@@ -85,25 +200,380 @@ function useDeleteSnapshot() {
   });
 }
 
-// ---------------------------------------------------------------------------
-// Small helpers
-// ---------------------------------------------------------------------------
+/* ══════════════════════════════════════════════════════════
+   HAWL SETUP CARD — replaces the simple toggle
+══════════════════════════════════════════════════════════ */
+function HawlSetupCard({
+  hawlDate, hawlDateType, hawlStartDate,
+  onChange, onSave, saving,
+}: {
+  hawlDate: string; hawlDateType: string; hawlStartDate: string;
+  onChange: (key: string, val: string) => void;
+  onSave: () => void; saving: boolean;
+}) {
+  const PRESET_DATES: { label: string; month: number; day: number }[] = [
+    { label: "1 Ramadan", month: 3, day: 2 },    // approximate Gregorian
+    { label: "1 Muharram", month: 7, day: 6 },
+    { label: "15 Sha'ban", month: 2, day: 14 },
+    { label: "Day of Arafah", month: 6, day: 5 },
+    { label: "1 Dhul Hijjah", month: 5, day: 28 },
+  ];
 
-const fmt = (v: number) => `$${v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const nextDate = hawlDate ? getNextHawlDate(hawlDate, hawlDateType, hawlStartDate) : null;
+  const hijriNext = nextDate ? toHijri(nextDate) : null;
 
-function InfoRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
   return (
-    <div className="flex justify-between items-center py-1.5 border-b last:border-0 dark:border-gray-800">
-      <span className={`text-sm ${strong ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{label}</span>
-      <span className={`text-sm font-mono ${strong ? "font-bold text-foreground" : ""}`}>{value}</span>
-    </div>
+    <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+      <div className="px-5 pt-5 pb-4 border-b border-gray-50 dark:border-gray-800">
+        <div className="flex items-center gap-2.5 mb-1">
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${MINT}33, ${GOLD}22)` }}>
+            <Moon className="w-4 h-4" style={{ color: GOLD }} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-base">Set Your Zakat Anniversary Date</h3>
+            <p className="text-xs text-gray-400">Choose when to calculate and pay your Zakat each year</p>
+          </div>
+        </div>
+      </div>
+      <div className="p-5 space-y-4">
+        {/* Option A: Fixed Annual Date */}
+        <div
+          onClick={() => onChange("hawlDateType", "fixed")}
+          className="w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer"
+          style={hawlDateType === "fixed"
+            ? { borderColor: MINT, backgroundColor: "#ECFDF5" }
+            : { borderColor: "#E2E8F0", backgroundColor: "transparent" }}>
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0"
+              style={{ borderColor: hawlDateType === "fixed" ? MINT : "#CBD5E1" }}>
+              {hawlDateType === "fixed" && <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: MINT }} />}
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">Fixed Annual Date</p>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full text-white" style={{ backgroundColor: MINT }}>Recommended</span>
+              </div>
+              <p className="text-xs text-gray-500">Choose a memorable Islamic date to calculate Zakat every year. Most practical for regular Muslims.</p>
+              {hawlDateType === "fixed" && (
+                <div className="mt-3 space-y-3">
+                  <div>
+                    <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">Quick select Islamic date</label>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {PRESET_DATES.map(p => {
+                        const yearDate = `${new Date().getFullYear()}-${String(p.month).padStart(2,"0")}-${String(p.day).padStart(2,"0")}`;
+                        return (
+                          <button key={p.label} onClick={e => { e.stopPropagation(); onChange("hawlDate", yearDate); }}
+                            className="text-[11px] font-medium px-2.5 py-1 rounded-full border transition-all"
+                            style={hawlDate === yearDate
+                              ? { backgroundColor: MINT, color: "#fff", borderColor: MINT }
+                              : { backgroundColor: "#F8FAFC", color: "#64748B", borderColor: "#E2E8F0" }}>
+                            {p.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Input type="date" value={hawlDate} onClick={e => e.stopPropagation()}
+                        onChange={e => { e.stopPropagation(); onChange("hawlDate", e.target.value); }}
+                        className="h-8 text-xs max-w-[180px]" />
+                      <span className="text-xs text-gray-400">Custom date</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Option B: Track Nisab Date */}
+        <div
+          onClick={() => onChange("hawlDateType", "tracking")}
+          className="w-full text-left p-4 rounded-xl border-2 transition-all cursor-pointer"
+          style={hawlDateType === "tracking"
+            ? { borderColor: BRAND, backgroundColor: "#EEF4FF" }
+            : { borderColor: "#E2E8F0", backgroundColor: "transparent" }}>
+          <div className="flex items-start gap-3">
+            <div className="w-5 h-5 rounded-full border-2 mt-0.5 flex items-center justify-center shrink-0"
+              style={{ borderColor: hawlDateType === "tracking" ? BRAND : "#CBD5E1" }}>
+              {hawlDateType === "tracking" && <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: BRAND }} />}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">Track My Nisab Date Precisely</p>
+              <p className="text-xs text-gray-500">I know the exact date my wealth first exceeded Nisab. Calculate based on the 354-day lunar cycle.</p>
+              {hawlDateType === "tracking" && (
+                <div className="mt-3">
+                  <label className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5 block">When did your wealth first exceed Nisab?</label>
+                  <Input type="date" value={hawlStartDate} onClick={e => e.stopPropagation()}
+                    onChange={e => { e.stopPropagation(); onChange("hawlStartDate", e.target.value); }}
+                    className="h-8 text-xs max-w-[200px]" />
+                  <p className="text-xs text-gray-400 mt-1">Hawl completes 354 days after this date and repeats annually.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Preview */}
+        {nextDate && (
+          <div className="p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/30" style={{ backgroundColor: "#F0FDF4" }}>
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <div>
+                <p className="text-xs font-semibold text-emerald-800">
+                  Your next Zakat date: {format(nextDate, "MMMM d, yyyy")}
+                  {" "}({format(nextDate, "EEEE")})
+                </p>
+                {hijriNext && (
+                  <p className="text-[11px] text-emerald-600 mt-0.5">
+                    ≈ {hijriNext.day} {hijriNext.monthName} {hijriNext.year} AH
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <Button onClick={onSave} disabled={saving || (!hawlDate && !hawlStartDate)}
+          className="gap-2 rounded-xl text-white" style={{ backgroundColor: MINT }}>
+          {saving ? <><RefreshCw className="w-4 h-4 animate-spin" />Saving…</> : <><Save className="w-4 h-4" />Save Hawl Date</>}
+        </Button>
+      </div>
+    </Card>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Main Component
-// ---------------------------------------------------------------------------
+/* ══════════════════════════════════════════════════════════
+   HAWL COUNTDOWN CARD
+══════════════════════════════════════════════════════════ */
+function HawlCountdownCard({
+  hawlDate, hawlDateType, hawlStartDate, zakatDue,
+}: {
+  hawlDate: string; hawlDateType: string; hawlStartDate: string; zakatDue: number;
+}) {
+  const [, navigate] = useLocation();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
 
+  const nextDate = getNextHawlDate(hawlDate, hawlDateType, hawlStartDate);
+  const lastDate = getLastHawlDate(hawlDate, hawlDateType, hawlStartDate);
+
+  if (!nextDate) {
+    return (
+      <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
+        <CardContent className="p-5 text-center">
+          <Moon className="w-8 h-8 mx-auto mb-3 text-gray-300" />
+          <p className="text-sm font-semibold text-gray-600 dark:text-gray-400">Hawl date not set</p>
+          <p className="text-xs text-gray-400 mt-1">Set your Zakat anniversary date in Settings above to see your countdown</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const daysLeft = differenceInDays(nextDate, today);
+  const daysElapsed = lastDate ? differenceInDays(today, lastDate) : 0;
+  const totalDays = hawlDateType === "tracking" ? 354 : 365;
+  const progress = Math.min(Math.max((daysElapsed / totalDays) * 100, 0), 100);
+  const state = countdownState(daysLeft);
+  const hijriNext = toHijri(nextDate);
+
+  // Month/day label
+  const months = Math.floor(Math.abs(daysLeft) / 30);
+  const days  = Math.abs(daysLeft) % 30;
+
+  return (
+    <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden">
+      <div className="p-1" style={{ background: `linear-gradient(135deg, ${MINT}18, ${GOLD}12)` }}>
+        <div className="bg-white dark:bg-gray-900 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Moon className="w-4 h-4" style={{ color: GOLD }} />
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">Next Zakat Date</span>
+            {daysLeft <= 14 && daysLeft >= 0 && (
+              <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse"
+                style={{ backgroundColor: state.bg, color: state.color }}>
+                {state.label}
+              </span>
+            )}
+          </div>
+
+          {/* Main countdown + ring */}
+          <div className="flex items-center gap-4 mb-4">
+            <div className="relative shrink-0">
+              <ProgressRing percent={progress} size={88} stroke={6} color={state.color} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-xl font-bold leading-none" style={{ color: state.color }}>
+                  {daysLeft === 0 ? "🎉" : Math.abs(daysLeft)}
+                </span>
+                {daysLeft !== 0 && <span className="text-[9px] text-gray-400 font-medium mt-0.5">days</span>}
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-base font-bold text-gray-900 dark:text-white">
+                {format(nextDate, "MMMM d, yyyy")}
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">{format(nextDate, "EEEE")}</p>
+              <p className="text-xs mt-1 font-medium" style={{ color: GOLD }}>
+                {hijriNext.day} {hijriNext.monthName} {hijriNext.year} AH
+              </p>
+              {daysLeft > 0 && (
+                <p className="text-xs text-gray-400 mt-1.5">
+                  {months > 0 ? `${months}mo ` : ""}{days > 0 ? `${days}d` : ""} remaining
+                </p>
+              )}
+              {daysLeft < 0 && (
+                <p className="text-xs font-semibold mt-1" style={{ color: DANGER }}>
+                  Overdue by {Math.abs(daysLeft)} days
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Progress bar label */}
+          <div className="mb-4">
+            <div className="flex justify-between text-[10px] text-gray-400 mb-1">
+              <span>Hawl progress</span>
+              <span>{progress.toFixed(0)}% · {daysElapsed} / {totalDays} days</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "#E2E8F0" }}>
+              <div className="h-full rounded-full transition-all duration-1000"
+                style={{ width: `${progress}%`, backgroundColor: state.color }} />
+            </div>
+          </div>
+
+          {/* Zakat amount */}
+          {zakatDue > 0 && (
+            <div className="p-2.5 rounded-xl mb-3" style={{ backgroundColor: state.bg }}>
+              <p className="text-[10px] text-gray-500 mb-0.5">Estimated Zakat due</p>
+              <p className="text-lg font-bold" style={{ color: state.color }}>{fmt(zakatDue)}</p>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-lg text-xs flex-1"
+              onClick={() => exportToICS(nextDate, zakatDue)}>
+              <Calendar className="w-3.5 h-3.5" /> Add to Calendar
+            </Button>
+            <Button variant="outline" size="sm" className="gap-1.5 rounded-lg text-xs flex-1"
+              onClick={() => navigate("/settings#notifications")}>
+              <Bell className="w-3.5 h-3.5" /> Reminders
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   ZAKAT JOURNEY (multi-year history)
+══════════════════════════════════════════════════════════ */
+function ZakatJourney({ snapshots }: { snapshots: any[] }) {
+  if (!snapshots || snapshots.length === 0) return null;
+
+  const total = snapshots.reduce((s, snap) => s + Number(snap.zakatDue || 0), 0);
+  const sorted = [...snapshots].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  return (
+    <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl mt-6">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-base flex items-center gap-2">
+              <Star className="w-4 h-4 text-amber-500" /> Your Zakat Journey
+            </h3>
+            <p className="text-xs text-gray-400 mt-0.5">Year-over-year record</p>
+          </div>
+          {total > 0 && (
+            <div className="text-right">
+              <p className="text-[10px] text-gray-400 mb-0.5">Lifetime total</p>
+              <p className="text-base font-bold" style={{ color: MINT }}>{fmt(total)}</p>
+            </div>
+          )}
+        </div>
+
+        {total > 0 && (
+          <div className="p-3 rounded-xl mb-4" style={{ background: `linear-gradient(135deg, ${MINT}18, ${GOLD}12)` }}>
+            <div className="flex items-center gap-2">
+              <CheckCheck className="w-4 h-4 text-emerald-600" />
+              <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                You've paid {fmt(total)} in Zakat across {snapshots.length} record{snapshots.length > 1 ? "s" : ""}. May Allah accept it. 🤲
+              </p>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-2.5">
+          {sorted.map((s: any, i) => {
+            const hijri = toHijri(new Date(s.createdAt));
+            const due = Number(s.zakatDue || 0);
+            const paid = s.hawlMet && s.nisabMet;
+            return (
+              <div key={s.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 group" data-testid={`snapshot-row-${s.id}`}>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: paid ? "#ECFDF5" : "#F1F5F9" }}>
+                  {paid ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <Clock className="w-4 h-4 text-gray-400" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-semibold text-gray-800 dark:text-gray-200">
+                      {format(new Date(s.createdAt), "dd MMM yyyy")}
+                    </p>
+                    <Badge variant="outline" className="text-[9px] h-4">{s.nisabStandard}</Badge>
+                    {i === 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: BRAND + "22", color: BRAND }}>Latest</span>}
+                  </div>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {hijri.day} {hijri.monthName} {hijri.year} AH · Net: {fmt(Number(s.netZakatable))}
+                  </p>
+                  {s.notes && <p className="text-[10px] text-gray-500 mt-0.5 truncate">"{s.notes}"</p>}
+                </div>
+                <div className="text-right shrink-0">
+                  {due > 0 ? (
+                    <p className="text-sm font-bold" style={{ color: MINT }}>{fmt(due)}</p>
+                  ) : (
+                    <p className="text-xs text-gray-400">Not due</p>
+                  )}
+                </div>
+                <DeleteSnapshotBtn id={s.id} />
+              </div>
+            );
+          })}
+        </div>
+
+        {snapshots.length >= 2 && (
+          <div className="mt-4 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Consider setting aside {fmt(sorted[0] ? Number(sorted[0].zakatDue || 0) / 12 : 0)}/month
+                to have next year's Zakat ready well in advance.
+              </p>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeleteSnapshotBtn({ id }: { id: number }) {
+  const qc = useQueryClient();
+  const del = useMutation({
+    mutationFn: async (id: number) => {
+      await fetch(`/api/zakat/snapshots/${id}`, { method: "DELETE", credentials: "include" });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["/api/zakat/snapshots"] }),
+  });
+  return (
+    <button onClick={() => del.mutate(id)}
+      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all ml-1"
+      data-testid={`button-delete-snapshot-${id}`}>
+      <Trash2 className="w-3.5 h-3.5" />
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════ */
 export default function ZakatPage() {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -117,47 +587,43 @@ export default function ZakatPage() {
 
   const saveSettings = useSaveZakatSettings();
   const saveSnapshot = useSaveSnapshot();
-  const deleteSnapshot = useDeleteSnapshot();
 
   const [settingsOpen, setSettingsOpen] = useState(true);
   const [pricesLoading, setPricesLoading] = useState(false);
 
-  // --- Calculator state ---
+  // Calculator state
   const [settings, setSettings] = useState<ZakatCalculatorSettings>({
-    nisabStandard: "gold",
-    includeDebts: true,
-    hawlMet: false,
-    realEstateMode: "exempt",
+    nisabStandard: "gold", includeDebts: true, hawlMet: false, realEstateMode: "exempt",
   });
-
-  const [prices, setPrices] = useState<ZakatPrices>({
-    goldPricePerGram: 60,
-    silverPricePerGram: 0.75,
-  });
-
-  const [cashOnHand, setCashOnHand] = useState("0");
-  const [goldGrams, setGoldGrams] = useState("0");
-  const [goldKarat, setGoldKarat] = useState("24");
-  const [silverGrams, setSilverGrams] = useState("0");
-  const [receivables, setReceivables] = useState("0");
+  const [prices, setPrices] = useState<ZakatPrices>({ goldPricePerGram: 60, silverPricePerGram: 0.75 });
+  const [cashOnHand, setCashOnHand]         = useState("0");
+  const [goldGrams, setGoldGrams]           = useState("0");
+  const [goldKarat, setGoldKarat]           = useState("24");
+  const [silverGrams, setSilverGrams]       = useState("0");
+  const [receivables, setReceivables]       = useState("0");
   const [rentalIncomeCash, setRentalIncomeCash] = useState("0");
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes]                   = useState("");
 
-  // Per-account and per-investment zakat overrides (local state synced from server)
-  const [accountZakatable, setAccountZakatable] = useState<Record<number, boolean>>({});
+  // Hawl tracking state
+  const [hawlDate, setHawlDate]           = useState("");
+  const [hawlDateType, setHawlDateType]   = useState("fixed");
+  const [hawlStartDate, setHawlStartDate] = useState("");
+
+  // Per-account / per-investment overrides
+  const [accountZakatable, setAccountZakatable]         = useState<Record<number, boolean>>({});
   const [investmentZakatMethod, setInvestmentZakatMethod] = useState<Record<number, string>>({});
 
-  // Populate state from saved settings on load
+  // Populate from saved settings
   useEffect(() => {
     if (!savedSettings) return;
     setSettings({
       nisabStandard: savedSettings.nisabStandard || "gold",
-      includeDebts: savedSettings.includeDebts ?? true,
-      hawlMet: savedSettings.hawlMet ?? false,
+      includeDebts:  savedSettings.includeDebts ?? true,
+      hawlMet:       savedSettings.hawlMet ?? false,
       realEstateMode: savedSettings.realEstateMode || "exempt",
     });
     setPrices({
-      goldPricePerGram: Number(savedSettings.goldPricePerGram) || 60,
+      goldPricePerGram:   Number(savedSettings.goldPricePerGram) || 60,
       silverPricePerGram: Number(savedSettings.silverPricePerGram) || 0.75,
     });
     setCashOnHand(String(savedSettings.cashOnHand || "0"));
@@ -166,9 +632,11 @@ export default function ZakatPage() {
     setSilverGrams(String(savedSettings.silverGrams || "0"));
     setReceivables(String(savedSettings.receivables || "0"));
     setRentalIncomeCash(String(savedSettings.rentalIncomeCash || "0"));
+    setHawlDate(savedSettings.hawlDate || "");
+    setHawlDateType(savedSettings.hawlDateType || "fixed");
+    setHawlStartDate(savedSettings.hawlStartDate || "");
   }, [savedSettings]);
 
-  // Populate account/investment toggles from server data
   useEffect(() => {
     const map: Record<number, boolean> = {};
     (bankAccounts as any[]).forEach((a: any) => { map[a.id] = a.isZakatable !== false; });
@@ -183,56 +651,50 @@ export default function ZakatPage() {
     setInvestmentZakatMethod(map);
   }, [investments]);
 
-  // --- Derived values ---
-  const cashFromBankAccounts = useMemo(() => {
-    return (bankAccounts as any[]).reduce((s, a) => {
-      if (accountZakatable[a.id] === false) return s;
-      return s + toUsd(a.balance, a.exchangeRateToUsd);
-    }, 0);
-  }, [bankAccounts, accountZakatable]);
+  // Derived hawlMet from dates
+  const derivedHawlMet = useMemo(() => {
+    if (settings.hawlMet) return true; // manual override
+    if (!hawlDate && !hawlStartDate) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    if (hawlDateType === "tracking" && hawlStartDate) {
+      const start = new Date(hawlStartDate);
+      const hawlComplete = addDays(start, 354);
+      return !isBefore(today, hawlComplete) || isToday(hawlComplete);
+    }
+    return !!hawlDate; // fixed date: assume hawl is met once date is set
+  }, [hawlDate, hawlDateType, hawlStartDate, settings.hawlMet]);
 
-  const investmentsValue = useMemo(() => {
-    return (investments as any[])
-      .filter((i: any) => i.status === "active" && investmentZakatMethod[i.id] !== "exempt")
-      .reduce((s, i) => s + toUsd(i.currentValue, i.exchangeRateToUsd), 0);
-  }, [investments, investmentZakatMethod]);
+  // Derived values
+  const cashFromBankAccounts = useMemo(() =>
+    (bankAccounts as any[]).reduce((s, a) => accountZakatable[a.id] === false ? s : s + toUsd(a.balance, a.exchangeRateToUsd), 0),
+    [bankAccounts, accountZakatable]);
 
-  const realEstateAssets = useMemo(() => {
-    return (assets as any[]).filter((a: any) => a.type === "Real Estate");
-  }, [assets]);
+  const investmentsValue = useMemo(() =>
+    (investments as any[]).filter((i: any) => i.status === "active" && investmentZakatMethod[i.id] !== "exempt")
+      .reduce((s, i) => s + toUsd(i.currentValue, i.exchangeRateToUsd), 0),
+    [investments, investmentZakatMethod]);
 
-  const realEstateValue = useMemo(() => {
-    return realEstateAssets.reduce((s: number, a: any) => s + toUsd(a.currentValue, a.exchangeRateToUsd), 0);
-  }, [realEstateAssets]);
+  const realEstateAssets = useMemo(() => (assets as any[]).filter((a: any) => a.type === "Real Estate"), [assets]);
+  const realEstateValue  = useMemo(() => realEstateAssets.reduce((s: number, a: any) => s + toUsd(a.currentValue, a.exchangeRateToUsd), 0), [realEstateAssets]);
+  const deductibleDebts  = useMemo(() =>
+    (debts as any[]).filter((d: any) => d.status === "active").reduce((s, d) => s + toUsd(d.remainingAmount, d.exchangeRateToUsd), 0),
+    [debts]);
 
-  const deductibleDebts = useMemo(() => {
-    return (debts as any[])
-      .filter((d: any) => d.status === "active")
-      .reduce((s, d) => s + toUsd(d.remainingAmount, d.exchangeRateToUsd), 0);
-  }, [debts]);
-
-  // --- Build assets & liabilities for calculator ---
   const zakatAssets: ZakatAssets = {
-    cashFromBankAccounts,
-    cashOnHand: Number(cashOnHand) || 0,
-    goldGrams: Number(goldGrams) || 0,
-    goldKarat: Number(goldKarat) || 24,
-    silverGrams: Number(silverGrams) || 0,
-    investmentsValue,
-    receivables: Number(receivables) || 0,
-    realEstateValue,
+    cashFromBankAccounts, cashOnHand: Number(cashOnHand) || 0,
+    goldGrams: Number(goldGrams) || 0, goldKarat: Number(goldKarat) || 24,
+    silverGrams: Number(silverGrams) || 0, investmentsValue,
+    receivables: Number(receivables) || 0, realEstateValue,
     rentalIncomeCash: Number(rentalIncomeCash) || 0,
   };
-
   const zakatLiabilities = { deductibleDebts: settings.includeDebts ? deductibleDebts : 0 };
 
-  // --- Run calculation ---
   const result = useMemo(
-    () => calculateZakat(zakatAssets, zakatLiabilities, settings, prices),
-    [zakatAssets, zakatLiabilities, settings, prices]
+    () => calculateZakat(zakatAssets, zakatLiabilities, { ...settings, hawlMet: derivedHawlMet }, prices),
+    [zakatAssets, zakatLiabilities, settings, derivedHawlMet, prices]
   );
 
-  // --- Actions ---
+  // Actions
   const fetchLivePrices = async () => {
     setPricesLoading(true);
     try {
@@ -240,16 +702,9 @@ export default function ZakatPage() {
       const data = await r.json();
       if (data.goldPricePerGram) setPrices(p => ({ ...p, goldPricePerGram: data.goldPricePerGram }));
       if (data.silverPricePerGram) setPrices(p => ({ ...p, silverPricePerGram: data.silverPricePerGram }));
-      if (data.goldPricePerGram) {
-        toast({ title: `Live prices loaded (${data.source})` });
-      } else {
-        toast({ title: "Live prices unavailable — enter manually", variant: "destructive" });
-      }
-    } catch {
-      toast({ title: "Failed to fetch prices", variant: "destructive" });
-    } finally {
-      setPricesLoading(false);
-    }
+      toast({ title: data.goldPricePerGram ? `Live prices loaded (${data.source})` : "Live prices unavailable — enter manually" });
+    } catch { toast({ title: "Failed to fetch prices", variant: "destructive" }); }
+    finally { setPricesLoading(false); }
   };
 
   const handleSaveSettings = async () => {
@@ -258,26 +713,30 @@ export default function ZakatPage() {
         ...settings,
         goldPricePerGram: String(prices.goldPricePerGram),
         silverPricePerGram: String(prices.silverPricePerGram),
-        cashOnHand,
-        goldGrams,
-        goldKarat: parseInt(goldKarat),
-        silverGrams,
-        receivables,
-        rentalIncomeCash,
+        cashOnHand, goldGrams, goldKarat: parseInt(goldKarat),
+        silverGrams, receivables, rentalIncomeCash,
+        hawlDate, hawlDateType, hawlStartDate,
       });
       toast({ title: "Settings saved" });
-    } catch {
-      toast({ title: "Failed to save settings", variant: "destructive" });
-    }
+    } catch { toast({ title: "Failed to save settings", variant: "destructive" }); }
+  };
+
+  const handleSaveHawl = async () => {
+    await handleSaveSettings();
+    toast({ title: "Hawl date saved ✓" });
+  };
+
+  const handleHawlChange = (key: string, val: string) => {
+    if (key === "hawlDate")      setHawlDate(val);
+    if (key === "hawlDateType")  setHawlDateType(val);
+    if (key === "hawlStartDate") setHawlStartDate(val);
   };
 
   const handleToggleAccount = async (accountId: number, val: boolean) => {
     setAccountZakatable(prev => ({ ...prev, [accountId]: val }));
     await fetch(`/api/bank-accounts/${accountId}/zakat`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isZakatable: val }),
-      credentials: "include",
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isZakatable: val }), credentials: "include",
     });
     qc.invalidateQueries({ queryKey: ["/api/bank-accounts"] });
   };
@@ -285,10 +744,8 @@ export default function ZakatPage() {
   const handleInvestmentMethod = async (invId: number, method: string) => {
     setInvestmentZakatMethod(prev => ({ ...prev, [invId]: method }));
     await fetch(`/api/investments/${invId}/zakat`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ zakatMethod: method }),
-      credentials: "include",
+      method: "PATCH", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ zakatMethod: method }), credentials: "include",
     });
     qc.invalidateQueries({ queryKey: ["/api/investments"] });
   };
@@ -309,80 +766,91 @@ export default function ZakatPage() {
         totalZakatableAssets: String(result.breakdown.totalZakatableAssets),
         deductibleDebts: String(result.breakdown.deductibleDebts),
         netZakatable: String(result.breakdown.netZakatable),
-        nisabMet: result.nisabMet,
-        hawlMet: result.hawlMet,
+        nisabMet: result.nisabMet, hawlMet: derivedHawlMet,
         zakatDue: String(result.zakatDue),
-        notes,
-        snapshotDate: new Date().toISOString(),
+        notes, snapshotDate: new Date().toISOString(),
       });
-      toast({ title: "Snapshot saved" });
-    } catch {
-      toast({ title: "Failed to save snapshot", variant: "destructive" });
-    }
+      toast({ title: "Snapshot saved ✓" });
+    } catch { toast({ title: "Failed to save snapshot", variant: "destructive" }); }
   };
+
+  // Hawl countdown days for badge tint
+  const nextHawlDate = hawlDate || hawlStartDate ? getNextHawlDate(hawlDate, hawlDateType, hawlStartDate) : null;
+  const hawlDaysLeft = nextHawlDate ? differenceInDays(nextHawlDate, new Date()) : null;
 
   return (
     <Layout>
-      <div className="flex justify-between items-center mb-8">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight" data-testid="text-page-title">
-            Zakat Calculator <span className="text-muted-foreground text-lg font-normal">حاسبة الزكاة</span>
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white" data-testid="text-page-title">
+            Zakat Calculator <span className="text-gray-400 text-lg font-normal">حاسبة الزكاة</span>
           </h2>
-          <p className="text-muted-foreground mt-1">
-            Calculate your annual Zakat obligation based on your financial holdings.
-          </p>
+          <p className="text-sm text-gray-500 mt-0.5">Calculate your annual Zakat obligation based on your financial holdings.</p>
         </div>
-        <Button onClick={handleSaveSnapshot} disabled={saveSnapshot.isPending} data-testid="button-save-snapshot">
-          <Save className="w-4 h-4 mr-2" />
-          Save Snapshot
+        <Button onClick={handleSaveSnapshot} disabled={saveSnapshot.isPending}
+          className="gap-2 text-white" style={{ backgroundColor: MINT }} data-testid="button-save-snapshot">
+          <Save className="w-4 h-4" /> Save Snapshot
         </Button>
       </div>
 
+      {/* Urgency banner */}
+      {hawlDaysLeft !== null && hawlDaysLeft <= 30 && (
+        <div className="mb-5 p-3.5 rounded-2xl border flex items-center gap-3"
+          style={{
+            borderColor: hawlDaysLeft <= 7 ? "#FCA5A5" : hawlDaysLeft <= 14 ? "#FED7AA" : "#FDE68A",
+            backgroundColor: hawlDaysLeft <= 7 ? "#FEF2F2" : hawlDaysLeft <= 14 ? "#FFF7ED" : "#FFFBEB",
+          }}>
+          <AlertTriangle className="w-5 h-5 shrink-0" style={{ color: hawlDaysLeft <= 7 ? DANGER : AMBER }} />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: hawlDaysLeft <= 7 ? DANGER : "#92400E" }}>
+              {hawlDaysLeft === 0 ? "Today is your Zakat day!" : `Zakat due in ${hawlDaysLeft} days`}
+            </p>
+            <p className="text-xs" style={{ color: hawlDaysLeft <= 7 ? "#DC2626" : "#B45309" }}>
+              {hawlDaysLeft <= 7 ? "Begin distributing to eligible recipients (Asnaf) today." : "Review your calculation and prepare for distribution."}
+              {result.zakatDue > 0 && ` Estimated: ${fmt(result.zakatDue)}`}
+            </p>
+          </div>
+          <Button size="sm" className="ml-auto gap-1.5 rounded-xl text-xs shrink-0" onClick={handleSaveSnapshot}
+            style={{ backgroundColor: hawlDaysLeft <= 7 ? DANGER : AMBER, color: "#fff" }}>
+            <Target className="w-3.5 h-3.5" /> Finalize →
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* ============================================================ */}
-        {/* LEFT COLUMN: Settings + Inputs                               */}
-        {/* ============================================================ */}
+        {/* LEFT COLUMN */}
         <div className="xl:col-span-2 space-y-6">
 
-          {/* ----- Settings ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
+          {/* Settings & Prices */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardHeader className="cursor-pointer" onClick={() => setSettingsOpen(o => !o)}>
               <div className="flex justify-between items-center">
-                <CardTitle>Settings & Prices</CardTitle>
-                {settingsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                <CardTitle className="text-base">Settings & Metal Prices</CardTitle>
+                {settingsOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
               </div>
             </CardHeader>
             {settingsOpen && (
-              <CardContent className="space-y-5">
-                {/* Nisab standard */}
+              <CardContent className="space-y-5 pt-0">
+                {/* Nisab */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Nisab Standard</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Nisab Standard</label>
                   <div className="flex gap-2">
                     {(["gold", "silver"] as const).map(s => (
-                      <Button
-                        key={s}
-                        variant={settings.nisabStandard === s ? "default" : "outline"}
-                        className="capitalize"
-                        onClick={() => setSettings(p => ({ ...p, nisabStandard: s }))}
-                        data-testid={`button-nisab-${s}`}
-                      >
+                      <Button key={s} variant={settings.nisabStandard === s ? "default" : "outline"} className="capitalize rounded-xl"
+                        onClick={() => setSettings(p => ({ ...p, nisabStandard: s }))} data-testid={`button-nisab-${s}`}>
                         {s === "gold" ? "🥇 Gold (85g)" : "🥈 Silver (595g)"}
                       </Button>
                     ))}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Gold standard (AAOIFI/contemporary) sets a higher threshold; silver standard (classical) is more conservative.
-                  </p>
+                  <p className="text-xs text-gray-400 mt-1">Gold standard (AAOIFI/contemporary) sets a higher threshold; silver standard (classical) is more conservative.</p>
                 </div>
 
-                {/* Real estate mode */}
+                {/* Real estate */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Real Estate Treatment</label>
-                  <Select
-                    value={settings.realEstateMode}
-                    onValueChange={v => setSettings(p => ({ ...p, realEstateMode: v as any }))}
-                  >
-                    <SelectTrigger data-testid="select-real-estate-mode"><SelectValue /></SelectTrigger>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Real Estate Treatment</label>
+                  <Select value={settings.realEstateMode} onValueChange={v => setSettings(p => ({ ...p, realEstateMode: v as any }))}>
+                    <SelectTrigger className="rounded-xl" data-testid="select-real-estate-mode"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="exempt">Exempt — Primary residence / personal use</SelectItem>
                       <SelectItem value="rental_income">Rental — Only net rental income is zakatable</SelectItem>
@@ -392,107 +860,88 @@ export default function ZakatPage() {
                 </div>
 
                 {/* Toggles */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-3 rounded-xl border dark:border-gray-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                     <div>
                       <p className="text-sm font-medium">Deduct Short-term Debts</p>
-                      <p className="text-xs text-muted-foreground">Debts due within 12 months</p>
+                      <p className="text-xs text-gray-400">Debts due within 12 months</p>
                     </div>
-                    <Switch
-                      checked={settings.includeDebts}
-                      onCheckedChange={v => setSettings(p => ({ ...p, includeDebts: v }))}
-                      data-testid="switch-include-debts"
-                    />
+                    <Switch checked={settings.includeDebts}
+                      onCheckedChange={v => setSettings(p => ({ ...p, includeDebts: v }))} data-testid="switch-include-debts" />
                   </div>
-                  <div className="flex items-center justify-between p-3 rounded-xl border dark:border-gray-800">
+                  <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800"
+                    style={{ backgroundColor: derivedHawlMet ? "#F0FDF4" : "transparent", borderColor: derivedHawlMet ? "#BBF7D0" : undefined }}>
                     <div>
-                      <p className="text-sm font-medium">Hawl Confirmed ✓</p>
-                      <p className="text-xs text-muted-foreground">I've been above nisab for a full lunar year (354 days)</p>
+                      <p className="text-sm font-medium">Hawl Status</p>
+                      <p className="text-xs" style={{ color: derivedHawlMet ? "#059669" : "#94A3B8" }}>
+                        {derivedHawlMet ? "✓ Full lunar year confirmed" : "Set date below to track automatically"}
+                      </p>
                     </div>
-                    <Switch
-                      checked={settings.hawlMet}
-                      onCheckedChange={v => setSettings(p => ({ ...p, hawlMet: v }))}
-                      data-testid="switch-hawl-met"
-                    />
+                    <Switch checked={settings.hawlMet}
+                      onCheckedChange={v => setSettings(p => ({ ...p, hawlMet: v }))} data-testid="switch-hawl-met" />
                   </div>
                 </div>
 
                 {/* Metal prices */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-sm font-medium">Metal Prices (USD per gram)</label>
-                    <Button variant="outline" size="sm" onClick={fetchLivePrices} disabled={pricesLoading} data-testid="button-fetch-prices">
-                      <RefreshCw className={`w-3 h-3 mr-1 ${pricesLoading ? "animate-spin" : ""}`} />
-                      Fetch Live
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Metal Prices (USD per gram)</label>
+                    <Button variant="outline" size="sm" onClick={fetchLivePrices} disabled={pricesLoading}
+                      className="rounded-xl gap-1.5 text-xs h-7" data-testid="button-fetch-prices">
+                      <RefreshCw className={`w-3 h-3 ${pricesLoading ? "animate-spin" : ""}`} /> Fetch Live
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Gold ($/g)</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={prices.goldPricePerGram}
-                        onChange={e => setPrices(p => ({ ...p, goldPricePerGram: Number(e.target.value) }))}
-                        data-testid="input-gold-price"
-                      />
+                      <label className="text-xs text-gray-400 mb-1 block">Gold ($/g)</label>
+                      <Input type="number" min="0" step="0.01" value={prices.goldPricePerGram}
+                        onChange={e => setPrices(p => ({ ...p, goldPricePerGram: Number(e.target.value) }))} data-testid="input-gold-price" />
                     </div>
                     <div>
-                      <label className="text-xs text-muted-foreground mb-1 block">Silver ($/g)</label>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.001"
-                        value={prices.silverPricePerGram}
-                        onChange={e => setPrices(p => ({ ...p, silverPricePerGram: Number(e.target.value) }))}
-                        data-testid="input-silver-price"
-                      />
+                      <label className="text-xs text-gray-400 mb-1 block">Silver ($/g)</label>
+                      <Input type="number" min="0" step="0.001" value={prices.silverPricePerGram}
+                        onChange={e => setPrices(p => ({ ...p, silverPricePerGram: Number(e.target.value) }))} data-testid="input-silver-price" />
                     </div>
                   </div>
                 </div>
 
-                <Button onClick={handleSaveSettings} disabled={saveSettings.isPending} variant="outline" className="w-full" data-testid="button-save-settings">
+                <Button onClick={handleSaveSettings} disabled={saveSettings.isPending} variant="outline" className="w-full rounded-xl" data-testid="button-save-settings">
                   <Save className="w-4 h-4 mr-2" /> Save Settings
                 </Button>
               </CardContent>
             )}
           </Card>
 
-          {/* ----- Cash & Bank Accounts ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
+          {/* Hawl Setup Card */}
+          <HawlSetupCard
+            hawlDate={hawlDate} hawlDateType={hawlDateType} hawlStartDate={hawlStartDate}
+            onChange={handleHawlChange} onSave={handleSaveHawl} saving={saveSettings.isPending}
+          />
+
+          {/* Cash & Bank Accounts */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardHeader><CardTitle>💵 Cash & Bank Accounts</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {(bankAccounts as any[]).map((a: any) => (
-                <div key={a.id} className="flex items-center justify-between p-3 rounded-xl border dark:border-gray-800">
+                <div key={a.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                   <div>
                     <p className="font-medium text-sm">{a.bankName} — {a.accountType}</p>
-                    <p className="text-xs text-muted-foreground">Balance: {fmt(toUsd(a.balance, a.exchangeRateToUsd))}</p>
+                    <p className="text-xs text-gray-400">Balance: {fmt(toUsd(a.balance, a.exchangeRateToUsd))}</p>
                   </div>
-                  <Switch
-                    checked={accountZakatable[a.id] !== false}
-                    onCheckedChange={v => handleToggleAccount(a.id, v)}
-                    data-testid={`switch-account-${a.id}`}
-                  />
+                  <Switch checked={accountZakatable[a.id] !== false}
+                    onCheckedChange={v => handleToggleAccount(a.id, v)} data-testid={`switch-account-${a.id}`} />
                 </div>
               ))}
               <div>
                 <label className="text-sm font-medium mb-1 block">Cash on Hand / E-wallets (USD)</label>
-                <Input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={cashOnHand}
-                  onChange={e => setCashOnHand(e.target.value)}
-                  data-testid="input-cash-on-hand"
-                  placeholder="0"
-                />
+                <Input type="number" min="0" step="1" value={cashOnHand}
+                  onChange={e => setCashOnHand(e.target.value)} data-testid="input-cash-on-hand" placeholder="0" />
               </div>
             </CardContent>
           </Card>
 
-          {/* ----- Gold & Silver ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
+          {/* Gold & Silver */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardHeader><CardTitle>🥇 Gold & Silver</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
@@ -501,19 +950,19 @@ export default function ZakatPage() {
                   <Input type="number" min="0" step="0.1" value={goldGrams} onChange={e => setGoldGrams(e.target.value)} data-testid="input-gold-grams" placeholder="0" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Gold Karat (purity)</label>
+                  <label className="text-sm font-medium mb-1 block">Gold Karat</label>
                   <Select value={goldKarat} onValueChange={setGoldKarat}>
                     <SelectTrigger data-testid="select-gold-karat"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {[24, 22, 21, 18, 14, 10, 9].map(k => (
-                        <SelectItem key={k} value={String(k)}>{k}k ({((k / 24) * 100).toFixed(1)}% pure)</SelectItem>
+                        <SelectItem key={k} value={String(k)}>{k}k ({((k / 24) * 100).toFixed(1)}%)</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               {Number(goldGrams) > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-400">
                   Pure gold: {(Number(goldGrams) * (Number(goldKarat) / 24)).toFixed(3)}g → {fmt(Number(goldGrams) * (Number(goldKarat) / 24) * prices.goldPricePerGram)}
                 </p>
               )}
@@ -524,26 +973,21 @@ export default function ZakatPage() {
             </CardContent>
           </Card>
 
-          {/* ----- Investments ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
-            <CardHeader>
-              <CardTitle>📈 Investments</CardTitle>
-            </CardHeader>
+          {/* Investments */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
+            <CardHeader><CardTitle>📈 Investments</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-xs text-blue-700 dark:text-blue-300">
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>For stocks/ETFs, using full market value is a conservative simplification. For pure trade goods (commodity stocks), market value is appropriate. Consult a scholar for your specific holdings.</span>
+                <span>For stocks/ETFs, using full market value is a conservative simplification. Consult a scholar for your specific holdings.</span>
               </div>
               {(investments as any[]).filter((i: any) => i.status === "active").map((inv: any) => (
-                <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl border dark:border-gray-800 gap-3">
+                <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 gap-3">
                   <div className="min-w-0">
                     <p className="font-medium text-sm truncate">{inv.name}</p>
-                    <p className="text-xs text-muted-foreground">{inv.type} — {fmt(toUsd(inv.currentValue, inv.exchangeRateToUsd))}</p>
+                    <p className="text-xs text-gray-400">{inv.type} — {fmt(toUsd(inv.currentValue, inv.exchangeRateToUsd))}</p>
                   </div>
-                  <Select
-                    value={investmentZakatMethod[inv.id] || "market_value"}
-                    onValueChange={v => handleInvestmentMethod(inv.id, v)}
-                  >
+                  <Select value={investmentZakatMethod[inv.id] || "market_value"} onValueChange={v => handleInvestmentMethod(inv.id, v)}>
                     <SelectTrigger className="w-40 text-xs" data-testid={`select-inv-method-${inv.id}`}><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="market_value">Full Market Value</SelectItem>
@@ -553,114 +997,109 @@ export default function ZakatPage() {
                 </div>
               ))}
               {(investments as any[]).filter((i: any) => i.status === "active").length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-2">No active investments found.</p>
+                <p className="text-sm text-gray-400 text-center py-2">No active investments found.</p>
               )}
             </CardContent>
           </Card>
 
-          {/* ----- Business Receivables ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
+          {/* Business Receivables */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardHeader><CardTitle>📋 Business Receivables</CardTitle></CardHeader>
             <CardContent>
               <label className="text-sm font-medium mb-1 block">Expected collectible receivables (USD)</label>
               <Input type="number" min="0" step="1" value={receivables} onChange={e => setReceivables(e.target.value)} data-testid="input-receivables" placeholder="0" />
-              <p className="text-xs text-muted-foreground mt-1">Include only amounts you reasonably expect to collect. Doubtful receivables may be excluded.</p>
+              <p className="text-xs text-gray-400 mt-1">Include only amounts you reasonably expect to collect.</p>
             </CardContent>
           </Card>
 
-          {/* ----- Real Estate (conditional) ----- */}
+          {/* Real Estate (conditional) */}
           {settings.realEstateMode !== "exempt" && (
-            <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
+            <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
               <CardHeader><CardTitle>🏠 Real Estate</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {settings.realEstateMode === "rental_income" && (
                   <div>
                     <label className="text-sm font-medium mb-1 block">Net rental income cash on hand (USD)</label>
                     <Input type="number" min="0" step="1" value={rentalIncomeCash} onChange={e => setRentalIncomeCash(e.target.value)} data-testid="input-rental-income" placeholder="0" />
-                    <p className="text-xs text-muted-foreground mt-1">Enter net rental income that has been in your possession for a full lunar year (hawl).</p>
+                    <p className="text-xs text-gray-400 mt-1">Enter net rental income held for a full lunar year.</p>
                   </div>
                 )}
                 {settings.realEstateMode === "trading" && (
                   <div>
-                    <p className="text-sm text-muted-foreground mb-3">Properties held for resale from your Assets:</p>
+                    <p className="text-sm text-gray-400 mb-3">Properties held for resale from your Assets:</p>
                     {realEstateAssets.map((a: any) => (
-                      <div key={a.id} className="flex justify-between items-center p-2 rounded-lg border dark:border-gray-800 mb-2">
+                      <div key={a.id} className="flex justify-between items-center p-2 rounded-lg border border-gray-100 dark:border-gray-800 mb-2">
                         <span className="text-sm font-medium">{a.name}</span>
                         <span className="text-sm">{fmt(toUsd(a.currentValue, a.exchangeRateToUsd))}</span>
                       </div>
                     ))}
-                    {realEstateAssets.length === 0 && (
-                      <p className="text-sm text-muted-foreground">No real estate assets found. Add them on the Assets page.</p>
-                    )}
-                    <p className="text-xs text-muted-foreground mt-2">Total real estate value: {fmt(realEstateValue)}</p>
+                    {realEstateAssets.length === 0 && <p className="text-sm text-gray-400">No real estate assets found.</p>}
                   </div>
                 )}
               </CardContent>
             </Card>
           )}
 
-          {/* ----- Deductible Debts ----- */}
+          {/* Deductible Debts */}
           {settings.includeDebts && (
-            <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
+            <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
               <CardHeader><CardTitle>💳 Deductible Liabilities</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-xs text-muted-foreground mb-3">Short-term debts due within 12 months. Long-term debts (mortgages etc.) typically cannot be deducted in full.</p>
+                <p className="text-xs text-gray-400 mb-3">Short-term debts due within 12 months.</p>
                 {(debts as any[]).filter((d: any) => d.status === "active").map((d: any) => (
                   <div key={d.id} className="flex justify-between items-center py-2 border-b last:border-0 dark:border-gray-800">
                     <div>
                       <p className="text-sm font-medium">{d.creditorName}</p>
-                      <p className="text-xs text-muted-foreground">{d.reason}</p>
+                      <p className="text-xs text-gray-400">{d.reason}</p>
                     </div>
-                    <span className="text-sm font-mono text-destructive">−{fmt(toUsd(d.remainingAmount, d.exchangeRateToUsd))}</span>
+                    <span className="text-sm font-mono text-red-500">−{fmt(toUsd(d.remainingAmount, d.exchangeRateToUsd))}</span>
                   </div>
                 ))}
                 {(debts as any[]).filter((d: any) => d.status === "active").length === 0 && (
-                  <p className="text-sm text-muted-foreground">No active debts found.</p>
+                  <p className="text-sm text-gray-400">No active debts found.</p>
                 )}
                 <div className="flex justify-between items-center pt-2 font-semibold">
                   <span className="text-sm">Total deductible</span>
-                  <span className="text-sm font-mono text-destructive">−{fmt(deductibleDebts)}</span>
+                  <span className="text-sm font-mono text-red-500">−{fmt(deductibleDebts)}</span>
                 </div>
               </CardContent>
             </Card>
           )}
         </div>
 
-        {/* ============================================================ */}
-        {/* RIGHT COLUMN: Results                                        */}
-        {/* ============================================================ */}
-        <div className="space-y-6">
+        {/* RIGHT COLUMN */}
+        <div className="space-y-4">
 
-          {/* ----- Results Card ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900 sticky top-6">
+          {/* Hawl Countdown */}
+          <HawlCountdownCard
+            hawlDate={hawlDate} hawlDateType={hawlDateType}
+            hawlStartDate={hawlStartDate} zakatDue={result.zakatDue}
+          />
+
+          {/* Results Card */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl sticky top-6">
             <CardHeader>
-              <CardTitle>Zakat Results</CardTitle>
+              <CardTitle className="text-base">Zakat Results</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Status badges */}
               <div className="flex gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5">
-                  {result.nisabMet
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    : <XCircle className="w-4 h-4 text-destructive" />}
-                  <span className="text-sm font-medium">Nisab {result.nisabMet ? "Met" : "Not Met"}</span>
+                  {result.nisabMet ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+                  <span className="text-sm font-medium">Nisab {result.nisabMet ? "Met ✓" : "Not Met"}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  {result.hawlMet
-                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                    : <XCircle className="w-4 h-4 text-destructive" />}
-                  <span className="text-sm font-medium">Hawl {result.hawlMet ? "Met" : "Not Met"}</span>
+                  {derivedHawlMet ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
+                  <span className="text-sm font-medium">Hawl {derivedHawlMet ? "Met ✓" : "Not Met"}</span>
                 </div>
               </div>
 
-              <div className="p-3 rounded-xl bg-muted/50">
-                <p className="text-xs text-muted-foreground">Nisab threshold ({settings.nisabStandard})</p>
+              <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+                <p className="text-xs text-gray-400">Nisab threshold ({settings.nisabStandard})</p>
                 <p className="text-lg font-bold">{fmt(result.nisabValueUsd)}</p>
               </div>
 
               <Separator />
 
-              {/* Breakdown */}
               <div className="space-y-0.5">
                 <InfoRow label="Cash (bank + on hand)" value={fmt(result.breakdown.cashTotal)} />
                 {result.breakdown.goldValue > 0 && <InfoRow label="Gold value" value={fmt(result.breakdown.goldValue)} />}
@@ -669,108 +1108,59 @@ export default function ZakatPage() {
                 {result.breakdown.receivablesTotal > 0 && <InfoRow label="Receivables" value={fmt(result.breakdown.receivablesTotal)} />}
                 {result.breakdown.realEstateValue > 0 && <InfoRow label="Real estate" value={fmt(result.breakdown.realEstateValue)} />}
                 <InfoRow label="Total zakatable assets" value={fmt(result.breakdown.totalZakatableAssets)} strong />
-                {result.breakdown.deductibleDebts > 0 && (
-                  <InfoRow label="Deductible debts" value={`−${fmt(result.breakdown.deductibleDebts)}`} />
-                )}
+                {result.breakdown.deductibleDebts > 0 && <InfoRow label="Deductible debts" value={`−${fmt(result.breakdown.deductibleDebts)}`} />}
                 <InfoRow label="Net zakatable amount" value={fmt(result.breakdown.netZakatable)} strong />
               </div>
 
               <Separator />
 
-              {/* Zakat Due */}
-              <div className={`p-4 rounded-xl text-center ${result.zakatDue > 0 ? "bg-green-50 dark:bg-green-950/30" : "bg-muted/50"}`}>
-                <p className="text-sm text-muted-foreground mb-1">Zakat Due (2.5%)</p>
-                <p className={`text-3xl font-bold ${result.zakatDue > 0 ? "text-green-700 dark:text-green-400" : "text-muted-foreground"}`} data-testid="text-zakat-due">
+              <div className={`p-4 rounded-xl text-center ${result.zakatDue > 0 ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-gray-50 dark:bg-gray-800"}`}>
+                <p className="text-xs text-gray-400 mb-1">Zakat Due (2.5%)</p>
+                <p className={`text-3xl font-bold ${result.zakatDue > 0 ? "text-emerald-700 dark:text-emerald-400" : "text-gray-400"}`} data-testid="text-zakat-due">
                   {result.zakatDue > 0 ? fmt(result.zakatDue) : "Not Due"}
                 </p>
+                {result.zakatDue > 0 && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    ≈ {fmt(result.zakatDue / 12)}/month if saved monthly
+                  </p>
+                )}
               </div>
 
-              {/* Notes */}
               <div>
-                <label className="text-xs text-muted-foreground mb-1 block">Notes (optional)</label>
+                <label className="text-xs text-gray-400 mb-1 block">Notes (optional)</label>
                 <Input placeholder="e.g. Ramadan 1446" value={notes} onChange={e => setNotes(e.target.value)} data-testid="input-notes" />
               </div>
 
-              <Button onClick={handleSaveSnapshot} className="w-full" disabled={saveSnapshot.isPending} data-testid="button-save-snapshot-result">
-                <Save className="w-4 h-4 mr-2" />
-                Save Snapshot
+              <Button onClick={handleSaveSnapshot} className="w-full rounded-xl gap-2 text-white"
+                style={{ backgroundColor: MINT }} disabled={saveSnapshot.isPending} data-testid="button-save-snapshot-result">
+                <Save className="w-4 h-4" /> Save Snapshot
               </Button>
 
-              {/* Explanation */}
               <details className="text-xs">
-                <summary className="cursor-pointer text-muted-foreground hover:text-foreground">Show calculation details</summary>
-                <div className="mt-2 space-y-1 text-muted-foreground">
+                <summary className="cursor-pointer text-gray-400 hover:text-gray-600">Show calculation details</summary>
+                <div className="mt-2 space-y-1 text-gray-400">
                   {result.explanations.map((e, i) => <p key={i}>• {e}</p>)}
                 </div>
               </details>
             </CardContent>
           </Card>
 
-          {/* ----- Assumptions card ----- */}
-          <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900">
-            <CardHeader><CardTitle className="text-sm">Assumptions</CardTitle></CardHeader>
-            <CardContent className="text-xs text-muted-foreground space-y-1">
-              <p>• <strong>Nisab:</strong> {settings.nisabStandard === "gold" ? "85g gold (AAOIFI contemporary)" : "595g silver (classical)"}</p>
-              <p>• <strong>Debts:</strong> {settings.includeDebts ? "Short-term debts deducted" : "Debts not deducted"}</p>
-              <p>• <strong>Real estate:</strong> {settings.realEstateMode === "exempt" ? "Exempt" : settings.realEstateMode === "rental_income" ? "Rental income only" : "Trading inventory (full market value)"}</p>
-              <p>• <strong>Investments:</strong> Full market value (conservative simplification)</p>
-              <p>• <strong>Gold price:</strong> ${prices.goldPricePerGram}/g | <strong>Silver:</strong> ${prices.silverPricePerGram}/g</p>
-              <p className="pt-1 italic">This calculator provides an estimate. Consult a qualified Islamic scholar for your specific situation.</p>
+          {/* Assumptions */}
+          <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
+            <CardHeader><CardTitle className="text-sm">Assumptions & Disclaimer</CardTitle></CardHeader>
+            <CardContent className="text-xs text-gray-400 space-y-1">
+              <p>• <strong className="text-gray-600 dark:text-gray-300">Nisab:</strong> {settings.nisabStandard === "gold" ? "85g gold (AAOIFI contemporary)" : "595g silver (classical)"}</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">Debts:</strong> {settings.includeDebts ? "Short-term debts deducted" : "Debts not deducted"}</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">Real estate:</strong> {settings.realEstateMode === "exempt" ? "Exempt" : settings.realEstateMode === "rental_income" ? "Rental income only" : "Trading inventory (full market value)"}</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">Gold:</strong> ${prices.goldPricePerGram}/g · <strong className="text-gray-600 dark:text-gray-300">Silver:</strong> ${prices.silverPricePerGram}/g</p>
+              <p className="pt-1 italic">This is an estimate. Consult a qualified Islamic scholar for your specific situation.</p>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* ============================================================ */}
-      {/* Snapshot History                                              */}
-      {/* ============================================================ */}
-      {snapshots && (snapshots as any[]).length > 0 && (
-        <Card className="border-none shadow-sm rounded-2xl bg-white dark:bg-gray-900 mt-6">
-          <CardHeader><CardTitle>📁 Snapshot History</CardTitle></CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b dark:border-gray-800">
-                    <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Date</th>
-                    <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Nisab</th>
-                    <th className="text-right py-2 px-3 font-semibold text-muted-foreground">Net Zakatable</th>
-                    <th className="text-right py-2 px-3 font-semibold text-muted-foreground">Zakat Due</th>
-                    <th className="text-left py-2 px-3 font-semibold text-muted-foreground">Notes</th>
-                    <th className="py-2 px-3"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(snapshots as any[]).map((s: any) => (
-                    <tr key={s.id} className="border-b last:border-0 dark:border-gray-800 hover:bg-muted/30" data-testid={`snapshot-row-${s.id}`}>
-                      <td className="py-2 px-3 text-muted-foreground">{format(new Date(s.createdAt), "dd MMM yyyy")}</td>
-                      <td className="py-2 px-3 capitalize">
-                        <Badge variant="outline">{s.nisabStandard}</Badge>
-                      </td>
-                      <td className="py-2 px-3 text-right font-mono">{fmt(Number(s.netZakatable))}</td>
-                      <td className="py-2 px-3 text-right font-mono font-bold text-green-700 dark:text-green-400">
-                        {Number(s.zakatDue) > 0 ? fmt(Number(s.zakatDue)) : "—"}
-                      </td>
-                      <td className="py-2 px-3 text-muted-foreground text-xs">{s.notes || "—"}</td>
-                      <td className="py-2 px-3">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                          onClick={() => deleteSnapshot.mutate(s.id)}
-                          data-testid={`button-delete-snapshot-${s.id}`}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Zakat Journey (multi-year history) */}
+      <ZakatJourney snapshots={snapshots as any[] || []} />
     </Layout>
   );
 }

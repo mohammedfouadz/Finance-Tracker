@@ -20,7 +20,7 @@ Key features (Phase 1 complete):
 - **Reports & Charts** — Visual dashboards with Recharts (pie, bar, area charts)
 - **AI Financial Coach** — Chat interface powered by OpenAI for personalized financial advice, with voice input/output support
 - **Multi-category system** — System-seeded default categories plus user-defined custom categories with subcategory support
-- **Zakat Calculator** — Islamic Zakat obligation calculator with gold/silver nisab standards, hawl tracking, real estate modes (exempt/rental/trading), per-asset inclusion toggles on bank accounts and investments, live gold/silver price fetching, calculation snapshots history. Pure calculation logic in `shared/zakatCalculator.ts` with 12 unit tests. DB tables: `zakatSettings`, `zakatSnapshots`. New columns: `isZakatable` on bankAccounts, `zakatMethod` on investments.
+- **Zakat Calculator** — Full Islamic Zakat system: rich Hawl Setup Card (Fixed Annual Date vs. Track Nisab Date Precisely), Hijri calendar conversion, Hawl Countdown Card with circular progress ring, color-coded urgency states, ICS calendar export with reminders, Zakat Journey multi-year history, urgency banner. Dashboard widget appears when within 30 days. Sidebar badge shows day countdown when within 14 days. Schema: `zakatSettings` has `hawlDate`, `hawlDateType`, `hawlStartDate`. Pure calc logic in `shared/zakatCalculator.ts`.
 
 ## User Preferences
 
