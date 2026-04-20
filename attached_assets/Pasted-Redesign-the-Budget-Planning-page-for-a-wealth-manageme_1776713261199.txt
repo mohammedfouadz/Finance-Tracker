@@ -1,0 +1,281 @@
+Redesign the "Budget Planning" page for a wealth management web app called 
+"Wealthly". The current page is a passive list of empty category rows with 
+zero intelligence. Transform it into an active, visual budgeting command 
+center that reads real-time spending data from the Expenses page, shows 
+allocated-vs-spent comparisons, and triggers smart overspend warnings — 
+while matching the existing dashboard's design system exactly.
+
+═══════════════════════════════════════════════════════════
+CORE FUNCTIONALITY (CRITICAL — design must reflect these behaviors)
+═══════════════════════════════════════════════════════════
+
+1. Budget page READS from Expenses page in real-time:
+   - Every category shows: Budgeted amount vs Actual spending this month
+   - Actual spending is pulled automatically from transactions tagged to 
+     that category on the Expenses page
+   - No manual entry of "spent" — it's always live
+
+2. Three threshold states per category, each with distinct visual treatment:
+   - SAFE (< 75% spent): green progress bar, calm
+   - WARNING (75-95% spent): amber progress bar, warning icon, subtle alert
+   - DANGER / OVER (≥ 95% or exceeded): red progress bar, pulsing alert icon, 
+     "⚠️ Over budget by $X" message
+
+3. Cross-page alert system (design the visual language):
+   - When a category hits WARNING or DANGER state on Budget page, an alert 
+     banner appears on the Expenses page for that category
+   - Show in the mockup: a notification badge on sidebar "Expenses" item 
+     showing count of warned categories
+
+4. Income-driven allocation:
+   - Top of page shows total income available to budget
+   - As user sets limits, remaining "unallocated" income updates live
+   - Visual feedback when over-allocating (exceeding income)
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (must match existing Wealthly dashboard)
+═══════════════════════════════════════════════════════════
+
+Colors:
+- Primary blue: #2563EB (active nav, primary CTAs, allocated amounts)
+- Success green: #10B981 (under budget, safe zone, remaining)
+- Warning amber: #F59E0B (approaching limit, 75-95% zone)
+- Danger red: #EF4444 (over budget, overspent)
+- Accent purple: #8B5CF6 (savings categories, positive secondary)
+- Category-specific colors (consistent with Expenses page):
+  Housing=red, Food=orange, Transportation=amber, Utilities=green, 
+  Healthcare=teal, Savings=purple, Emergency=pink, Entertainment=red-pink, 
+  Shopping=pink, Travel=blue, Gold=gold
+- Background: #F8FAFC (page), #FFFFFF (cards)
+- Borders: #E2E8F0 (1px subtle)
+- Text: #0F172A (primary), #64748B (secondary), #94A3B8 (tertiary)
+
+Typography:
+- Inter / SF Pro, sans-serif
+- H1 page title: 30px / bold 700
+- Section titles: 20px / semibold 600
+- Money values: tabular-nums, 28-32px KPIs, bold
+- Category names: 16px / semibold
+- Labels: 12px uppercase tracking-wide
+
+Components:
+- Cards: white, rounded-2xl (16px), shadow-sm, 1px slate-200 border
+- Fixed left sidebar 260px — "Budget" item active (solid blue bg, white)
+- Main content padding: 32-40px
+- Icons: Lucide outline style, 1.5 stroke
+
+═══════════════════════════════════════════════════════════
+PAGE STRUCTURE — top to bottom
+═══════════════════════════════════════════════════════════
+
+1) HEADER ROW
+   • Left: "Budget Planning" title (30px bold) + subtitle 
+     "Allocate your income, track spending live, stay in control."
+   • Right cluster:
+     - Month navigator: "◀ April 2026 ▶" in pill container
+     - "Copy from last month" secondary button (duplicate icon)
+     - Primary "Save Budget" button (blue, rounded-xl, shadow-sm)
+
+2) INCOME ALLOCATION HERO (NEW — top of page, critical)
+   Wide gradient card (soft blue→purple bg), "Your April Budget" title.
+   
+   Visual: large horizontal allocation bar showing income breakdown:
+   [ Budgeted 68% ████████ | Unallocated 32% ░░░░ ]
+   
+   Below, 3-column stat grid:
+   • Monthly Income: $3,794.18 (pulled from Income page)
+   • Total Budgeted: $2,580.00 (sum of category limits)
+   • Unallocated: $1,214.18 (green if positive, red if over-allocated)
+   
+   Right side: circular donut showing allocation split by category with 
+   color-coded segments.
+   
+   Bottom caption: "💡 Smart tip: The 50/30/20 rule suggests $1,897 needs, 
+   $1,138 wants, $759 savings" with "Apply template →" link.
+
+3) KPI STATS ROW — 4 cards (upgrade from 2)
+   
+   Card 1 — Total Budgeted
+   • Soft blue bg, pie-chart icon blue
+   • Value: $2,580.00
+   • Caption: "Across 11 categories"
+   
+   Card 2 — Total Spent This Month
+   • Soft amber bg, trending-down icon amber
+   • Value: $1,710.67
+   • Caption: "66% of budget used"
+   • Mini progress bar below
+   
+   Card 3 — Remaining Budget
+   • Soft green bg, wallet icon green
+   • Value: $869.33
+   • Caption: "10 days left in month · $86.93/day"
+   
+   Card 4 — Categories at Risk (NEW)
+   • Soft red bg, alert icon red
+   • Value: 2
+   • Caption: "1 warning · 1 over budget"
+   • Small "Review now →" link
+
+4) OVERALL BUDGET HEALTH BANNER (conditional)
+   Thin card with status indicator:
+   • Green state: "✅ You're on track this month — 66% spent with 33% of 
+     month remaining"
+   • Amber state: "⚠️ Spending pace is ahead — you're spending 20% faster 
+     than planned"
+   • Red state: "🚨 2 categories over budget — review below"
+   With pace visualization: tiny bar showing "Expected pace" vs "Actual pace"
+
+5) BUDGET CATEGORIES — core redesign (replacing the flat list)
+   
+   Section header:
+   • "Category Budgets" title + count "(11 categories · 2 need attention)"
+   • Right cluster:
+     - Filter pills: All · On Track · Warning · Over Budget
+     - Sort dropdown: By spent % / By amount / By category
+     - View toggle: Detailed / Compact
+   
+   EACH BUDGET CATEGORY CARD — rich, interactive row:
+   Rounded-xl, white bg, 1px border (border color shifts by status):
+   - SAFE: slate-200 border
+   - WARNING: amber-300 border with soft amber-50 tint bg
+   - DANGER: red-400 border with soft red-50 tint bg, subtle pulse animation
+   
+   CARD LAYOUT (horizontal row, ~96px tall):
+   
+   [Left zone — 35% width]
+   • Category icon in colored rounded-xl square (48x48) matching category 
+     color system
+   • Category name (bold 16px)
+   • Small status pill below name:
+     - Green "On Track" · Amber "Approaching limit" · Red "Over budget"
+   • Transaction count in slate-500: "24 transactions this month"
+   
+   [Center zone — 45% width — the progress visualization]
+   • Large progress bar (height 14px, rounded-full):
+     - Green fill for safe zone
+     - Amber fill for warning (75-95%)
+     - Red fill for danger (>95%)
+     - If over 100%: show overflow in darker red extending past the bar
+   • Above bar (small labels):
+     "Spent $X" (left) ← → "Limit $Y" (right)
+   • Below bar:
+     - Left: percentage used (e.g., "87% used")
+     - Right: remaining or overspent
+       · Green: "$120 left"
+       · Amber: "$45 left · slow down"
+       · Red: "Over by $38"
+   
+   [Right zone — 20% width — controls]
+   • Editable amount input field (pre-filled with current limit, $ prefix)
+   • "Save" micro-button (appears on edit)
+   • Three-dot menu: Edit · Set recurring · Remove · View transactions
+   
+   Generate realistic sample data for all 11 categories shown in the 
+   original screenshot. Examples:
+   
+   1. Housing — Limit $1,200 · Spent $1,200 · 100% · 🟡 WARNING (exactly at)
+   2. Food & Groceries — Limit $400 · Spent $387 · 97% · 🔴 DANGER
+   3. Transportation — Limit $200 · Spent $145 · 72% · 🟢 SAFE
+   4. Utilities — Limit $150 · Spent $142 · 95% · 🟡 WARNING  
+   5. Healthcare — Limit $100 · Spent $35 · 35% · 🟢 SAFE
+   6. Savings — Limit $500 · Allocated $500 · Goal met ✨ (purple theme)
+   7. Emergency Fund — Limit $200 · Allocated $200 · On track
+   8. Entertainment — Limit $120 · Spent $156 · 130% · 🔴 OVER by $36
+   9. Shopping — Limit $150 · Spent $89 · 59% · 🟢 SAFE
+   10. Travel — Limit $0 · Spent $0 · not budgeted (ghost row, dimmed)
+   11. Gold — Limit $100 · Spent $0 · 0% · Not spent yet
+   
+   Include "+ Add Category" ghost row at the bottom (dashed border).
+
+6) SPENDING TREND VISUALIZATION (NEW) — 2-column section
+   
+   LEFT CARD (2/3 width) — "Monthly Spending Pace"
+   • Line chart with 2 lines over 30 days:
+     - Blue line: "Expected pace" (budget / days in month, linear)
+     - Green/amber/red line: "Actual pace" (cumulative real spending)
+   • Shaded area between lines shows over/under pacing
+   • Today marker vertical line
+   • Legend + annotations on peaks ("Rent paid Apr 1")
+   
+   RIGHT CARD (1/3 width) — "Top Overspend Categories"
+   • Ranked list of categories exceeding budget:
+     1. Entertainment · +$36 over (red bar)
+     2. Food & Groceries · approaching limit (amber)
+     3. Utilities · approaching limit (amber)
+   • Each with mini horizontal bar + action: "Adjust limit →"
+
+7) SMART INSIGHTS FOOTER (NEW)
+   Soft gradient card with AI sparkle icon:
+   
+   Three insight chips horizontally:
+   
+   💡 "You consistently underspend on Transportation by $55/mo. 
+       Reallocate to Savings?" [Apply →]
+   
+   📊 "Entertainment has exceeded budget 3 months in a row. 
+       Consider raising limit to $160." [Review →]
+   
+   ✨ "Your Housing + Food = 42% of income — 
+       perfectly aligned with 50/30/20 rule." [Learn more →]
+
+═══════════════════════════════════════════════════════════
+CROSS-PAGE ALERT BEHAVIOR (show in mockup)
+═══════════════════════════════════════════════════════════
+
+Design a supplementary mockup showing how budget alerts appear on the 
+EXPENSES page:
+
+- Sidebar "Expenses" nav item has a red badge "2" indicating warned 
+  categories
+- At the top of Expenses page, sticky alert banner:
+  "🚨 2 budget alerts this month" 
+  [Entertainment is $36 over budget · Food & Groceries at 97%]
+  [Review Budget →] [Dismiss]
+- When viewing category-filtered expenses (e.g., Entertainment), a slim 
+  red banner appears: "You're $36 over your $120 monthly limit for 
+  Entertainment"
+- Each transaction in the Expenses list that pushed a category over gets 
+  a tiny red flag icon
+
+═══════════════════════════════════════════════════════════
+INTERACTIONS & MICRO-POLISH
+═══════════════════════════════════════════════════════════
+- Inline editing: click limit amount → input activates with save/cancel
+- Slider alternative: right-click or long-press on limit opens a slider 
+  (0 to 150% of income)
+- Progress bars animate fill on load, smooth easing
+- Real-time recalculation: editing any limit instantly updates 
+  "Total Budgeted", "Unallocated", donut chart
+- Over-allocation warning: if total budgets > income, unallocated shows 
+  negative in red with shake animation
+- Drag-to-reorder categories by priority
+- Budget templates quick-apply: 50/30/20, 70/20/10, Zero-based, Custom
+- Keyboard shortcuts: Tab through categories, Enter to save
+- Empty categories (limit $0) are dimmed/collapsed with "Set a limit" CTA
+- Monthly rollover toggle per category: "Unused rolls to next month"
+- Hover on category card: subtle lift, shadow-md
+- RTL support for Arabic
+
+═══════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════
+Provide:
+1. Desktop view @ 1440px — light mode (primary) with realistic data 
+   showing mix of safe/warning/danger states
+2. Desktop view @ 1440px — dark mode (slate-900 bg, slate-800 cards)
+3. Mobile view @ 375px — stacked, categories full-width, allocation hero 
+   simplifies
+4. "Set Budget" modal — bulk setup with category list, suggested amounts 
+   based on past spending averages, template picker
+5. Cross-page alert mockup — Expenses page WITH the budget warning 
+   banner active, showing how the two pages communicate
+6. Notification toast design — when crossing a threshold: 
+   "⚠️ Entertainment reached 100% of budget" with "View" / "Dismiss"
+
+The page must feel like a proactive financial coach, not a passive 
+spreadsheet. Every zero-amount category is a missed opportunity to educate. 
+Every overspend is a teaching moment, not a shame. Maintain perfect visual 
+consistency with the Wealthly dashboard: same sidebar, same card language, 
+same typography, same spacing DNA. Think YNAB's envelope method meets 
+Copilot's smart categorization meets Linear's clean execution.
