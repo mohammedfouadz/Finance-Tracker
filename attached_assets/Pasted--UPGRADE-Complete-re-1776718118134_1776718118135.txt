@@ -1,0 +1,671 @@
+═══════════════════════════════════════════════════════════════════════════════
+UPGRADE: Complete redesign of the Wealthly Settings page.
+
+The current Settings page is minimal — only currency dropdown and a flat 
+category list with budget percentages. Transform it into a comprehensive, 
+well-organized control center that covers EVERY aspect of the user's 
+financial app experience: profile, preferences, categories for ALL types 
+(income + expenses + investments + assets), notifications, security, 
+integrations, data management, and more.
+═══════════════════════════════════════════════════════════════════════════════
+
+DESIGN SYSTEM (must match existing Wealthly app)
+───────────────────────────────────────────────────────────────────────────
+- Colors: Primary #2563EB, Success #10B981, Warning #F59E0B, Danger #EF4444
+- Purple accent #8B5CF6, Page bg #F8FAFC, Card bg #FFFFFF
+- Borders #E2E8F0, Text #0F172A / #64748B / #94A3B8
+- Cards: rounded-2xl, shadow-sm, 1px slate-200 border
+- Primary button: bg-blue-600, text-white, rounded-xl, shadow-sm
+- Icons: Lucide React, 1.5 stroke
+- Typography: Inter, H1 30/700, section 20/600, body 14-15/400-500
+- Existing sidebar stays unchanged (grouped navigation)
+- Floating AI chat button remains (bottom-right)
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 1 — LAYOUT STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+Two-column layout on desktop:
+
+LEFT: Settings sub-navigation (260px wide sticky)
+RIGHT: Settings content area (main)
+
+The sub-nav is a vertical menu of sections, with icon + label for each. 
+Active item: blue-50 bg, blue-600 text, rounded-xl. 
+Inactive: slate-600 text, hover:bg-slate-50.
+
+Sub-navigation sections (with icons):
+👤 Profile
+🎨 Preferences
+🗂️ Categories
+🔔 Notifications
+🔐 Security
+💳 Accounts & Integrations
+🤖 AI Assistant
+📊 Data & Privacy
+🌍 Localization
+💎 Subscription & Billing
+📱 Devices & Sessions
+❓ Help & Support
+⚠️ Danger Zone
+
+URL routing: /settings/profile, /settings/preferences, etc.
+Mobile: sub-nav becomes top dropdown or tabs.
+
+HEADER (above both columns):
+- Title: "Settings" (30px bold)
+- Subtitle: "Customize your Wealthly experience"
+- Right: "Changes auto-save" small text indicator with green dot when saved
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 2 — SETTINGS SECTIONS (detailed specifications)
+═══════════════════════════════════════════════════════════════════════════════
+
+▶ SECTION 1 — PROFILE
+─────────────────────────────────────────────────────
+Hero card with avatar and personal info:
+
+- Avatar upload (128x128 rounded-full, gradient fallback with initials)
+  - "Change photo" / "Remove" buttons on hover
+  - Drag-drop support
+- Full Name input
+- Email input (with verified badge if confirmed)
+- Phone number with country code picker
+- Date of Birth
+- Occupation / Role dropdown
+- Country (flag + name)
+- Time zone (auto-detected, editable)
+- Bio / Notes textarea (optional)
+
+Financial profile card:
+- Financial Goals: multi-select chips (Save for home, Pay off debt, 
+  Retire early, Build emergency fund, Invest, Travel, Other)
+- Risk Tolerance slider: Conservative → Moderate → Aggressive
+- Monthly savings target: input
+- Household size: number input
+- Dependents: number input
+
+Save button at bottom of each card.
+
+▶ SECTION 2 — PREFERENCES
+─────────────────────────────────────────────────────
+Card: Appearance
+- Theme selector: visual cards for Light / Dark / System (with preview)
+- Accent color picker: 6 preset colors (blue default, purple, green, 
+  orange, pink, teal) + custom hex input
+- Font size: Small / Medium / Large
+- Density: Compact / Comfortable / Spacious
+- Sidebar: Expanded / Collapsed by default / Auto-hide
+- Reduce motion toggle (accessibility)
+- High contrast mode toggle
+
+Card: Display Preferences
+- Default landing page: dropdown (Home / Net Worth / Transactions / Budget)
+- Number format: 1,000.00 vs 1.000,00 vs 1 000,00
+- Date format: MM/DD/YYYY vs DD/MM/YYYY vs YYYY-MM-DD
+- Time format: 12-hour / 24-hour
+- First day of week: Sunday / Monday / Saturday
+- Default chart type: Bar / Line / Area
+- Show balances as: Absolute / Percentage / Both
+
+Card: Behavior
+- Auto-categorize transactions toggle
+- Confirm before delete toggle
+- Keyboard shortcuts enabled toggle
+- Sound effects toggle
+- Show tooltips toggle
+
+▶ SECTION 3 — CATEGORIES (THE MAIN UPGRADE)
+─────────────────────────────────────────────────────
+This is the most critical section. Three tabs at top:
+
+[Expense Categories] [Income Categories] [Investment & Asset Categories]
+
+Each tab has:
+- Header row: category count + "Sorted by: [Name / Usage / Budget %]" + 
+  "+ Add Category" primary button
+- Bulk actions: Import preset, Reset to defaults, Export list
+
+═══ EXPENSE CATEGORIES TAB ═══
+
+Table layout (replaces current flat list):
+Columns: Drag-handle · Icon · Name · Color · Type · Budget % · Monthly Limit · 
+         Transactions · Status · Actions
+
+Each row (rich, interactive):
+- Drag-handle icon (for reordering) — cursor-grab
+- Icon selector: click to open icon picker modal (Lucide icons library, 
+  searchable, 100+ icons)
+- Name: inline editable (click to edit)
+- Color: colored circle, click to open color picker (12 preset + custom hex)
+- Type pill: "System" (blue-100 bg) = can't delete, only edit
+                "Custom" (purple-100 bg) = fully editable/deletable
+- Budget Allocation %: inline input with % suffix, live-updates total
+- Monthly Limit: computed ($X based on income) or manual override
+- Transactions count: "47 this month" (clickable → filters expenses)
+- Status toggle: Active / Archived
+- Actions menu:
+  - Edit (opens full edit modal)
+  - Duplicate
+  - Merge into another category
+  - Archive (soft delete — keeps history)
+  - Delete permanently (only for custom, confirmation required)
+
+Top-right sticky total indicator:
+"Total Allocated: 87% of income · $3,299 / $3,794"
+Color: green if ≤100%, amber if 95-100%, red if >100%
+Progress bar below: visual fill
+
+Include all current categories plus support for adding:
+System categories (pre-seeded): Housing, Food & Groceries, Transportation, 
+Utilities, Healthcare, Savings, Emergency Fund, Entertainment, Shopping, 
+Travel, Education, Personal, Gold, Subscriptions, Insurance, Taxes, 
+Charity, Debt Payments, Other
+
+Plus sub-categories support:
+- Expand arrow next to category name reveals sub-categories
+- Example: Food & Groceries → Groceries, Restaurants, Coffee, Delivery
+- Each sub-category has its own budget sub-allocation
+- Transactions can be tagged with main + sub category
+
+"Apply Template" button opens modal with presets:
+- 50/30/20 (Needs/Wants/Savings auto-allocated)
+- 70/20/10 (Spending/Savings/Giving)
+- Zero-Based Budget
+- Envelope System
+- Custom Template (user saves their own)
+
+═══ INCOME CATEGORIES TAB ═══
+
+Same table structure for income sources:
+System categories: Salary, Freelance, Business, Investments, Dividends, 
+Interest, Rental, Royalties, Bonuses, Commission, Gifts, Refunds, Other
+
+Per category:
+- Icon + Name + Color
+- Type (taxable / non-taxable toggle — links to Tax Center)
+- Default account (where income usually deposits)
+- Recurring? (yes/no)
+- Transactions count
+- Actions
+
+No "Budget %" column since income doesn't need allocation.
+Instead: "Share of total income" column showing % of last 6 months
+
+═══ INVESTMENT & ASSET CATEGORIES TAB ═══
+
+Two sub-sections:
+
+Investment Types:
+- Stocks, Bonds, ETFs, Mutual Funds, Crypto, Gold, Silver, Forex, 
+  Commodities, REITs, Private Equity, Startup Equity, Other
+- Each with: Icon, Color, Risk level (Low/Medium/High), Platform defaults
+
+Asset Types:
+- Real Estate, Vehicles, Collectibles, Jewelry, Art, Equipment, 
+  Intellectual Property, Business Ownership, Other
+- Each with: Icon, Color, Depreciation schedule (appreciates / depreciates / 
+  stable), Expected annual % change
+
+═══ ADD/EDIT CATEGORY MODAL ═══
+
+Full-featured modal with:
+- Name input
+- Icon picker (searchable Lucide library grid)
+- Color picker (preset palette + custom hex + gradient option)
+- Parent category (for sub-categories)
+- Budget allocation % (expense only)
+- Monthly limit $ (expense only, auto-calculated from %)
+- Rollover unused budget to next month toggle (expense only)
+- Keywords for auto-categorization (e.g., "starbucks, dunkin" → Coffee)
+- Default account
+- Tax category (for Tax Center integration)
+- Zakatable? toggle (for Zakat integration, if savings/gold/investment)
+- Notes
+- Save / Cancel buttons
+
+▶ SECTION 4 — NOTIFICATIONS
+─────────────────────────────────────────────────────
+Card: Channels
+- Email notifications toggle (with email address shown)
+- Push notifications toggle (browser + mobile)
+- SMS notifications toggle (with phone number)
+- In-app notifications toggle
+
+Card: What to notify me about
+Grouped list with master + granular toggles per event:
+
+Budget Alerts:
+- 75% of category budget reached
+- 90% of category budget reached
+- Category budget exceeded
+- Monthly budget summary
+
+Goals:
+- Goal milestone reached (25%, 50%, 75%, 100%)
+- Goal deadline approaching (30, 14, 7 days)
+- Goal completed
+
+Bills & Recurring:
+- Bill due in X days (configurable: 1, 3, 7 days)
+- Recurring payment processed
+- Subscription renewal upcoming
+- Unusual charge detected
+
+Debts:
+- Payment due soon
+- Payment processed
+- Debt fully paid off
+
+Investments:
+- Portfolio value change >X% (configurable threshold)
+- Dividend received
+- Stock price alert (custom)
+
+Security:
+- New device login
+- Password changed
+- 2FA enabled/disabled
+- Suspicious activity
+
+AI Insights:
+- Weekly AI summary
+- Important insights worth attention
+- Anomalies detected
+
+Reports:
+- Monthly report ready
+- Year-end summary available
+
+Each event has: Email toggle | Push toggle | SMS toggle
+
+Card: Quiet Hours
+- Enable quiet hours toggle
+- From time / To time pickers
+- Days of week selector
+- "Except for critical alerts" toggle
+
+▶ SECTION 5 — SECURITY
+─────────────────────────────────────────────────────
+Card: Password
+- Last changed date
+- "Change password" button → modal with current, new, confirm fields
+- Password strength indicator
+
+Card: Two-Factor Authentication
+- Status: Enabled/Disabled prominent indicator
+- Methods available:
+  - Authenticator app (TOTP) — setup with QR code
+  - SMS (fallback)
+  - Email (fallback)
+- Backup codes section (download/regenerate)
+
+Card: Biometric Authentication
+- Face ID / Touch ID / Windows Hello toggle
+- App lock timeout: Immediately / 1min / 5min / 15min / Never
+
+Card: Privacy Shield
+- Global balance hide toggle (masks all money values as ••••••)
+- Auto-lock on background toggle
+- Require authentication for: Export data / Delete data / Large transactions
+
+Card: Connected Devices (redundant with Devices section — link to it)
+
+Card: Security Activity
+- Recent security events list
+- Failed login attempts
+- Password change history
+- 2FA events
+
+Card: Data Encryption
+- Status indicator: "End-to-end encrypted"
+- Encryption key management (advanced)
+
+▶ SECTION 6 — ACCOUNTS & INTEGRATIONS
+─────────────────────────────────────────────────────
+Card: Linked Financial Accounts
+- List of connected banks/brokerages (via Plaid or similar)
+- Each with: institution logo, account count, last sync, status, sync now, disconnect
+- "+ Connect new account" primary button
+- Manual sync all button
+
+Card: External Integrations
+Each integration as a card with logo, description, status (Connected/Not connected):
+- Plaid (bank aggregation)
+- Stripe (payment processing)
+- Google Calendar (for bill reminders)
+- Apple/Google Health (for health-related expense tracking)
+- IFTTT / Zapier (automation)
+- Excel / Google Sheets (export sync)
+- QuickBooks / FreshBooks (accounting)
+- TurboTax (tax integration)
+
+Card: API Access (for power users)
+- API keys management
+- Webhooks configuration
+- Developer documentation link
+
+Card: Export Integrations
+- Automatic monthly CSV export to email toggle
+- Sync to cloud storage (Google Drive / Dropbox / iCloud)
+
+▶ SECTION 7 — AI ASSISTANT
+─────────────────────────────────────────────────────
+Card: AI Personality
+- AI model selector: Default / Financial Advisor / Conservative / 
+  Aggressive / Cultural (Islamic finance aware)
+- Response tone: Formal / Friendly / Casual
+- Response length: Concise / Balanced / Detailed
+- Language preference (independent from app language)
+
+Card: AI Capabilities
+Granular toggles:
+- Proactive insights on dashboard
+- Transaction auto-categorization
+- Anomaly detection
+- Spending pattern analysis
+- Goal recommendations
+- Investment suggestions (with disclaimer)
+- Zakat calculations
+- Tax optimization hints
+
+Card: AI Learning
+- "Let AI learn from my corrections" toggle
+- Clear AI learning history button
+- Reset AI personality button
+
+Card: AI Data Access
+- What data can AI access (granular checkboxes):
+  ☑ Transactions ☑ Budget ☑ Goals ☑ Debts
+  ☐ Investments ☐ Personal info ☐ Documents
+
+Card: AI Chat History
+- Download chat history
+- Clear chat history
+- Auto-delete after X days setting
+
+▶ SECTION 8 — DATA & PRIVACY
+─────────────────────────────────────────────────────
+Card: Data Export
+- "Export all my data" button → downloads ZIP with CSV files for 
+  transactions, accounts, goals, etc.
+- Format options: CSV / Excel / JSON / PDF
+- Date range selector
+- "Schedule monthly exports" toggle
+
+Card: Data Import
+- Import from CSV (with mapping wizard)
+- Import from Mint / YNAB / Personal Capital / Quicken
+- Bulk transaction upload
+
+Card: Data Retention
+- Auto-delete transactions older than: Never / 1y / 3y / 5y / 7y / 10y
+- Archive old data toggle
+
+Card: Privacy Controls
+- Anonymous analytics toggle
+- Share anonymized data to improve AI toggle
+- Marketing emails toggle
+- Product updates emails toggle
+
+Card: Cookies & Tracking
+- Cookie preferences
+- Do Not Track honor toggle
+
+▶ SECTION 9 — LOCALIZATION
+─────────────────────────────────────────────────────
+Card: Language & Region
+- Language dropdown (English / العربية / Français / Español / Deutsch / 
+  Türkçe / Urdu / Indonesian / Malay + more)
+- Region dropdown (affects tax rules, date formats, currency defaults)
+- Translation quality feedback
+
+Card: Currency
+- Primary currency dropdown (USD / EUR / GBP / SAR / AED / ILS / JOD / 
+  TRY / EGP / PKR + all ISO currencies)
+- Display secondary currency toggle + selector
+- Exchange rate source: Live API / Fixed daily / Manual
+- Last updated timestamp + refresh button
+- Historical exchange rate handling for old transactions
+
+Card: Regional Financial Rules
+- Tax year start month (varies by country)
+- Fiscal calendar selector
+- Zakat calculation method: Gold standard / Silver standard / Cash
+- Hawl tracking enabled
+
+Card: Calendar
+- Calendar system: Gregorian / Hijri / Both
+- First day of week
+- Holidays to observe (affects "working days" calculations)
+
+▶ SECTION 10 — SUBSCRIPTION & BILLING
+─────────────────────────────────────────────────────
+Card: Current Plan
+- Plan name: Free / Plus / Pro / Family (with badge)
+- Features of current plan
+- Usage indicators (transactions, accounts, AI queries used/limit)
+- "Upgrade" or "Manage" button
+
+Card: Plan Comparison
+- Table comparing Free / Plus / Pro / Family
+- Highlighted current plan
+- "Choose plan" buttons
+
+Card: Billing Information
+- Payment method (card, with last 4 digits)
+- Billing address
+- "Update payment method" button
+- Billing history table (invoices with download)
+- Next billing date + amount
+
+Card: Promo Codes
+- Input field for promo code
+- Active promotions list
+
+Card: Cancel Subscription
+- Explains what happens (data retention, downgrade)
+- Feedback form
+- "Cancel subscription" button (confirmation required)
+
+▶ SECTION 11 — DEVICES & SESSIONS
+─────────────────────────────────────────────────────
+Card: Active Sessions
+- List of all currently logged-in devices
+- Each with: Device icon (phone/laptop), name, OS, location, IP, last 
+  active, current session indicator
+- "Sign out" button per device
+- "Sign out all other devices" prominent button
+
+Card: Trusted Devices
+- Devices user marked as trusted (skip 2FA)
+- Manage / remove
+
+Card: Login Activity
+- Timeline of recent logins
+- Failed attempts highlighted in red
+- Geo-location of logins (map view)
+- Report suspicious activity button
+
+▶ SECTION 12 — HELP & SUPPORT
+─────────────────────────────────────────────────────
+Card: Contact Support
+- Live chat (if available)
+- Email support button
+- Support ticket form
+- Expected response time displayed
+
+Card: Help Center
+- Links to:
+  - Getting Started Guide
+  - Video Tutorials
+  - FAQ
+  - Best Practices
+  - Blog
+
+Card: Feedback
+- "Share feedback" form
+- Feature request submission
+- Rate Wealthly (stars)
+- Refer a friend (with rewards)
+
+Card: Developer Tools (power users)
+- View app version, build number, last update
+- Diagnostic data (for support)
+- Debug mode toggle
+- Clear cache button
+
+Card: Legal
+- Terms of Service link
+- Privacy Policy link
+- Cookie Policy link
+- Open source licenses
+
+▶ SECTION 13 — DANGER ZONE
+─────────────────────────────────────────────────────
+Red-tinted card with warnings throughout.
+
+Action 1: Reset All Data
+- Clears all transactions, budgets, goals (keeps account)
+- Confirmation with password required
+- "This cannot be undone" warning
+
+Action 2: Delete Specific Data
+- Granular selection: just transactions / just goals / just investments / 
+  just AI history etc.
+
+Action 3: Export & Delete Account
+- Downloads all data THEN deletes account
+- Two-step confirmation
+
+Action 4: Delete Account Permanently
+- Requires password
+- Cooling-off period option: "Delete in 30 days" (can cancel)
+- Immediate deletion option
+- Data retention policy explanation
+- Final warning
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 3 — GLOBAL UX PATTERNS
+═══════════════════════════════════════════════════════════════════════════════
+
+AUTO-SAVE BEHAVIOR:
+- Most changes save automatically on blur/change
+- Visual feedback: "Saving..." → "Saved ✓" (fades after 2s)
+- Critical changes (password, delete) require explicit confirmation
+
+SEARCH:
+- Top of settings page: "Search settings..." input
+- Real-time filtering of all settings across all sections
+- Search indexes section titles + setting labels + descriptions
+
+BREADCRUMBS:
+- On mobile: back arrow + current section title
+- On desktop: "Settings / [Section]"
+
+UNDO:
+- Toast with "Undo" button appears after destructive actions
+- 10-second undo window for things like delete category
+
+VALIDATION:
+- Inline validation (red text below invalid field)
+- Save buttons disabled until valid
+- Helpful error messages, never just "Error"
+
+TOOLTIPS:
+- Hover "?" icons next to complex settings
+- Contextual help without leaving the page
+
+SMART INSIGHTS (consistent with other pages):
+Sprinkle small AI insights throughout:
+- "Based on your spending, consider 55/25/20 split instead of 50/30/20" 
+  in Categories
+- "Users in your region typically enable 2FA" in Security
+- "You haven't used 3 integrations — consider removing?" in Integrations
+
+═══════════════════════════════════════════════════════════════════════════════
+PART 4 — RESPONSIVE & POLISH
+═══════════════════════════════════════════════════════════════════════════════
+
+DESKTOP (1440px):
+- Two-column layout as specified
+- Sub-nav sticky on scroll
+
+TABLET (768px):
+- Sub-nav converts to horizontal tabs at top
+- Content full-width below
+
+MOBILE (375px):
+- Sub-nav becomes a list (like iOS Settings)
+- Tapping section → drill-in to that section
+- Back button to return to main settings list
+
+DARK MODE:
+- Full support with inverted palette
+- Color pickers remain vibrant
+- Danger zone keeps red accents
+
+RTL (Arabic):
+- Full mirroring
+- Sub-nav on right, content on left
+- Toggle switches flip direction
+
+ANIMATIONS:
+- Section transitions: slide
+- Toggle switches: smooth spring
+- Color picker: scale + fade
+- Save indicator: fade in/out
+- Drag-drop category reorder: smooth with ghost element
+
+ACCESSIBILITY:
+- All toggles have proper labels
+- Color is never the only indicator
+- Full keyboard navigation
+- Screen reader friendly
+- Focus indicators clear
+
+═══════════════════════════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════════════════════════
+
+Provide:
+1. Main settings page — desktop light mode
+2. Main settings page — desktop dark mode
+3. Categories section — detailed view showing all three tabs (Expense, 
+   Income, Investment/Asset) with rich table
+4. Add/Edit Category modal
+5. Notifications section showing granular toggles
+6. Security section with 2FA setup flow
+7. Mobile view showing the iOS-style drill-in navigation
+8. Color picker and icon picker modals
+9. Danger Zone section with confirmation flows
+
+═══════════════════════════════════════════════════════════════════════════════
+CRITICAL RULES
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Settings must be HIGHLY ORGANIZED. No flat mega-page. The 13 sections 
+   with clear sub-nav prevent overwhelm.
+
+2. Categories management is the STAR — it must handle Income, Expenses, 
+   AND Investment/Asset types with equal power.
+
+3. Every setting change must have clear visual feedback (saved indicator).
+
+4. Dangerous actions are visually separated in Danger Zone with red 
+   accents and require confirmation.
+
+5. Consistent with main app design language — same sidebar, cards, 
+   typography, colors, hover states.
+
+6. Accessibility is non-negotiable — all toggles labeled, keyboard 
+   navigable, screen reader compatible.
+
+7. Mobile experience should feel native (iOS-style drill-in) not a 
+   shrunk desktop.
+
+8. The AI Assistant settings reflect that AI is distributed throughout 
+   the app (not a standalone page), so users control it globally from here.
+
+Reference aesthetic: Linear's settings × Notion's settings × Apple's 
+System Settings × Stripe Dashboard settings. Organized, powerful, beautiful.
