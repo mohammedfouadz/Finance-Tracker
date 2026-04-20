@@ -1,0 +1,231 @@
+Redesign the "Debt Management" page for a wealth management web app called 
+"Wealthly". The current page is minimal — a single debt card with a basic 
+progress bar and flat KPI stats. Transform it into a powerful debt-crushing 
+command center with payoff projections, strategy insights, and visual 
+storytelling, while matching the existing dashboard's design system exactly.
+
+═══════════════════════════════════════════════════════════
+DESIGN SYSTEM (must match existing Wealthly dashboard)
+═══════════════════════════════════════════════════════════
+
+Colors:
+- Primary blue: #2563EB (active nav, primary CTAs, progress accents)
+- Success green: #10B981 (paid off, positive progress, savings)
+- Danger red: #EF4444 (debt totals, high-priority debts, overdue)
+- Warning amber: #F59E0B (active debts, upcoming payments)
+- Accent purple: #8B5CF6 (interest rates, secondary metrics)
+- Background: #F8FAFC (page), #FFFFFF (cards)
+- Borders: #E2E8F0 (1px subtle)
+- Text: #0F172A (primary), #64748B (secondary), #94A3B8 (tertiary)
+
+Typography:
+- Inter / SF Pro, sans-serif
+- H1 page title: 30px / bold 700
+- Card titles: 20px / bold 700
+- Money values: tabular-nums, 28-32px for KPIs, bold
+- Labels: 12px uppercase tracking-wide for stat labels
+
+Components:
+- Cards: white, rounded-2xl (16px), shadow-sm, 1px slate-200 border
+- Fixed left sidebar 260px (identical to dashboard) — "Debts" item active 
+  (solid blue bg, white text, rounded-lg)
+- Main content padding: 32-40px
+- Icons: Lucide outline style, 1.5 stroke
+
+═══════════════════════════════════════════════════════════
+PAGE STRUCTURE — top to bottom
+═══════════════════════════════════════════════════════════
+
+1) HEADER ROW
+   • Left: "Debt Management" title (30px bold) + subtitle "Track payments, 
+     crush debt faster, and save on interest."
+   • Right cluster:
+     - Strategy selector dropdown: "Payoff Strategy: Avalanche ▾" 
+       (options: Avalanche / Snowball / Custom)
+     - Secondary "Record Payment" button (outlined)
+     - Primary "+ Add Debt" button (blue, white text, rounded-xl, shadow-sm)
+
+2) KPI STATS ROW — 4 cards (upgrade the existing 4)
+   Each card: soft tinted background, icon in rounded-xl square top-right, 
+   uppercase label, large bold value, descriptive caption below with 
+   insight/trend.
+   
+   Card 1 — Total Debt
+   • Soft red bg (#FEF2F2), dollar icon red
+   • Value: $4,500.00
+   • Caption: "Across 1 active debt"
+   • Tiny trend: ↘ -$2,500 paid this year
+   
+   Card 2 — Monthly Payment
+   • Soft amber bg (#FFFBEB), calendar icon amber
+   • Value: $450.00
+   • Caption: "Next due: May 5, 2026"
+   • Progress mini-bar: "12 / 20 payments made"
+   
+   Card 3 — Debt-Free Date (NEW — replaces "Paid Off")
+   • Soft green bg (#ECFDF5), flag icon green
+   • Value: Nov 2026
+   • Caption: "7 months remaining"
+   • Tiny text: "2 months ahead of schedule ✨"
+   
+   Card 4 — Total Interest Saved (NEW — replaces flat "Avg Interest Rate")
+   • Soft purple bg (#F5F3FF), percent icon purple
+   • Value: $340.00
+   • Caption: "Via extra payments"
+   • Bold line: "Avg rate: 0% · Debt-to-income: 18%"
+
+3) DEBT PAYOFF JOURNEY — hero section (NEW)
+   Wide card spanning full width, "Your Debt-Free Journey" title.
+   
+   • Large curved progress visualization — semi-circle gauge or horizontal 
+     journey bar from "Start $7,000" → "Today $4,500" → "Goal $0"
+   • Milestones marked along the path with date labels:
+     - ✅ Jan 2026: Started ($7,000)
+     - ✅ Mar 2026: 25% milestone
+     - 🎯 Today: 35.7% paid off ($2,500 crushed)
+     - ⏳ Aug 2026: 75% milestone
+     - 🏁 Nov 2026: Debt-free!
+   • Below the journey: encouraging caption in slate-600
+     "You've paid off 35.7% — keep going! Add $100 extra/month and finish 
+     2 months sooner."
+   • Right side: subtle confetti/celebration illustration
+
+4) TWO-COLUMN LAYOUT — Debts list + Smart sidebar
+   
+   LEFT COLUMN (2/3 width) — "Your Debts"
+   
+   Section header:
+   • Title "Your Debts (1 active · 0 paid off)"
+   • Right: view toggle Grid / List + sort dropdown 
+     "Sort by: Highest interest / Smallest balance / Due date"
+   
+   DEBT CARDS — redesigned, richer, full-width list style:
+   
+   Each DebtCard (rounded-2xl, white, slate-200 border):
+   • TOP ROW:
+     - Left: category icon in tinted square (48x48, rounded-xl) — 
+       category-colored (Car=blue, Credit=purple, Student=green, 
+       Mortgage=amber, Personal=red, Medical=pink)
+     - Debt name (bold 20px) + lender name in slate-500 italic 
+       (e.g., "Qase · via Toyota Financial")
+     - Right: status pill (Active=amber / Paid=green / Overdue=red), 
+       three-dot menu icon
+   
+   • BALANCE ROW — 3-column grid:
+     · Original · $7,000.00 (slate-500)
+     · Remaining · $4,500.00 (bold, large)
+     · Paid Off · $2,500.00 (green)
+   
+   • PROGRESS BAR — thicker (12px height), rounded-full, gradient blue→green,
+     percentage label on right "35.7% paid off"
+   • Below bar: "12 of 20 payments made · 8 payments remaining"
+   
+   • DETAILS ROW — 4-column grid (soft slate-50 bg inside card):
+     · Interest Rate: 0.0%
+     · Monthly: $450.00
+     · Next Due: May 5 (amber highlight if within 7 days)
+     · Term: 20 months
+   
+   • MINI PAYOFF CHART — 120px height line/area chart showing balance decline 
+     over time with projection line (dashed) extending to zero
+   
+   • FOOTER ACTIONS (3 buttons):
+     - Primary "Record Payment" (blue, flex-1) with credit-card icon
+     - Outlined "View History" with chevron
+     - Icon buttons: edit, delete (red on hover)
+   
+   Include 3 sample debt cards for variety:
+   1. Qase — CAR · $4,500 remaining · 0% · Active (existing)
+   2. Chase Credit Card · $2,840 remaining of $5,000 · 18.99% APR · Active 
+      (show interest accumulation warning)
+   3. Student Loan — Sallie Mae · $12,000 remaining of $18,000 · 4.5% APR · 
+      Active
+   
+   "+ Add Debt" ghost card at the end — dashed border, plus icon.
+
+   RIGHT COLUMN (1/3 width) — Smart Insights Stack
+   
+   Card A — "Payoff Strategy" (primary insight card)
+   • Soft blue gradient background
+   • Title: "Avalanche Strategy Active 🔥"
+   • Body: "Focus extra payments on Chase Credit Card (18.99% APR) to save 
+     $840 in interest."
+   • Small visualization: ordered list of debts by priority with tiny bars
+   • CTA: "Switch to Snowball →" link
+   
+   Card B — "Upcoming Payments" calendar mini-view
+   • Title + current month
+   • Compact list:
+     · 🔴 May 5 · Qase · $450
+     · 🟣 May 15 · Chase CC · $120 (min)
+     · 🟢 May 28 · Student Loan · $180
+   • Total: "$750 due this month"
+   • "View calendar →" link
+   
+   Card C — "Extra Payment Calculator" (interactive)
+   • Title + slider input: "Add $___ extra monthly"
+   • Default value: $100
+   • Live output: "→ Debt-free 2 months sooner · Save $180 in interest"
+   • Primary button: "Apply Extra Payment"
+   
+   Card D — "AI Debt Coach" (tying to AI Reports feature)
+   • Sparkle icon, subtle purple gradient
+   • "3 new insights available"
+   • Preview: "Your credit card rate is 3x higher than your car loan..."
+   • "Read full analysis →"
+
+5) PAYMENT HISTORY SECTION — below main columns, full-width
+   • Title "Payment History" + filter pills (All / Qase / Chase / Student Loan)
+   • Timeline-style list or clean table with columns:
+     Date · Debt · Amount · Method · Principal/Interest split · Balance After
+   • Each entry has a small colored dot matching the debt
+   • Example row: "Apr 5, 2026 · Qase · $450.00 · Bank Transfer · 
+     $450 principal / $0 interest · Balance: $4,500"
+   • Export button top-right (CSV/PDF)
+   • Pagination footer
+
+6) DEBT-FREE CELEBRATION MODAL (design spec, not shown by default)
+   When a debt hits 100%, trigger a celebration modal:
+   • Confetti animation, large checkmark
+   • "Debt crushed! 🎉 You paid off Qase in 18 months"
+   • Stats: "Total saved vs minimum payments: $340"
+   • Social share buttons, "View next target →" CTA
+
+═══════════════════════════════════════════════════════════
+INTERACTIONS & MICRO-POLISH
+═══════════════════════════════════════════════════════════
+- Card hover: translate-y -2px, shadow-md
+- Progress bars animate fill on page load (smooth ease-out)
+- Mini payoff charts draw in with stroke animation
+- Overdue debts: red pulsing border + "Overdue by X days" red pill
+- High-interest debts (>10% APR): subtle amber glow border to draw attention
+- Empty state (no debts): large celebratory illustration + 
+  "You're debt-free! 🎉 Keep it that way." + small "Track a debt" link
+- Record Payment modal: amount field, date, principal/interest split toggle, 
+  notes, source account dropdown
+- Recalculate projections in real-time when user changes strategy or extra 
+  payment amount
+- All money tabular-nums
+- RTL support for Arabic
+
+═══════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════
+Provide:
+1. Desktop view @ 1440px — light mode (primary)
+2. Desktop view @ 1440px — dark mode (slate-900 bg, slate-800 cards)
+3. Mobile view @ 375px — stacked, KPIs horizontal scroll, sidebar cards 
+   stack below main debt list
+4. "Add Debt" modal — form with: debt name, lender, category picker (icons), 
+   original amount, current balance, interest rate (APR), minimum payment, 
+   payment frequency, start date, due date, linked account, notes
+5. "Record Payment" modal — amount, date, payment method, principal/interest 
+   split, optional "extra payment" toggle, receipt upload
+6. Debt detail drawer — slide-in from right with full payment history, 
+   amortization schedule table, interactive payoff projection chart
+
+The page must feel empowering and motivating — not stressful. Turn debt 
+management from a chore into a game of wins. Maintain perfect visual 
+consistency with the Wealthly dashboard: same sidebar, same card language, 
+same typography rhythm, same spacing DNA. Think YNAB meets Linear meets 
+Duolingo's streak psychology.
