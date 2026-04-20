@@ -54,6 +54,11 @@ export async function registerRoutes(
     res.status(204).send();
   });
 
+  app.post("/api/categories/deduplicate", isAuthenticated, async (req, res) => {
+    const removed = await storage.deduplicateCategories();
+    res.json({ removed });
+  });
+
   // Transactions
   app.get(api.transactions.list.path, isAuthenticated, async (req, res) => {
     const userId = getUserId(req);

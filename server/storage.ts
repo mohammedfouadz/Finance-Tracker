@@ -28,6 +28,7 @@ export interface IStorage extends IAuthStorage, IChatStorage {
   createCategory(category: InsertCategory): Promise<typeof categories.$inferSelect>;
   updateCategory(id: number, updates: UpdateCategoryRequest): Promise<typeof categories.$inferSelect>;
   deleteCategory(id: number): Promise<void>;
+  deduplicateCategories(): Promise<number>;
 
   // Transactions
   getTransactions(userId: string, params?: TransactionQueryParams): Promise<typeof transactions.$inferSelect[]>;
@@ -101,12 +102,47 @@ export class DatabaseStorage implements IStorage {
 
   // Categories
   async getCategories(userId: string) {
-    return await db.select().from(categories).where(
+    const rows = await db.select().from(categories).where(
       or(
         eq(categories.userId, userId),
         eq(categories.isSystem, true)
       )
     );
+    // Deduplicate by name+type, keeping lowest id (first inserted)
+    const seen = new Map<string, typeof rows[0]>();
+    for (const row of rows) {
+      const key = `${row.name.toLowerCase()}|${row.type}`;
+      const existing = seen.get(key);
+      if (!existing || row.id < existing.id) {
+        seen.set(key, row);
+      }
+    }
+    return Array.from(seen.values()).sort((a, b) => a.id - b.id);
+  }
+
+  async deduplicateCategories() {
+    const rows = await db.select().from(categories);
+    const seen = new Map<string, number>(); // key -> keep id
+    const toDelete: number[] = [];
+    for (const row of rows) {
+      const key = `${row.name.toLowerCase()}|${row.type}`;
+      const keepId = seen.get(key);
+      if (keepId === undefined) {
+        seen.set(key, row.id);
+      } else {
+        // keep the lower id, delete the higher
+        if (row.id < keepId) {
+          toDelete.push(keepId);
+          seen.set(key, row.id);
+        } else {
+          toDelete.push(row.id);
+        }
+      }
+    }
+    for (const id of toDelete) {
+      await db.delete(categories).where(eq(categories.id, id));
+    }
+    return toDelete.length;
   }
 
   async getCategory(id: number) {

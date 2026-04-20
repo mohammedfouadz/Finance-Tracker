@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import {
   User, Palette, FolderOpen, Bell, Shield, CreditCard, Bot, Database,
   Globe, Crown, Smartphone, HelpCircle, AlertTriangle, Plus, Trash2, Save,
@@ -310,7 +312,16 @@ function CategoriesSection({ user }: { user: any }) {
   const updateCategory  = useUpdateCategory();
   const deleteCategory  = useDeleteCategory();
   const { toast } = useToast();
-  const { formatAmount } = useCurrency();
+
+  const dedup = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/categories/deduplicate"),
+    onSuccess: async (res: any) => {
+      const data = await res.json();
+      await queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({ title: `Duplicates removed: ${data.removed} categories cleaned up` });
+    },
+    onError: () => toast({ title: "Failed to clean duplicates", variant: "destructive" }),
+  });
 
   const [activeTab, setActiveTab] = useState<"expense"|"income"|"investment">("expense");
   const [showForm, setShowForm]   = useState(false);
@@ -380,6 +391,16 @@ function CategoriesSection({ user }: { user: any }) {
             {label}
           </button>
         ))}
+      </div>
+
+      {/* dedup toolbar */}
+      <div className="flex items-center justify-end mb-3">
+        <Button variant="outline" size="sm" className="gap-1.5 rounded-xl text-xs h-8 border-orange-200 text-orange-600 hover:bg-orange-50"
+          onClick={() => dedup.mutate()} disabled={dedup.isPending} data-testid="button-clean-duplicates">
+          {dedup.isPending
+            ? <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Cleaning…</>
+            : <><RefreshCw className="w-3.5 h-3.5" /> Clean Duplicates</>}
+        </Button>
       </div>
 
       {/* add category dialog */}
@@ -495,11 +516,9 @@ function CategoriesSection({ user }: { user: any }) {
                           </div>
                         </td>
                         <td className="py-2.5 px-3 text-right">
-                          {!cat.isSystem && (
-                            <button onClick={() => handleDelete(cat.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all ml-auto" data-testid={`button-delete-${cat.id}`}>
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <button onClick={() => handleDelete(cat.id)} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all ml-auto" data-testid={`button-delete-${cat.id}`}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </td>
                       </tr>
                     );
