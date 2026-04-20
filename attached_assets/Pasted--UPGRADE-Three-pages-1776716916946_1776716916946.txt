@@ -1,0 +1,487 @@
+═══════════════════════════════════════════════════════════════════════════════
+UPGRADE: Three pages of Wealthly need to be transformed from flat, empty-state 
+layouts into rich, intelligent, data-driven experiences.
+
+Target pages:
+1. EXPENSES — currently empty, needs full redesign with live budget integration
+2. INVESTMENTS — basic table, needs portfolio intelligence and visualization
+3. ASSETS — minimal, needs rich asset management with appreciation tracking
+
+All three pages must preserve the existing design system established in the 
+app (colors, typography, cards, sidebar) and feel like natural siblings of 
+the Home and Budget pages already built.
+═══════════════════════════════════════════════════════════════════════════════
+
+GLOBAL REMINDERS (apply to all three pages):
+
+DESIGN TOKENS:
+- Primary: #2563EB · Success: #10B981 · Warning: #F59E0B · Danger: #EF4444
+- Purple (AI/accent): #8B5CF6
+- Page bg: #F8FAFC · Card bg: #FFFFFF · Border: #E2E8F0
+- Text: #0F172A / #64748B / #94A3B8
+- Card: rounded-2xl, shadow-sm, 1px border slate-200
+- Primary button: bg-blue-600, text-white, rounded-xl, shadow-sm
+- Icons: Lucide React, 1.5 stroke
+- Money: tabular-nums, semibold/bold
+- Card hover: translate-y-[-2px], shadow-md
+
+CONNECTIVITY:
+- All three pages must integrate with the Net Worth calculation
+- Transactions from Expenses feed the Budget page
+- Investments and Assets both contribute to total wealth
+- Every page has a floating AI chat button (bottom-right, 56px, blue, sparkle)
+- Every page has a Smart Insights section (soft blue→purple gradient, 
+  sparkle icon) with 2-3 contextual observations
+
+═══════════════════════════════════════════════════════════════════════════════
+PAGE 1 — EXPENSES (complete redesign)
+═══════════════════════════════════════════════════════════════════════════════
+
+The current page is mostly empty states. Transform into a spending 
+intelligence hub with deep Budget integration.
+
+▶ BUDGET ALERT BANNER (sticky top, conditional)
+When any category is at warning (75-95%) or danger (≥95%) budget state:
+- Red-tinted gradient card (#FEF2F2) with red-200 border
+- Left: pulsing alert icon + "🚨 2 budget alerts active"
+- Middle: scrollable chips of warned categories
+  [🔴 Entertainment · $36 over] [🟡 Food · 97% used]
+- Right: [Review Budget →] and dismiss ×
+When all categories safe: compact green success banner (collapsible)
+
+▶ HEADER ROW
+- Left: "Expenses" (30px bold) + subtitle "Track spending, monitor budgets, 
+  find patterns."
+- Right cluster:
+  - Month dropdown "April ▾" · Year dropdown "2026 ▾"
+  - Search icon button
+  - Export button (outlined, download icon)
+  - Primary "+ Add Expense" button (blue, rounded-xl)
+
+▶ KPI STATS ROW (4 cards — upgrade from 3)
+Card 1 — Monthly Income (green, wallet icon): $3,794.18 · "from Income page"
+Card 2 — Total Spent (red, trending-down): $1,710.67 · "45% of income" + sparkline
+Card 3 — Remaining (blue, calculator): $2,083.51 · "$208/day · 10 days left"
+Card 4 — Budget Health (amber/green, shield): "2 Alerts" · "9 safe · 2 warning · 1 over"
+
+▶ BUDGET VS ACTUAL — HERO SECTION (replaces empty state)
+Wide card with title "Budget vs Actual (April 2026)" + view toggle (Bars / 
+Rings / Donut).
+
+Default: horizontal progress bars per budgeted category
+Each row:
+- Left: category icon (40x40, tinted) + name
+- Center: thick progress bar (16px, rounded-full)
+  - Green/amber/red fill by status
+  - If over 100%: overflow rendered past the bar in darker red
+  - Subtle 100% marker line
+- Right of bar: "$387 / $400" stacked with "97%" in status color
+- Far right: three-dot menu
+
+Include 10 realistic rows:
+1. Housing · $1,200 / $1,200 · 100% 🟡
+2. Food & Groceries · $387 / $400 · 97% 🟡
+3. Transportation · $145 / $200 · 72% 🟢
+4. Utilities · $142 / $150 · 95% 🟡
+5. Entertainment · $156 / $120 · 130% 🔴 OVER
+6. Healthcare · $35 / $100 · 35% 🟢
+7. Shopping · $89 / $150 · 59% 🟢
+8. Personal · $42 / $80 · 53% 🟢
+9. Education · $20 / $50 · 40% 🟢
+10. Other · $18 / unset · ⚪ ghost row "Set a limit →"
+
+Summary strip below: "Total: $2,234 of $2,500 · 89% utilized · $266 remaining"
+
+▶ SPENDING VISUALIZATION (2-column)
+
+LEFT (2/3) — "Daily Spending Trend"
+- Combo chart: bars (daily spending) + line (cumulative vs budget line)
+- Color above/below budget line differently
+- Annotation markers for large transactions (e.g., "Rent $1,200")
+- Toggle: Daily / Weekly / Compare to last month
+
+RIGHT (1/3) — "Category Breakdown"
+- Interactive donut with center total
+- Hover segment → highlight + update center
+- Below: top 3 categories with bars
+- "View all →" link
+
+▶ EXPENSE ENTRIES — full table (replaces empty state)
+
+Section header:
+- "Expense Entries (47 transactions)"
+- Category filter pills row (horizontal scroll):
+  [All · 47] [🔴Housing · 2] [🟠Food · 18] [🟡Trans · 8] [🟣Shop · 6] ...
+  Each pill: colored dot + category + count; active pill filled
+- Right: search input, date range picker, sort dropdown, view toggle 
+  (Table / Cards / Timeline)
+
+Table (default):
+Columns: Date · Description · Category · Account · Amount · Actions
+Each row (56px tall, hover slate-50):
+- Date: "Apr 18" bold if today
+- Description: 
+  - Merchant bold, sub-line "Groceries · Whole Foods #812" in slate-500
+  - 🚩 Red flag icon INLINE if this transaction pushed the category over budget
+- Category: colored rounded-full pill matching category color
+- Account: bank name + ••8938 with tiny card icon
+- Amount: bold red "-$87.50" right-aligned, tabular-nums
+- Actions (on hover): edit · duplicate · delete
+
+Visual row markers:
+- 🔄 recurring icon next to amount for subscriptions
+- Large transactions (>$200): subtle amber left-border
+- Budget-breakers: subtle red left-border
+
+Include 15 realistic sample rows with mix of categories, dates, amounts.
+Footer: "Showing 1-15 of 47" + pagination + page-size selector
+
+▶ SMART INSIGHTS FOOTER
+Soft blue→purple gradient card with sparkle icon.
+Three insight chips:
+📊 "You spent 40% more on Entertainment this month than 6-month average. 
+    Top culprit: streaming subs." [Review →]
+💡 "3 recurring charges totaling $67/mo are untagged as subscriptions." 
+    [Tag them →]
+⚡ "Tuesdays are your biggest spending days ($340 avg)." [Learn more →]
+
+▶ ADD EXPENSE MODAL
+Centered modal with fields:
+- Amount + currency · Date (defaults today) · Category picker with icons
+- Merchant/description (autocomplete from history)
+- Account dropdown · Recurring toggle
+- Notes textarea · Tags · Split transaction toggle
+- Receipt upload (drag-drop zone with OCR)
+- Cancel / Save buttons
+
+═══════════════════════════════════════════════════════════════════════════════
+PAGE 2 — INVESTMENTS (portfolio intelligence hub)
+═══════════════════════════════════════════════════════════════════════════════
+
+Current page has the right bones but lacks visualization, performance 
+tracking, and insight. Transform into a serious portfolio dashboard.
+
+▶ HEADER ROW
+- Left: "Investments" (30px bold) + subtitle "Track portfolio performance 
+  and diversification."
+- Right cluster:
+  - Currency display dropdown "USD ▾"
+  - Time range pills: [1D] [1W] [1M] [3M] [1Y] [ALL]
+  - Export button
+  - Primary "+ Add Investment" button
+
+▶ KPI STATS ROW (keep existing 4, enhance)
+Card 1 — Total Portfolio Value (blue, trending-up):
+  $75,100.00 + small trend "↘ -$18,200 (-19.5%) all-time"
+Card 2 — Total Gain/Loss (red, arrow-down):
+  -$18,200.00 · "vs $93,300 invested"
+Card 3 — Active Investments (green, bar-chart):
+  2 · "across 2 asset types"
+Card 4 — Best Performer (NEW — replaces "Sold Investments"):
+  "Gold · +54.5%" amber accent · "Worst: BTC -22.2%"
+
+▶ PORTFOLIO PERFORMANCE CHART (NEW — major addition)
+Wide card with title "Portfolio Performance" + time range toggle already 
+in header syncs here.
+- Area chart: portfolio value over time
+- Overlay line: total cost basis (showing when invested)
+- Shaded area between = gain/loss visualization
+- Green shade when above cost basis, red when below
+- Hover: tooltip with date, value, gain/loss
+- Annotations: mark dates of deposits/buys with small dots
+- Empty state below chart if no history: "Add investments to see performance"
+
+▶ ASSET ALLOCATION — 2-column section
+
+LEFT (1/2) — "Portfolio Allocation"
+- Large donut chart with center showing "$75,100 Total"
+- Segments by asset type:
+  - Gold (amber) 6.8% · $5,100
+  - Stocks (blue) 0% · $0
+  - Crypto (purple) 93.2% · $70,000
+  - Real Estate (green) 0%
+  - Bonds (red) 0%
+- Hover segment → highlight + details pop
+- Below: small legend with amounts
+
+RIGHT (1/2) — "Diversification Score"
+- Circular score (large, 0-100): "23 · Poor"
+- Color: red if <40, amber 40-70, green >70
+- Below: 3 improvement suggestions:
+  - "Portfolio is 93% crypto — high volatility risk"
+  - "Consider adding bonds for stability (0% currently)"
+  - "Geographic diversity: 100% US-based"
+- "See rebalancing suggestions →" CTA
+
+▶ ASSET TYPE CARDS (keep the 6 cards from current design but enhance)
+Layout: 3 columns × 2 rows on desktop.
+Each card:
+- Colored icon (tinted bg)
+- Asset type name
+- Value: $XX,XXX
+- "X active" count
+- Mini sparkline (30 days of value change)
+- Gain/loss inline: "+$1,800 (+54.5%)" green or red
+- Card click → filters "All Investments" table below
+
+Keep current: Gold · Stocks · Crypto · Real Estate · Bonds · Other
+Consider adding: Mutual Funds, ETFs if relevant
+
+▶ HOLDINGS TABLE (enhance current "All Investments")
+Section header: "All Holdings (2)" + filter pills [All · Active · Sold] + 
+sort dropdown + search
+
+Enhance columns:
+- Checkbox (for bulk actions)
+- Name (with tiny logo/icon if available — crypto: coin icon, stocks: 
+  ticker badge, gold: metal icon)
+- Type (colored pill matching category)
+- Quantity (tabular)
+- Avg Cost / Unit
+- Current Price / Unit (with tiny % change today, green/red)
+- Total Value (bold, tabular)
+- Gain/Loss $ (green/red)
+- Gain/Loss % (green/red badge)
+- Allocation % (horizontal mini-bar)
+- Status pill (Active / Sold)
+- Actions: edit, sell, delete
+
+Rich row examples:
+Row 1: Gold Ounce · 🟡Gold · 1 · $3,300 · $5,100 (+$30 today +0.6%) · 
+       $5,100 · +$1,800 · +54.5% · 6.8% · Active
+Row 2: Bitcoin · 🟣Crypto · 0.005 · $90,000 · $14,000,000/BTC (↘ -2.1% today) 
+       · $70,000 · -$20,000 · -22.2% · 93.2% · Active
+
+Table footer: sum row + pagination
+
+▶ TRANSACTIONS HISTORY (NEW section)
+"Investment Transactions" card with table:
+- Date · Action (Buy/Sell/Dividend/Interest) · Asset · Quantity · 
+  Price · Total · Fees · Account
+Show 5-10 recent, "View all →" link
+
+▶ DIVIDEND & INCOME CALENDAR (NEW — if stocks/bonds)
+"Upcoming Dividends" mini section:
+- List of expected dividend payments by date
+- Expected monthly dividend income total
+
+▶ SMART INSIGHTS FOOTER
+Three insight chips:
+🎯 "Your portfolio is 93% concentrated in crypto. Consider diversifying 
+    to reduce risk." [View strategy →]
+📊 "BTC down 22% since purchase. This is within normal volatility range — 
+    avoid panic selling." [Learn more →]
+✨ "Gold has gained $1,800. Consider taking partial profits or rebalancing?" 
+    [Rebalance →]
+
+▶ ADD INVESTMENT MODAL
+Form fields:
+- Asset type picker (Gold / Stocks / Crypto / Real Estate / Bonds / Other)
+- Name / symbol (autocomplete for stocks/crypto tickers)
+- Quantity · Purchase price · Currency
+- Purchase date · Platform/broker (e.g., Binance, Fidelity)
+- Account (links to which bank account funded it)
+- Notes · Tags
+- For crypto: wallet address (optional)
+- For real estate: full address, size, type
+- Save / Cancel
+
+═══════════════════════════════════════════════════════════════════════════════
+PAGE 3 — ASSETS & PROPERTIES (physical valuables tracker)
+═══════════════════════════════════════════════════════════════════════════════
+
+Clearly position as NON-FINANCIAL INSTRUMENTS — for physical/tangible 
+valuables and properties. Distinct from Investments.
+
+▶ HEADER ROW
+- Left: "Assets & Properties" (30px bold) + subtitle "Track properties, 
+  vehicles, valuables, and collectibles."
+- Right cluster:
+  - Category filter "All types ▾"
+  - View toggle: Grid / Table
+  - Export button
+  - Primary "+ Add Asset" button
+
+▶ KPI STATS ROW (enhance existing 4)
+Card 1 — Total Assets Value (blue, building icon):
+  $60,000.00 · "↘ -$10,000 all-time depreciation"
+Card 2 — Total Monthly Income (green, dollar icon):
+  $0.00 · "from rental/leasing"
+Card 3 — Number of Assets (purple, hash icon):
+  1 · "1 property · 0 vehicles"
+Card 4 — Average Appreciation (amber, trending-up):
+  -14.3% · "across all assets"
+
+▶ ASSET CATEGORIES STRIP (NEW)
+Horizontal cards showing breakdown by category, similar to Investments type cards:
+- 🏠 Real Estate · $60,000 · 1 asset
+- 🚗 Vehicles · $0 · 0 assets
+- 💎 Collectibles · $0 · 0 assets
+- 🥇 Gold & Precious Metals · $0 · 0 assets
+- 📦 Valuables · $0 · 0 assets
+- 📁 Other · $0 · 0 assets
+
+▶ ASSETS GRID (NEW — replaces flat table as primary view)
+Grid of rich asset cards (3 columns desktop):
+
+Each AssetCard (rounded-2xl, white):
+- Top: hero image of the asset (photo upload, 16:9 ratio, rounded-t-2xl)
+  - If no photo: colorful gradient placeholder matching category
+  - Top-left: category pill overlay (e.g., "🏠 Real Estate")
+  - Top-right: status pill (Owned / Leased / Sold)
+  - Bottom-left: appreciation badge (+/-% with arrow)
+- Body:
+  - Asset name (bold 18px)
+  - Location sub-line with pin icon (if applicable)
+  - 2-column stats grid:
+    · Purchase Price · $XX,XXX (slate-500)
+    · Current Value · $XX,XXX (bold)
+  - Gain/Loss line: "-$10,000 (-14.3%)" green or red
+  - Monthly income (if any): "💰 $0/mo" or "🏢 $1,200/mo rental"
+  - Purchased: "Jan 2023 · 3 years owned"
+- Footer actions:
+  - "View details" (flex-1 outlined)
+  - Edit · Delete icons
+
+Example cards to show (include the existing Land + add 3 more for richness):
+1. Land (Gaza) · Real Estate · $60,000 (was $70,000) · -14.3%
+2. Toyota Camry 2022 · Vehicle · $22,000 (was $28,000) · -21.4% · depreciation expected
+3. Rolex Submariner · Valuables · $15,500 (was $12,000) · +29.2% · appreciating
+4. Apartment (Dubai) · Real Estate · $280,000 (was $250,000) · +12% · $1,800/mo rental
+
+Plus "+ Add Asset" ghost card (dashed border).
+
+TABLE VIEW (alternative, keep existing table enhanced):
+Columns: Photo thumbnail · Name · Type · Location · Purchase Price · 
+Current Value · Gain/Loss · Monthly Income · Status · Actions
+Same data, denser layout.
+
+▶ APPRECIATION CHART (NEW section)
+"Asset Value Over Time" card with multi-line chart:
+- Each asset = one line
+- X-axis: time (years), Y-axis: value
+- Toggle: Individual / Aggregate view
+- Useful for seeing which assets appreciate vs depreciate
+
+▶ VALUATION HISTORY / UPDATES (NEW section)
+"Recent Valuations" card showing timeline:
+- Date · Asset · Old value → New value · Change · Source
+  (e.g., "Feb 2026 · Land (Gaza) · $65,000 → $60,000 · -7.7% · Self-reported")
+- Allow manual valuation updates
+- "Update valuations" CTA
+
+▶ DOCUMENTS & RECORDS (NEW section)
+"Asset Documents" card:
+- Grid of document thumbnails per asset
+- Title deeds, vehicle registrations, appraisals, insurance papers
+- Drag-drop upload zone
+- Secure storage icon indicator
+
+▶ SMART INSIGHTS FOOTER
+Three insight chips:
+🏠 "Your real estate assets depreciated 14.3% in the last year. Consider 
+    getting a fresh professional appraisal." [Find appraiser →]
+💡 "No rental income from your Gaza property. Exploring rental could yield 
+    ~$400/month." [Explore options →]
+📋 "2 assets have insurance renewals due within 60 days." [Review →]
+
+▶ ADD ASSET MODAL
+Fields:
+- Category picker with visual icons (Real Estate / Vehicle / Collectible / 
+  Gold / Valuable / Other)
+- Asset name
+- Photo upload (multiple photos, first is hero)
+- Purchase price + currency · Purchase date
+- Current value (with "appraise" option for help) · Last valuation date
+- Location (map picker for real estate)
+- Size/specs (conditional per category: sqft for property, year/make/model 
+  for vehicle, etc.)
+- Ownership % (for shared assets)
+- Status (Owned / Leased / Financed)
+- Monthly income (rental, lease)
+- Linked debt (if financed — connects to Debts page)
+- Documents upload
+- Notes · Tags
+- Insurance info (policy #, renewal date)
+- Save / Cancel
+
+═══════════════════════════════════════════════════════════════════════════════
+CROSS-PAGE INTEGRATION RULES
+═══════════════════════════════════════════════════════════════════════════════
+
+1. Every expense entered on Expenses page immediately:
+   - Updates Budget category spent amount
+   - Triggers budget alert if crosses threshold
+   - Appears in Transactions unified hub
+   - Reduces Net Worth if from bank account
+
+2. Every investment change (buy/sell/value update):
+   - Updates Net Worth total
+   - Reflects in Home dashboard wealth breakdown
+   - Updates Wealth Breakdown donut
+
+3. Every asset addition/valuation change:
+   - Updates Net Worth total
+   - Reflects in Home dashboard
+   - If linked to debt (e.g., car loan) syncs with Debts page
+
+4. All three pages share:
+   - Same currency display settings
+   - Same date/time formats
+   - Same AI chat context awareness (AI knows what page you're on)
+
+═══════════════════════════════════════════════════════════════════════════════
+RESPONSIVE & POLISH
+═══════════════════════════════════════════════════════════════════════════════
+
+DESKTOP (1440px): full layouts as specified
+TABLET (768px): 
+- KPI cards: 2 per row
+- Asset/Investment grids: 2 columns
+- Charts stack full-width
+MOBILE (375px):
+- KPI cards: horizontal scroll
+- Cards full-width
+- Tables convert to card rows
+- Filters collapse to icon → drawer
+
+ANIMATIONS:
+- Number counters: count-up on mount
+- Progress bars: fill animation on load
+- Charts: staggered fade-in
+- Card hover: lift + shadow
+
+EMPTY STATES (when no data):
+- Friendly illustration
+- Clear explanation
+- Primary CTA button
+- Never just grey text
+
+DARK MODE:
+- Full support across all three pages
+- Cards: #1E293B · Borders: #334155
+- Adjust chart colors for contrast
+- Gradients subtly glow
+
+RTL (Arabic):
+- Full layout mirroring
+- Numbers remain LTR (tabular-nums)
+
+═══════════════════════════════════════════════════════════════════════════════
+DELIVERABLES
+═══════════════════════════════════════════════════════════════════════════════
+
+For each of the three pages, deliver:
+1. Light mode desktop view with realistic sample data
+2. Dark mode desktop view
+3. Mobile responsive view
+4. Primary modal (Add Expense / Add Investment / Add Asset)
+5. Detail drawer or modal (when clicking an item)
+
+The three pages must feel like one coherent product, not three separate 
+designs. They should inherit the exact same sidebar, same header patterns, 
+same card language, same typography rhythm, same spacing DNA as the 
+already-built Home and Budget pages.
+
+Reference polish: Linear's cleanliness × Copilot's intelligence × 
+Monarch Money's warmth × Apple's humane design.
