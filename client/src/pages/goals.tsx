@@ -241,7 +241,13 @@ function GoalFormDialog({ trigger, initial, onSave }: {
                 </FormItem>
               )} />
             </div>
-            <CurrencyFields form={form} />
+            <CurrencyFields
+              currencyCode={form.watch("currencyCode")}
+              exchangeRate={form.watch("exchangeRateToUsd")}
+              amount={form.watch("targetAmount")}
+              onCurrencyChange={code => form.setValue("currencyCode", code)}
+              onExchangeRateChange={rate => form.setValue("exchangeRateToUsd", rate)}
+            />
             <FormField control={form.control} name="deadline" render={({ field }) => (
               <FormItem>
                 <FormLabel>Target Date <span className="text-gray-400 font-normal">(optional)</span></FormLabel>
