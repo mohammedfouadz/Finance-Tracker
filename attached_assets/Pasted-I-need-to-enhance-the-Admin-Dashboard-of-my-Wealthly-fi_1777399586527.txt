@@ -1,0 +1,99 @@
+I need to enhance the Admin Dashboard of my "Wealthly" finance app. Currently, it only shows basic statistics (Total Users, Active Users, New This Week/Month, Top Currencies, Languages, Themes). I need to add a comprehensive User Management section.
+
+## Required Features:
+
+### 1. Users List Page (/admin/users)
+Create a new page accessible from the admin sidebar that displays all users in a detailed table with:
+
+**Table Columns:**
+- Avatar + Full Name
+- Email
+- Registration Date
+- Last Login / Last Active
+- Status (Active / Inactive / Suspended) — with colored badges
+- Language (English / Arabic)
+- Currency
+- Theme (Light / Dark)
+- Total Net Worth (calculated from their accounts)
+- Number of Transactions
+- Actions (View / Edit / Suspend / Delete)
+
+**Table Features:**
+- Search bar (by name, email, or ID)
+- Filters: Status, Language, Currency, Registration date range
+- Sorting on all columns
+- Pagination (20 users per page)
+- Bulk actions (export selected, suspend selected)
+- Export to CSV / Excel
+
+### 2. User Details Page (/admin/users/:id)
+When clicking on any user, open a detailed profile page showing:
+
+**Personal Info Section:**
+- Profile picture, full name, email, phone
+- Registration date, last login, account status
+- Preferred language, currency, theme
+- Email verification status
+
+**Financial Overview:**
+- Total Net Worth
+- Total Income (this month / all time)
+- Total Expenses (this month / all time)
+- Number of Accounts, Investments, Assets, Debts, Goals
+- Active Budget status
+- Zakat status
+
+**Activity Tab:**
+- Recent transactions (last 50)
+- Login history with IP addresses and devices
+- Actions log (what they created/edited/deleted)
+
+**Admin Actions:**
+- Send notification / email to user
+- Reset password
+- Suspend / Reactivate account
+- Delete account (with confirmation modal)
+- Impersonate user (login as them for support — with audit log)
+- Edit user data manually
+
+### 3. Enhanced Dashboard Stats
+Add to the existing admin dashboard:
+- User growth chart (last 30 days / 6 months / 1 year)
+- Active vs Inactive users pie chart
+- New registrations per day (line chart)
+- User retention rate
+- Average session duration
+- Most used features (Income, Expenses, Goals, etc.)
+- Geographic distribution (if location data is available)
+
+### 4. Security & Permissions
+- Only users with role = "admin" can access these pages
+- Add proper authentication middleware
+- Log every admin action (who did what and when) in an audit_logs table
+- Add a confirmation modal for destructive actions (delete, suspend)
+
+## Technical Requirements:
+- Keep the same design system already used in the app (same colors, fonts, sidebar style)
+- Use the existing UI components (cards, badges, buttons) for visual consistency
+- Make it fully responsive (works on mobile and tablet)
+- Support both English and Arabic (RTL layout)
+- Support both Light and Dark themes
+- Use proper loading states and skeleton loaders
+- Handle empty states gracefully
+- Add proper error handling and toast notifications
+
+## Backend Requirements:
+- Create RESTful API endpoints:
+  - GET    /api/admin/users           (list with filters & pagination)
+  - GET    /api/admin/users/:id       (user details)
+  - PATCH  /api/admin/users/:id       (update user)
+  - DELETE /api/admin/users/:id       (delete user)
+  - POST   /api/admin/users/:id/suspend
+  - POST   /api/admin/users/:id/reactivate
+  - GET    /api/admin/users/:id/activity
+  - GET    /api/admin/stats/growth    (chart data)
+- Protect all endpoints with admin role check
+- Add rate limiting on sensitive endpoints
+- Return proper HTTP status codes and error messages
+
+Please start by analyzing the current codebase structure, then implement these features step by step. Show me the file structure changes first before writing the code.
