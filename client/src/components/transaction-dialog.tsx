@@ -13,6 +13,8 @@ import { useState } from "react";
 import { z } from "zod";
 import { CurrencyFields } from "@/components/currency-fields";
 import { getDefaultRate } from "@/lib/currency";
+import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 // Extend schema to handle string -> number coercion for amount/categoryId
 const formSchema = insertTransactionSchema.extend({
@@ -26,6 +28,7 @@ const formSchema = insertTransactionSchema.extend({
 type FormValues = z.infer<typeof formSchema>;
 
 export function TransactionDialog() {
+  const { t, isRtl } = useI18n();
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { data: categories } = useCategories();
@@ -62,13 +65,13 @@ export function TransactionDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button data-testid="button-add-transaction" className="shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all">
-          <Plus className="w-4 h-4 mr-2" />
-          Add Transaction
+          <Plus className={cn("w-4 h-4", isRtl ? "ml-2" : "mr-2")} />
+          {t("dashboard.addTransaction")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px]" dir={isRtl ? "rtl" : "ltr"}>
         <DialogHeader>
-          <DialogTitle>Add New Transaction</DialogTitle>
+          <DialogTitle>{t("dashboard.addTransaction")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -77,9 +80,9 @@ export function TransactionDialog() {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>{t("common.description")}</FormLabel>
                   <FormControl>
-                    <Input data-testid="input-transaction-description" placeholder="Grocery shopping, Rent, Salary..." {...field} />
+                    <Input data-testid="input-transaction-description" placeholder={t("income.descriptionPlaceholder")} {...field} value={field.value || ""} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -92,11 +95,11 @@ export function TransactionDialog() {
                 name="amount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Amount</FormLabel>
+                    <FormLabel>{t("common.amount")}</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
-                        <Input data-testid="input-transaction-amount" type="number" step="0.01" className="pl-7" placeholder="0.00" {...field} />
+                        <span className={cn("absolute top-2.5 text-muted-foreground", isRtl ? "right-3" : "left-3")}>$</span>
+                        <Input data-testid="input-transaction-amount" type="number" step="0.01" className={isRtl ? "pr-7" : "pl-7"} placeholder="0.00" {...field} />
                       </div>
                     </FormControl>
                     <FormMessage />
@@ -109,11 +112,11 @@ export function TransactionDialog() {
                 name="categoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>{t("common.category")}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={String(field.value)}>
                       <FormControl>
                         <SelectTrigger data-testid="select-transaction-category">
-                          <SelectValue placeholder="Select..." />
+                          <SelectValue placeholder={t("common.search")} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -158,7 +161,7 @@ export function TransactionDialog() {
               name="date"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>{t("common.date")}</FormLabel>
                   <FormControl>
                     <Input 
                       data-testid="input-transaction-date"
@@ -173,7 +176,7 @@ export function TransactionDialog() {
             />
 
             <Button data-testid="button-submit-transaction" type="submit" className="w-full" disabled={createTransaction.isPending}>
-              {createTransaction.isPending ? "Saving..." : "Save Transaction"}
+              {createTransaction.isPending ? t("common.saving") : t("dashboard.saveContribution")}
             </Button>
           </form>
         </Form>

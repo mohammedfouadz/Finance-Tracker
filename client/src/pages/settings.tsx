@@ -27,19 +27,19 @@ const PURPLE = "#8B5CF6";
 
 /* ── sub-nav sections ── */
 const NAV_SECTIONS = [
-  { id: "profile",       label: "Profile",                icon: User },
-  { id: "preferences",  label: "Preferences",            icon: Palette },
-  { id: "categories",   label: "Categories",             icon: FolderOpen },
-  { id: "notifications",label: "Notifications",          icon: Bell },
-  { id: "security",     label: "Security",               icon: Shield },
-  { id: "integrations", label: "Accounts & Integrations",icon: CreditCard },
-  { id: "ai",           label: "AI Assistant",           icon: Bot },
-  { id: "data",         label: "Data & Privacy",         icon: Database },
-  { id: "localization", label: "Localization",           icon: Globe },
+  { id: "profile",       label: "settings.profile",                icon: User },
+  { id: "preferences",  label: "settings.preferences",            icon: Palette },
+  { id: "categories",   label: "settings.categories",             icon: FolderOpen },
+  { id: "notifications",label: "settings.notifications",          icon: Bell },
+  { id: "security",     label: "settings.security",               icon: Shield },
+  { id: "integrations", label: "nav.accounts",                    icon: CreditCard },
+  { id: "ai",           label: "aiCoach.title",                   icon: Bot },
+  { id: "data",         label: "settings.dataExport",             icon: Database },
+  { id: "localization", label: "settings.language",               icon: Globe },
   { id: "billing",      label: "Subscription & Billing", icon: Crown },
   { id: "devices",      label: "Devices & Sessions",     icon: Smartphone },
   { id: "help",         label: "Help & Support",         icon: HelpCircle },
-  { id: "danger",       label: "Danger Zone",            icon: AlertTriangle },
+  { id: "danger",       label: "settings.dangerZone",            icon: AlertTriangle },
 ];
 
 /* ── reusable toggle component ── */
@@ -93,6 +93,7 @@ function SavedIndicator({ state }: { state: "idle"|"saving"|"saved" }) {
 ═══════════════════════════════════════════════════════ */
 
 function ProfileSection({ user }: { user: any }) {
+  const { t } = useI18n();
   const [name, setName] = useState(user?.firstName || "");
   const [bio, setBio]   = useState("");
   const [goals, setGoals] = useState<string[]>(["Save for home", "Build emergency fund"]);
@@ -102,52 +103,52 @@ function ProfileSection({ user }: { user: any }) {
 
   return (
     <div>
-      <SectionCard title="Personal Information" sub="Your basic profile details">
+      <SectionCard title={t("settings.personalInfo")} sub={t("settings.profileSub") || "Your basic profile details"}>
         <div className="flex items-center gap-4 mb-5">
           <div className="w-20 h-20 rounded-full flex items-center justify-center text-white text-2xl font-bold shrink-0"
             style={{ background: `linear-gradient(135deg, ${BRAND}, ${PURPLE})` }}>
             {(user?.firstName?.[0] || "U").toUpperCase()}
           </div>
-          <div>
+          <div className="text-start">
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">{user?.firstName} {user?.lastName}</p>
             <p className="text-xs text-gray-400">{user?.email || "No email set"}</p>
             <div className="flex gap-2 mt-2">
-              <button className="text-xs font-medium px-3 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">Change photo</button>
-              <button className="text-xs font-medium px-3 py-1 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">Remove</button>
+              <button className="text-xs font-medium px-3 py-1 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">{t("common.edit")}</button>
+              <button className="text-xs font-medium px-3 py-1 rounded-lg text-gray-400 hover:text-gray-600 transition-colors">{t("common.delete")}</button>
             </div>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Full Name</label>
-            <Input value={name} onChange={e => setName(e.target.value)} placeholder="Your full name" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.name")}</label>
+            <Input value={name} onChange={e => setName(e.target.value)} placeholder={t("common.name")} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Email</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("settings.email")}</label>
             <div className="relative">
-              <Input value={user?.email || ""} readOnly className="pr-16 bg-gray-50 dark:bg-gray-800" />
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">Verified</span>
+              <Input value={user?.email || ""} readOnly className="pe-16 bg-gray-50 dark:bg-gray-800" />
+              <span className="absolute end-2 top-1/2 -translate-y-1/2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400">{t("common.verified") || "Verified"}</span>
             </div>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Country</label>
-            <Input defaultValue="United States" placeholder="Your country" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("settings.country")}</label>
+            <Input defaultValue="Saudi Arabia" placeholder={t("settings.country")} />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Time Zone</label>
-            <Input defaultValue="UTC+0 (London)" placeholder="Time zone" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("settings.timezone") || "Time Zone"}</label>
+            <Input defaultValue="UTC+3 (Riyadh)" placeholder="Time zone" />
           </div>
           <div className="sm:col-span-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Bio (optional)</label>
-            <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="A short bio…" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.bio") || "Bio"}</label>
+            <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2} className="w-full px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-xl text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" placeholder="..." />
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Financial Profile" sub="Helps AI personalize recommendations for you">
+      <SectionCard title={t("settings.financialProfile") || "Financial Profile"} sub={t("settings.financialProfileSub") || "Helps AI personalize recommendations for you"}>
         <div className="space-y-5">
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Financial Goals</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t("goals.title")}</p>
             <div className="flex flex-wrap gap-2">
               {GOAL_OPTIONS.map(g => (
                 <button key={g} onClick={() => setGoals(prev => prev.includes(g) ? prev.filter(x => x !== g) : [...prev, g])}
@@ -160,26 +161,26 @@ function ProfileSection({ user }: { user: any }) {
           </div>
           <div>
             <div className="flex justify-between mb-2">
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Risk Tolerance</p>
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("settings.riskTolerance") || "Risk Tolerance"}</p>
               <span className="text-xs font-bold" style={{ color: risk < 34 ? MINT : risk < 67 ? AMBER : DANGER }}>
-                {risk < 34 ? "Conservative" : risk < 67 ? "Moderate" : "Aggressive"}
+                {risk < 34 ? t("settings.riskLow") : risk < 67 ? t("settings.riskMedium") : t("settings.riskHigh")}
               </span>
             </div>
             <input type="range" min="0" max="100" value={risk} onChange={e => setRisk(Number(e.target.value))} className="w-full accent-blue-600" />
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1"><span>Conservative</span><span>Moderate</span><span>Aggressive</span></div>
+            <div className="flex justify-between text-[10px] text-gray-400 mt-1"><span>{t("settings.riskLow")}</span><span>{t("settings.riskMedium")}</span><span>{t("settings.riskHigh")}</span></div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Monthly Savings Target</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("settings.monthlyTarget") || "Monthly Savings Target"}</label>
               <Input type="number" placeholder="$0" defaultValue="500" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Household Size</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("settings.householdSize") || "Household Size"}</label>
               <Input type="number" placeholder="1" defaultValue="1" min="1" />
             </div>
           </div>
           <Button className="gap-2 rounded-xl" style={{ backgroundColor: BRAND }}>
-            <Save className="w-4 h-4" /> Save Profile
+            <Save className="w-4 h-4" /> {t("settings.saveChanges")}
           </Button>
         </div>
       </SectionCard>
@@ -1207,12 +1208,12 @@ export default function SettingsPage() {
         {/* page header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Settings</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Customize your Wealthly experience</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("settings.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("settings.subtitle")}</p>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-gray-400">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            Changes auto-save
+            {lang === "ar" ? "حفظ تلقائي" : "Changes auto-save"}
           </div>
         </div>
 
@@ -1231,7 +1232,7 @@ export default function SettingsPage() {
                       ? { backgroundColor: isDanger ? "#FEF2F2" : "#EEF4FF", color: isDanger ? DANGER : BRAND }
                       : { color: "#64748B" }}>
                     <Icon className="w-4 h-4 shrink-0" style={isActive ? { color: isDanger ? DANGER : BRAND } : { color: "#94A3B8" }} />
-                    <span className={`text-xs font-medium ${isDanger ? "text-red-500" : ""}`} style={isActive && !isDanger ? { color: BRAND } : isDanger ? { color: DANGER } : {}}>{s.label}</span>
+                    <span className={`text-xs font-medium ${isDanger ? "text-red-500" : ""}`} style={isActive && !isDanger ? { color: BRAND } : isDanger ? { color: DANGER } : {}}>{t(s.label)}</span>
                   </button>
                 );
               })}
@@ -1243,7 +1244,7 @@ export default function SettingsPage() {
             <Select value={activeSection} onValueChange={setActiveSection}>
               <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {NAV_SECTIONS.map(s => <SelectItem key={s.id} value={s.id}>{s.label}</SelectItem>)}
+                {NAV_SECTIONS.map(s => <SelectItem key={s.id} value={s.id}>{t(s.label)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -1252,9 +1253,9 @@ export default function SettingsPage() {
           <div className="flex-1 min-w-0">
             {/* section breadcrumb */}
             <div className="flex items-center gap-2 mb-4 text-xs text-gray-400">
-              <span>Settings</span>
-              <ChevronRight className="w-3 h-3" />
-              <span className="font-semibold text-gray-700 dark:text-gray-300">{currentSection?.label}</span>
+              <span>{t("settings.title")}</span>
+              <ChevronRight className="w-3 h-3 rtl:rotate-180" />
+              <span className="font-semibold text-gray-700 dark:text-gray-300">{currentSection ? t(currentSection.label) : ""}</span>
             </div>
 
             {renderSection()}

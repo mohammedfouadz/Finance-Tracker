@@ -13,6 +13,7 @@ import { useCurrency, toUsd } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useI18n } from "@/lib/i18n";
 import {
   Plus, Trash2, Pencil, TrendingUp, TrendingDown, Gem, BarChart3,
   Bitcoin, Building2, Landmark, MoreHorizontal, Sparkles, ChevronRight,
@@ -29,14 +30,18 @@ const AMBER  = "#F59E0B";
 const DANGER = "#EF4444";
 const PURPLE = "#8B5CF6";
 
-const INVESTMENT_TYPES = [
-  { name: "Gold",        icon: Gem,          color: AMBER,  bg: "#FFFBEB" },
-  { name: "Stocks",      icon: BarChart3,    color: BRAND,  bg: "#EEF4FF" },
-  { name: "Crypto",      icon: Bitcoin,      color: PURPLE, bg: "#F5F3FF" },
-  { name: "Real Estate", icon: Building2,    color: MINT,   bg: "#ECFDF5" },
-  { name: "Bonds",       icon: Landmark,     color: DANGER, bg: "#FEF2F2" },
-  { name: "Other",       icon: MoreHorizontal,color:"#64748B",bg:"#F1F5F9"},
-];
+function useInvestmentTypeConfig() {
+  const { t } = useI18n();
+  const INVESTMENT_TYPES = [
+    { name: "Gold",        icon: Gem,          color: AMBER,  bg: "#FFFBEB", label: t("investments.gold") },
+    { name: "Stocks",      icon: BarChart3,    color: BRAND,  bg: "#EEF4FF", label: t("investments.stocks") },
+    { name: "Crypto",      icon: Bitcoin,      color: PURPLE, bg: "#F5F3FF", label: t("investments.crypto") },
+    { name: "Real Estate", icon: Building2,    color: MINT,   bg: "#ECFDF5", label: t("investments.realEstate") },
+    { name: "Bonds",       icon: Landmark,     color: DANGER, bg: "#FEF2F2", label: t("investments.bonds") },
+    { name: "Other",       icon: MoreHorizontal,color:"#64748B",bg:"#F1F5F9", label: t("investments.other") },
+  ];
+  return INVESTMENT_TYPES;
+}
 
 const emptyForm = {
   name: "", type: "", quantity: "", purchasePrice: "", unitPriceAtPurchase: "",
@@ -71,6 +76,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, trend }: {
 }
 
 export default function InvestmentsPage() {
+  const { t, lang } = useI18n();
   const { user }     = useAuth();
   const { data: investments, isLoading } = useInvestments();
   const createInvestment = useCreateInvestment();
@@ -78,6 +84,7 @@ export default function InvestmentsPage() {
   const deleteInvestment = useDeleteInvestment();
   const { toast }    = useToast();
   const { formatAmount } = useCurrency();
+  const INVESTMENT_TYPES = useInvestmentTypeConfig();
 
   const [showForm,   setShowForm]   = useState(false);
   const [editingId,  setEditingId]  = useState<number | null>(null);
@@ -177,16 +184,16 @@ export default function InvestmentsPage() {
         sellPrice: formData.status === "sold" && formData.sellPrice ? formData.sellPrice : null,
         notes: formData.notes || null,
       };
-      if (editingId) { await updateInvestment.mutateAsync({ id: editingId, ...payload }); toast({ title: "Investment updated" }); }
-      else           { await createInvestment.mutateAsync(payload); toast({ title: "Investment added" }); }
+      if (editingId) { await updateInvestment.mutateAsync({ id: editingId, ...payload }); toast({ title: t("common.saveSuccess") }); }
+      else           { await createInvestment.mutateAsync(payload); toast({ title: t("common.saveSuccess") }); }
       cancelForm();
-    } catch { toast({ title: "Failed to save investment", variant: "destructive" }); }
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this investment?")) return;
-    try { await deleteInvestment.mutateAsync(id); toast({ title: "Investment deleted" }); }
-    catch { toast({ title: "Failed to delete", variant: "destructive" }); }
+    if (!confirm(t("common.confirmDelete"))) return;
+    try { await deleteInvestment.mutateAsync(id); toast({ title: t("common.deleteSuccess") }); }
+    catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const isPending = createInvestment.isPending || updateInvestment.isPending;
@@ -199,27 +206,27 @@ export default function InvestmentsPage() {
 
         {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Investments</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track portfolio performance and diversification.</p>
+          <div className="text-start">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("investments.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("investments.subtitle")}</p>
           </div>
           <Button onClick={() => { cancelForm(); setShowForm(true); }} className="gap-2 rounded-xl" style={{ backgroundColor: BRAND }} data-testid="button-add-investment">
-            <Plus className="w-4 h-4" /> Add Investment
+            <Plus className="w-4 h-4" /> {t("investments.addInvestment")}
           </Button>
         </div>
 
         {/* KPI strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label="Portfolio Value" value={formatAmount(totalValue)} sub={`vs ${formatAmount(totalCost)} invested`}
+          <KpiCard label={t("investments.currentValue")} value={formatAmount(totalValue)} sub={`${t("common.total")}: ${formatAmount(totalCost)}`}
             icon={TrendingUp} color={BRAND} bg="#EEF4FF"
             trend={totalCost > 0 ? { label: `${gainLossPct >= 0 ? "+" : ""}${gainLossPct.toFixed(1)}% all-time`, up: gainLossPct >= 0 } : undefined} />
-          <KpiCard label="Total Gain/Loss" value={`${totalGainLoss >= 0 ? "+" : ""}${formatAmount(Math.abs(totalGainLoss))}`}
-            sub={`${gainLossPct >= 0 ? "+" : ""}${gainLossPct.toFixed(1)}% return`}
+          <KpiCard label={t("investments.totalReturn")} value={`${totalGainLoss >= 0 ? "+" : ""}${formatAmount(Math.abs(totalGainLoss))}`}
+            sub={`${gainLossPct >= 0 ? "+" : ""}${gainLossPct.toFixed(1)}% ${t("goals.progress")}`}
             icon={totalGainLoss >= 0 ? TrendingUp : TrendingDown} color={totalGainLoss >= 0 ? MINT : DANGER} bg={totalGainLoss >= 0 ? "#ECFDF5" : "#FEF2F2"} />
-          <KpiCard label="Active Positions" value={String(activeInv.length)} sub={`across ${typeBreakdown.filter(t => t.count > 0).length} asset types`}
+          <KpiCard label={t("common.active")} value={String(activeInv.length)} sub={t("investments.assetType")}
             icon={BarChart3} color="#10B981" bg="#ECFDF5" />
-          <KpiCard label="Best Performer" value={best ? `+${best.gainPct.toFixed(1)}%` : "—"}
-            sub={best ? `${best.name} · Worst: ${worst?.gainPct.toFixed(1)}%` : "Add investments to see performance"}
+          <KpiCard label={t("goals.priorityHigh")} value={best ? `+${best.gainPct.toFixed(1)}%` : "—"}
+            sub={best ? `${best.name} · Worst: ${worst?.gainPct.toFixed(1)}%` : t("investments.noEntries")}
             icon={Trophy} color={AMBER} bg="#FFFBEB" />
         </div>
 
@@ -227,9 +234,9 @@ export default function InvestmentsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* performance area chart */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-            <CardContent className="p-5">
+            <CardContent className="p-5 text-start">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-base">Portfolio Performance</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-base">Performance</h3>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${totalGainLoss >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
                   {totalGainLoss >= 0 ? "+" : ""}{gainLossPct.toFixed(1)}%
                 </span>
@@ -245,20 +252,20 @@ export default function InvestmentsPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="month" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} />
-                  <Tooltip formatter={(v: any, n: string) => [formatAmount(v), n === "value" ? "Portfolio" : "Cost Basis"]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                  <Tooltip formatter={(v: any, n: string) => [formatAmount(v), n === "value" ? t("investments.title") : t("investments.purchasePrice")]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
                   <Area type="monotone" dataKey="cost" stroke="#CBD5E1" strokeWidth={1.5} strokeDasharray="4 3" fill="transparent" name="cost" dot={false} />
                   <Area type="monotone" dataKey="value" stroke={totalGainLoss >= 0 ? BRAND : DANGER} strokeWidth={2.5} fill="url(#vGrad)" name="value" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
-              {allInv.length === 0 && <p className="text-xs text-gray-400 text-center mt-2">Add investments to see performance chart</p>}
+              {allInv.length === 0 && <p className="text-xs text-gray-400 text-center mt-2">{t("investments.noEntries")}</p>}
             </CardContent>
           </Card>
 
           {/* allocation donut + diversification */}
           <div className="space-y-4">
             <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-3">Portfolio Allocation</h3>
+              <CardContent className="p-5 text-start">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-3">{t("reports.categoryBreakdown")}</h3>
                 <div className="flex items-center gap-4">
                   <div className="relative shrink-0">
                     <PieChart width={130} height={130}>
@@ -268,19 +275,19 @@ export default function InvestmentsPage() {
                       </Pie>
                     </PieChart>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[9px] text-gray-400">total</span>
-                      <span className="text-xs font-bold text-gray-800 dark:text-white tabular-nums">{formatAmount(totalValue)}</span>
+                      <span className="text-[9px] text-gray-400">{t("common.total")}</span>
+                      <span className="text-xs font-bold text-gray-800 dark:text-white tabular-nums" dir="ltr">{formatAmount(totalValue)}</span>
                     </div>
                   </div>
                   <div className="space-y-1.5 flex-1">
-                    {typeBreakdown.filter(t => t.total > 0 || t.count > 0).map(t => (
-                      <div key={t.name} className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t.color }} />
-                        <span className="text-xs text-gray-600 dark:text-gray-400 flex-1">{t.name}</span>
-                        <span className="text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-300">{totalValue > 0 ? ((t.total / totalValue) * 100).toFixed(1) : "0"}%</span>
+                    {typeBreakdown.filter(t_entry => t_entry.total > 0 || t_entry.count > 0).map(t_entry => (
+                      <div key={t_entry.name} className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: t_entry.color }} />
+                        <span className="text-xs text-gray-600 dark:text-gray-400 flex-1">{t_entry.label}</span>
+                        <span className="text-xs font-semibold tabular-nums text-gray-700 dark:text-gray-300">{totalValue > 0 ? ((t_entry.total / totalValue) * 100).toFixed(1) : "0"}%</span>
                       </div>
                     ))}
-                    {typeBreakdown.every(t => t.total === 0) && <p className="text-xs text-gray-400">No active investments</p>}
+                    {typeBreakdown.every(t_entry => t_entry.total === 0) && <p className="text-xs text-gray-400">{t("investments.noEntries")}</p>}
                   </div>
                 </div>
               </CardContent>
@@ -288,22 +295,22 @@ export default function InvestmentsPage() {
 
             {/* diversification score */}
             <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-              <CardContent className="p-4">
+              <CardContent className="p-4 text-start">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Diversification Score</h3>
-                  <div className="text-right">
+                  <div className="text-end">
                     <span className="text-xl font-bold tabular-nums" style={{ color: divScore >= 70 ? MINT : divScore >= 40 ? AMBER : DANGER }}>{divScore}</span>
-                    <span className="text-xs text-gray-400 ml-1">/ 100</span>
+                    <span className="text-xs text-gray-400 ms-1">/ 100</span>
                   </div>
                 </div>
                 <div className="h-2 rounded-full overflow-hidden mb-3 bg-slate-100 dark:bg-slate-700">
                   <div className="h-full rounded-full transition-all duration-700" style={{ width: `${divScore}%`, backgroundColor: divScore >= 70 ? MINT : divScore >= 40 ? AMBER : DANGER }} />
                 </div>
                 <div className="space-y-1 text-xs text-gray-500">
-                  {donutData.length === 0 && <p>Add multiple investment types to improve diversification.</p>}
+                  {donutData.length === 0 && <p>{t("investments.noEntries")}</p>}
                   {donutData.length === 1 && <p className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-amber-500" /> 100% in {donutData[0].name} — high concentration risk.</p>}
-                  {divScore < 40 && donutData.length > 0 && <p className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-red-500" /> Consider adding bonds or stocks for stability.</p>}
-                  {divScore >= 40 && <p className="flex items-center gap-1"><TrendingUp className="w-3 h-3 text-emerald-500" /> Good spread across asset types.</p>}
+                  {divScore < 40 && donutData.length > 0 && <p className="flex items-center gap-1"><AlertTriangle className="w-3 h-3 text-red-500" /> {t("aiReports.recommendations")}</p>}
+                  {divScore >= 40 && <p className="flex items-center gap-1"><TrendingUp className="w-3 h-3 text-emerald-500" /> {t("common.active")}</p>}
                 </div>
               </CardContent>
             </Card>
@@ -312,18 +319,18 @@ export default function InvestmentsPage() {
 
         {/* type breakdown strip */}
         <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
-          {typeBreakdown.map(t => (
-            <Card key={t.name} className={`border rounded-2xl cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md ${typeFilter === t.name ? "ring-2" : "border-gray-100 dark:border-gray-800"}`}
-              style={typeFilter === t.name ? { ringColor: t.color } : {}}
-              onClick={() => setTypeFilter(typeFilter === t.name ? "All" : t.name)}
-              data-testid={`card-type-${t.name.toLowerCase().replace(/\s+/g, "-")}`}>
+          {typeBreakdown.map(t_card => (
+            <Card key={t_card.name} className={`border rounded-2xl cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-md ${typeFilter === t_card.name ? "ring-2" : "border-gray-100 dark:border-gray-800"}`}
+              style={typeFilter === t_card.name ? { ringColor: t_card.color } : {}}
+              onClick={() => setTypeFilter(typeFilter === t_card.name ? "All" : t_card.name)}
+              data-testid={`card-type-${t_card.name.toLowerCase().replace(/\s+/g, "-")}`}>
               <CardContent className="p-3 flex flex-col items-center text-center gap-1.5">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: t.bg }}>
-                  <t.icon className="w-4 h-4" style={{ color: t.color }} />
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: t_card.bg }}>
+                  <t_card.icon className="w-4 h-4" style={{ color: t_card.color }} />
                 </div>
-                <p className="text-[10px] font-medium text-gray-500">{t.name}</p>
-                <p className="text-sm font-bold text-gray-900 dark:text-white tabular-nums" data-testid={`text-type-total-${t.name.toLowerCase().replace(/\s+/g, "-")}`}>{formatAmount(t.total)}</p>
-                <p className="text-[10px] text-gray-400">{t.count} active</p>
+                <p className="text-[10px] font-medium text-gray-500">{t_card.label}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-white tabular-nums" data-testid={`text-type-total-${t_card.name.toLowerCase().replace(/\s+/g, "-")}`} dir="ltr">{formatAmount(t_card.total)}</p>
+                <p className="text-[10px] text-gray-400">{t_card.count} {t("common.active")}</p>
               </CardContent>
             </Card>
           ))}
@@ -331,18 +338,18 @@ export default function InvestmentsPage() {
 
         {/* holdings table */}
         <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-          <CardContent className="p-5">
+          <CardContent className="p-5 text-start">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-white text-base">
-                All Holdings
-                <span className="ml-2 text-xs font-normal text-gray-400">({filteredInv.length})</span>
+                {t("investments.entries")}
+                <span className="ms-2 text-xs font-normal text-gray-400">({filteredInv.length})</span>
               </h3>
               <div className="flex gap-1.5">
                 {(["all","active","sold"] as const).map(f => (
                   <button key={f} onClick={() => setStatusFilter(f)}
                     className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium capitalize transition-all", statusFilter !== f && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}
                     style={statusFilter === f ? { backgroundColor: BRAND, color: "#fff" } : {}}>
-                    {f}
+                    {f === "active" ? t("common.active") : f === "sold" ? "Sold" : t("common.all")}
                   </button>
                 ))}
               </div>
@@ -350,9 +357,9 @@ export default function InvestmentsPage() {
 
             {filteredInv.length === 0 ? (
               <div className="text-center py-10">
-                <p className="text-sm text-gray-400">No investments found.</p>
+                <p className="text-sm text-gray-400">{t("investments.noEntries")}</p>
                 <Button onClick={() => { cancelForm(); setShowForm(true); }} className="mt-3 gap-1.5 rounded-xl" style={{ backgroundColor: BRAND }}>
-                  <Plus className="w-4 h-4" /> Add Investment
+                  <Plus className="w-4 h-4" /> {t("investments.addInvestment")}
                 </Button>
               </div>
             ) : (
@@ -360,8 +367,8 @@ export default function InvestmentsPage() {
                 <table className="w-full text-sm" data-testid="table-investments">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800">
-                      {["Name","Type","Qty","Cost","Value (USD)","Gain/Loss","G/L %","Alloc","Status",""].map(h => (
-                        <th key={h} className={`py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${["Cost","Value (USD)","Gain/Loss","G/L %","Alloc"].includes(h) ? "text-right" : h === "" ? "text-right" : "text-left"}`}>{h}</th>
+                      {[t("common.name"),t("common.type"),t("investments.quantity"),t("investments.purchasePrice"),t("investments.currentValue"),"Gain/Loss","G/L %","Alloc",t("common.status"),""].map(h => (
+                        <th key={h} className={`py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${[t("investments.purchasePrice"),t("investments.currentValue"),"Gain/Loss","G/L %","Alloc"].includes(h) ? "text-end" : h === "" ? "text-end" : "text-start"}`}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -372,34 +379,36 @@ export default function InvestmentsPage() {
                       const gl  = curUsd - purUsd;
                       const glPct = purUsd > 0 ? (gl / purUsd) * 100 : 0;
                       const alloc = totalValue > 0 ? (curUsd / totalValue) * 100 : 0;
-                      const typeInfo = INVESTMENT_TYPES.find(t => t.name === inv.type);
+                      const typeInfo = INVESTMENT_TYPES.find(t_info => t_info.name === inv.type);
                       return (
                         <tr key={inv.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 group transition-colors" data-testid={`row-investment-${inv.id}`}>
                           <td className="py-3 px-3 font-semibold text-gray-900 dark:text-white text-sm" data-testid={`text-name-${inv.id}`}>{inv.name}</td>
                           <td className="py-3 px-3">
                             <span className={cn("text-[11px] font-medium px-2 py-0.5 rounded-full", !typeInfo && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")} style={typeInfo ? { backgroundColor: `${typeInfo.color}22`, color: typeInfo.color } : {}} data-testid={`badge-type-${inv.id}`}>
-                              {inv.type}
+                              {typeInfo?.label || inv.type}
                             </span>
                           </td>
                           <td className="py-3 px-3 text-gray-500 tabular-nums">{inv.quantity || "—"}</td>
-                          <td className="py-3 px-3 text-right tabular-nums text-gray-500">{formatAmount(purUsd)}</td>
-                          <td className="py-3 px-3 text-right font-bold tabular-nums text-gray-900 dark:text-white">{formatAmount(curUsd)}</td>
-                          <td className="py-3 px-3 text-right font-bold tabular-nums" style={{ color: gl >= 0 ? MINT : DANGER }}>{gl >= 0 ? "+" : ""}{formatAmount(gl)}</td>
-                          <td className="py-3 px-3 text-right">
-                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${glPct >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>{glPct >= 0 ? "+" : ""}{glPct.toFixed(1)}%</span>
+                          <td className="py-3 px-3 text-end tabular-nums text-gray-500" dir="ltr">{formatAmount(purUsd)}</td>
+                          <td className="py-3 px-3 text-end font-bold tabular-nums text-gray-900 dark:text-white" dir="ltr">{formatAmount(curUsd)}</td>
+                          <td className="py-3 px-3 text-end font-bold tabular-nums" style={{ color: gl >= 0 ? MINT : DANGER }} dir="ltr">{gl >= 0 ? "+" : ""}{formatAmount(gl)}</td>
+                          <td className="py-3 px-3 text-end">
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${glPct >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`} dir="ltr">{glPct >= 0 ? "+" : ""}{glPct.toFixed(1)}%</span>
                           </td>
-                          <td className="py-3 px-3 text-right">
+                          <td className="py-3 px-3 text-end">
                             <div className="flex items-center justify-end gap-1.5">
                               <div className="w-12 h-1.5 rounded-full overflow-hidden bg-gray-100">
                                 <div className="h-full rounded-full" style={{ width: `${alloc}%`, backgroundColor: typeInfo?.color || BRAND }} />
                               </div>
-                              <span className="text-[10px] text-gray-400 tabular-nums w-8 text-right">{alloc.toFixed(0)}%</span>
+                              <span className="text-[10px] text-gray-400 tabular-nums w-8 text-end">{alloc.toFixed(0)}%</span>
                             </div>
                           </td>
                           <td className="py-3 px-3">
-                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${inv.status === "active" ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-gray-100 text-gray-500"}`}>{inv.status}</span>
+                            <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full capitalize", inv.status === "active" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500")}>
+                              {inv.status === "active" ? t("common.active") : inv.status}
+                            </span>
                           </td>
-                          <td className="py-3 px-3 text-right">
+                          <td className="py-3 px-3 text-end">
                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                               <button onClick={() => startEdit(inv)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" data-testid={`button-edit-${inv.id}`}><Pencil className="w-3.5 h-3.5" /></button>
                               <button onClick={() => handleDelete(inv.id)} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors" data-testid={`button-delete-${inv.id}`}><Trash2 className="w-3.5 h-3.5" /></button>
@@ -411,11 +420,11 @@ export default function InvestmentsPage() {
                   </tbody>
                   <tfoot>
                     <tr className="border-t-2 border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/20">
-                      <td colSpan={4} className="py-2.5 px-3 text-xs font-semibold text-gray-500">Total ({activeInv.length} active)</td>
-                      <td className="py-2.5 px-3 text-right text-sm font-bold tabular-nums text-gray-900 dark:text-white">{formatAmount(totalValue)}</td>
-                      <td className="py-2.5 px-3 text-right text-sm font-bold tabular-nums" style={{ color: totalGainLoss >= 0 ? MINT : DANGER }}>{totalGainLoss >= 0 ? "+" : ""}{formatAmount(Math.abs(totalGainLoss))}</td>
-                      <td className="py-2.5 px-3 text-right">
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${gainLossPct >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>{gainLossPct >= 0 ? "+" : ""}{gainLossPct.toFixed(1)}%</span>
+                      <td colSpan={4} className="py-2.5 px-3 text-xs font-semibold text-gray-500 text-start">{t("common.total")} ({activeInv.length} {t("common.active")})</td>
+                      <td className="py-2.5 px-3 text-end text-sm font-bold tabular-nums text-gray-900 dark:text-white" dir="ltr">{formatAmount(totalValue)}</td>
+                      <td className="py-2.5 px-3 text-end text-sm font-bold tabular-nums" style={{ color: totalGainLoss >= 0 ? MINT : DANGER }} dir="ltr">{totalGainLoss >= 0 ? "+" : ""}{formatAmount(Math.abs(totalGainLoss))}</td>
+                      <td className="py-2.5 px-3 text-end">
+                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${gainLossPct >= 0 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`} dir="ltr">{gainLossPct >= 0 ? "+" : ""}{gainLossPct.toFixed(1)}%</span>
                       </td>
                       <td colSpan={3} />
                     </tr>
@@ -428,18 +437,18 @@ export default function InvestmentsPage() {
 
         {/* smart insights */}
         <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
-          <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
-            <div className="flex items-center gap-2 mb-4"><Sparkles className="w-4 h-4" style={{ color: PURPLE }} /><h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3></div>
+          <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30] text-start">
+            <div className="flex items-center gap-2 mb-4 text-start"><Sparkles className="w-4 h-4" style={{ color: PURPLE }} /><h3 className="font-semibold text-gray-900 dark:text-white text-base">{t("aiReports.insights")}</h3></div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
+              <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs text-start">
                 <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">🎯 Diversification</p>
                 <p className="text-gray-500">{divScore < 40 ? `Portfolio concentration is high (score: ${divScore}/100). Consider adding different asset types to reduce risk.` : `Diversification score: ${divScore}/100. ${divScore >= 70 ? "Good spread across asset types." : "Adding bonds or real estate could improve stability."}`}</p>
               </div>
-              <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
+              <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs text-start">
                 <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📊 Performance</p>
-                <p className="text-gray-500">{best ? `Your best performer is ${best.name} at +${best.gainPct.toFixed(1)}%${worst && worst.id !== best.id ? `, while ${worst.name} is at ${worst.gainPct.toFixed(1)}%` : ""}.` : "Add investments to see performance insights."}</p>
+                <p className="text-gray-500">{best ? `Your best performer is ${best.name} at +${best.gainPct.toFixed(1)}%${worst && worst.id !== best.id ? `, while ${worst.name} is at ${worst.gainPct.toFixed(1)}%` : ""}.` : t("investments.noEntries")}</p>
               </div>
-              <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
+              <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs text-start">
                 <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">✨ Portfolio value</p>
                 <p className="text-gray-500">{totalGainLoss >= 0 ? `Your portfolio gained ${formatAmount(totalGainLoss)} (+${gainLossPct.toFixed(1)}%) since purchase. Strong performance!` : `Portfolio is down ${formatAmount(Math.abs(totalGainLoss))} (${gainLossPct.toFixed(1)}%). Stay patient with long-term holdings.`}</p>
               </div>
@@ -451,38 +460,38 @@ export default function InvestmentsPage() {
       {/* Add/Edit Investment Dialog */}
       <Dialog open={showForm} onOpenChange={v => { if (!v) cancelForm(); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editingId ? "Edit Investment" : "Add Investment"}</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4" data-testid="form-investment">
+          <DialogHeader><DialogTitle className="text-start">{editingId ? t("investments.editInvestment") : t("investments.addInvestment")}</DialogTitle></DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 text-start" data-testid="form-investment">
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Name</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.name")}</label>
                 <Input placeholder="e.g. Apple Stock" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} data-testid="input-name" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Type</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.type")}</label>
                 <Select value={formData.type} onValueChange={v => setFormData({ ...formData, type: v })}>
                   <SelectTrigger data-testid="select-type"><SelectValue placeholder="Select type..." /></SelectTrigger>
-                  <SelectContent>{INVESTMENT_TYPES.map(t => <SelectItem key={t.name} value={t.name}>{t.name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{INVESTMENT_TYPES.map(t_opt => <SelectItem key={t_opt.name} value={t_opt.name}>{t_opt.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Quantity</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("investments.quantity")}</label>
                 <Input type="number" step="any" placeholder="0" value={formData.quantity} onChange={e => setFormData({ ...formData, quantity: e.target.value })} data-testid="input-quantity" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Purchase Price (Total)</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("investments.purchasePrice")} ({t("common.total")})</label>
                 <Input type="number" step="0.01" placeholder="0.00" value={formData.purchasePrice} onChange={e => setFormData({ ...formData, purchasePrice: e.target.value })} data-testid="input-purchase-price" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Unit Price at Purchase</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("investments.unitPrice")} at Purchase</label>
                 <Input type="number" step="0.01" placeholder="0.00" value={formData.unitPriceAtPurchase} onChange={e => setFormData({ ...formData, unitPriceAtPurchase: e.target.value })} data-testid="input-unit-price" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Current Value</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("investments.currentValue")}</label>
                 <Input type="number" step="0.01" placeholder="0.00" value={formData.currentValue} onChange={e => setFormData({ ...formData, currentValue: e.target.value })} data-testid="input-current-value" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Purchase Date</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("investments.purchaseDate")}</label>
                 <Input type="date" value={formData.purchaseDate} onChange={e => setFormData({ ...formData, purchaseDate: e.target.value })} data-testid="input-purchase-date" />
               </div>
               <div>
@@ -490,10 +499,10 @@ export default function InvestmentsPage() {
                 <Input placeholder="e.g. Robinhood, Binance" value={formData.platform} onChange={e => setFormData({ ...formData, platform: e.target.value })} data-testid="input-platform" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Status</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.status")}</label>
                 <Select value={formData.status} onValueChange={v => setFormData({ ...formData, status: v })}>
                   <SelectTrigger data-testid="select-status"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="active">Active</SelectItem><SelectItem value="sold">Sold</SelectItem></SelectContent>
+                  <SelectContent><SelectItem value="active">{t("common.active")}</SelectItem><SelectItem value="sold">Sold</SelectItem></SelectContent>
                 </Select>
               </div>
               {formData.status === "sold" && (
@@ -513,13 +522,13 @@ export default function InvestmentsPage() {
               onCurrencyChange={code => setFormData(p => ({ ...p, currencyCode: code }))}
               onExchangeRateChange={rate => setFormData(p => ({ ...p, exchangeRateToUsd: rate }))} showUsdPreview={true} />
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Notes</label>
-              <Textarea placeholder="Optional notes..." value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} className="resize-none" rows={2} data-testid="input-notes" />
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.notes")}</label>
+              <Textarea placeholder={t("common.optional")} value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} className="resize-none" rows={2} data-testid="input-notes" />
             </div>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={cancelForm} data-testid="button-cancel-edit">Cancel</Button>
+              <Button type="button" variant="outline" className="flex-1" onClick={cancelForm} data-testid="button-cancel-edit">{t("common.cancel")}</Button>
               <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }} disabled={isPending} data-testid="button-submit-investment">
-                {isPending ? "Saving…" : editingId ? "Update" : "Add Investment"}
+                {isPending ? t("common.saving") : editingId ? t("common.save") : t("investments.addInvestment")}
               </Button>
             </div>
           </form>

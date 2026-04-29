@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 import { format, subYears, startOfYear } from "date-fns";
 import {
   Plus, Trash2, DollarSign, TrendingUp, TrendingDown, Calendar,
@@ -72,6 +73,7 @@ function AddIncomeDialog({ incomeCategories, userId, onSuccess }: {
   const [open, setOpen] = useState(false);
   const createTx = useCreateTransaction();
   const { toast } = useToast();
+  const { t } = useI18n();
 
   const form = useForm<TxValues>({
     resolver: zodResolver(txSchema),
@@ -89,12 +91,12 @@ function AddIncomeDialog({ incomeCategories, userId, onSuccess }: {
   const onSubmit = async (v: TxValues) => {
     try {
       await createTx.mutateAsync({ ...v, userId, amount: v.amount, categoryId: Number(v.categoryId) });
-      toast({ title: "Income added", description: `${v.description} recorded successfully.` });
+      toast({ title: t("common.saveSuccess"), description: `${v.description} recorded successfully.` });
       setOpen(false);
       form.reset();
       onSuccess();
     } catch {
-      toast({ title: "Error", description: "Failed to add income.", variant: "destructive" });
+      toast({ title: t("common.errorGeneric"), description: "Failed to add income.", variant: "destructive" });
     }
   };
 
@@ -102,33 +104,33 @@ function AddIncomeDialog({ incomeCategories, userId, onSuccess }: {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="gap-2 rounded-xl shadow-sm" style={{ backgroundColor: BRAND }} data-testid="button-add-income">
-          <Plus className="w-4 h-4" /> Add Income
+          <Plus className="w-4 h-4" /> {t("income.addIncome")}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Add Income Entry</DialogTitle>
+          <DialogTitle>{t("income.addIncome")}</DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField control={form.control} name="description" render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormControl><Input placeholder="e.g. Monthly Salary" {...field} data-testid="input-description" /></FormControl>
+                <FormLabel>{t("common.description")}</FormLabel>
+                <FormControl><Input placeholder={t("income.descriptionPlaceholder")} {...field} data-testid="input-description" /></FormControl>
                 <FormMessage />
               </FormItem>
             )} />
             <div className="grid grid-cols-2 gap-3">
               <FormField control={form.control} name="amount" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount</FormLabel>
-                  <FormControl><Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-amount" /></FormControl>
+                  <FormLabel>{t("common.amount")}</FormLabel>
+                  <FormControl><Input type="number" step="0.01" placeholder={t("income.amountPlaceholder")} {...field} data-testid="input-amount" /></FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
               <FormField control={form.control} name="date" render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Date</FormLabel>
+                  <FormLabel>{t("common.date")}</FormLabel>
                   <FormControl><Input type="date" {...field} data-testid="input-date" /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -136,10 +138,10 @@ function AddIncomeDialog({ incomeCategories, userId, onSuccess }: {
             </div>
             <FormField control={form.control} name="categoryId" render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>{t("common.category")}</FormLabel>
                 <Select value={field.value ? String(field.value) : undefined} onValueChange={v => field.onChange(Number(v))}>
                   <FormControl>
-                    <SelectTrigger data-testid="select-category"><SelectValue placeholder="Select category…" /></SelectTrigger>
+                    <SelectTrigger data-testid="select-category"><SelectValue placeholder={t("common.search")} /></SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {incomeCategories.map((c: any) => (
@@ -152,10 +154,10 @@ function AddIncomeDialog({ incomeCategories, userId, onSuccess }: {
             )} />
             <CurrencyFields form={form} />
             <div className="flex gap-2 pt-1">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
               <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }}
                 disabled={createTx.isPending} data-testid="button-save-income">
-                {createTx.isPending ? "Saving…" : "Add Income"}
+                {createTx.isPending ? t("common.saving") : t("income.addIncome")}
               </Button>
             </div>
           </form>
@@ -211,6 +213,7 @@ export default function IncomePage() {
   const { user }    = useAuth();
   const { formatAmount } = useCurrency();
   const { toast }   = useToast();
+  const { t, lang, isRtl } = useI18n();
 
   const { data: transactions = [] } = useTransactions();
   const { data: categories   = [] } = useCategories();
@@ -317,9 +320,9 @@ export default function IncomePage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this entry?")) return;
+    if (!confirm(t("common.confirmDelete"))) return;
     await deleteTransaction.mutateAsync(id);
-    toast({ title: "Deleted" });
+    toast({ title: t("common.deleteSuccess") });
   };
 
   const exportCSV = () => {
@@ -347,8 +350,8 @@ export default function IncomePage() {
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Income</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track and manage your income sources.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("income.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("income.subtitle")}</p>
           </div>
           <div className="flex flex-wrap gap-2 items-center">
             {/* year selector */}
@@ -362,7 +365,7 @@ export default function IncomePage() {
             </Select>
 
             <Button variant="outline" size="sm" className="gap-1.5 rounded-xl h-9 text-xs" onClick={exportCSV} data-testid="button-export">
-              <Download className="w-3.5 h-3.5" /> Export
+              <Download className="w-3.5 h-3.5" /> {t("reports.exportCsv")}
             </Button>
 
             <AddIncomeDialog
@@ -376,7 +379,7 @@ export default function IncomePage() {
         {/* ── KPI STRIP ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            label={`Total Income ${selectedYear}`}
+            label={`${t("income.totalIncome")} ${selectedYear}`}
             value={formatAmount(totalIncome)}
             icon={DollarSign}
             color="#10B981"
@@ -385,18 +388,18 @@ export default function IncomePage() {
             trendUp={trendPct !== null ? trendPct >= 0 : undefined}
           />
           <KpiCard
-            label="This Month"
+            label={t("common.thisMonth")}
             value={formatAmount(curMonthIncome)}
             icon={Calendar}
             color={BRAND}
             bg="#EEF4FF"
-            sub={curMonthIncome === 0 ? "No income logged yet" : `${MONTHS_SHORT[curMonth]} ${selectedYear}`}
+            sub={curMonthIncome === 0 ? t("income.noEntries") : `${MONTHS_SHORT[curMonth]} ${selectedYear}`}
             trend={monthlyAvg > 0 && curMonthIncome < monthlyAvg
               ? `↘ ${formatAmount(monthlyAvg - curMonthIncome)} below avg` : undefined}
             trendUp={false}
           />
           <KpiCard
-            label="Monthly Average"
+            label={t("income.monthlyAverage")}
             value={formatAmount(monthlyAvg)}
             sub="Based on 12 months"
             icon={BarChart3}
@@ -404,9 +407,9 @@ export default function IncomePage() {
             bg="#F5F3FF"
           />
           <KpiCard
-            label="Top Source"
+            label={t("dashboard.topSpending")}
             value={topSource?.name || "—"}
-            sub={topSource ? `${formatAmount(topSource.value)} · ${totalIncome > 0 ? ((topSource.value / totalIncome) * 100).toFixed(0) : 0}% of total` : "No income yet"}
+            sub={topSource ? `${formatAmount(topSource.value)} · ${totalIncome > 0 ? ((topSource.value / totalIncome) * 100).toFixed(0) : 0}% of total` : t("income.noEntries")}
             icon={Star}
             color={AMBER}
             bg="#FFFBEB"
@@ -421,7 +424,7 @@ export default function IncomePage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-base">Monthly Income Overview</h3>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base">{t("income.incomeEntries")}</h3>
                   <p className="text-xs text-gray-400">{selectedYear}</p>
                 </div>
                 <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
@@ -429,7 +432,7 @@ export default function IncomePage() {
                     <button key={v} onClick={() => setChartView(v)}
                       className="px-3 py-1 rounded-md text-xs font-medium transition-all capitalize"
                       style={chartView === v ? { backgroundColor: BRAND, color: "#fff" } : { color: "#64748B" }}>
-                      {v}
+                      {v === "chart" ? t("common.actions") : t("common.viewAll")}
                     </button>
                   ))}
                 </div>
@@ -439,7 +442,7 @@ export default function IncomePage() {
                 <>
                   {yearIncome.length === 0 ? (
                     <div className="h-48 flex items-center justify-center text-gray-400 text-sm">
-                      No income data for {selectedYear}
+                      {t("income.noEntries")}
                     </div>
                   ) : (
                     <ResponsiveContainer width="100%" height={200}>
@@ -454,7 +457,7 @@ export default function IncomePage() {
                         <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                         <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} />
                         <Tooltip content={<ChartTip fmt={formatAmount} />} cursor={{ fill: "#f8faff" }} />
-                        <Bar dataKey="income" name="Income" fill="url(#incGrad)" radius={[5, 5, 0, 0]} />
+                        <Bar dataKey="income" name={t("nav.income")} fill="url(#incGrad)" radius={[5, 5, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -463,7 +466,7 @@ export default function IncomePage() {
                     <div className="flex gap-4 mt-3 pt-3 border-t border-gray-50 dark:border-gray-800 text-xs text-gray-500">
                       {highestMonth && <span>📈 Highest: <strong className="text-gray-700 dark:text-gray-300">{highestMonth.month}</strong> · {formatAmount(highestMonth.income)}</span>}
                       {lowestMonth  && <span>📉 Lowest: <strong className="text-gray-700 dark:text-gray-300">{lowestMonth.month}</strong> · {formatAmount(lowestMonth.income)}</span>}
-                      <span className="ml-auto">Total: <strong style={{ color: MINT }}>{formatAmount(totalIncome)}</strong></span>
+                      <span className="ms-auto">{t("common.total")}: <strong style={{ color: MINT }}>{formatAmount(totalIncome)}</strong></span>
                     </div>
                   )}
                 </>
@@ -473,9 +476,9 @@ export default function IncomePage() {
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-800">
-                        <th className="py-2 px-3 text-left text-gray-500 font-semibold uppercase tracking-wide">Month</th>
-                        <th className="py-2 px-3 text-right text-gray-500 font-semibold uppercase tracking-wide">Income</th>
-                        <th className="py-2 px-3 text-right text-gray-500 font-semibold uppercase tracking-wide">Share</th>
+                        <th className="py-2 px-3 text-left text-gray-500 font-semibold uppercase tracking-wide">{t("common.month")}</th>
+                        <th className="py-2 px-3 text-right text-gray-500 font-semibold uppercase tracking-wide">{t("nav.income")}</th>
+                        <th className="py-2 px-3 text-right text-gray-500 font-semibold uppercase tracking-wide">{t("common.percentage")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -496,10 +499,10 @@ export default function IncomePage() {
           {/* income by category donut — 1/3 width */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-category-donut">
             <CardContent className="p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">By Category</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">{t("expenses.byCategory")}</h3>
               <p className="text-xs text-gray-400 mb-4">{selectedYear} breakdown</p>
               {catBreakdown.length === 0 ? (
-                <div className="h-40 flex items-center justify-center text-sm text-gray-400">No income yet</div>
+                <div className="h-40 flex items-center justify-center text-sm text-gray-400">{t("income.noEntries")}</div>
               ) : (
                 <>
                   <div className="relative">
@@ -515,7 +518,7 @@ export default function IncomePage() {
                     </ResponsiveContainer>
                     {/* center label */}
                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                      <span className="text-xs text-gray-400">Total</span>
+                      <span className="text-xs text-gray-400">{t("common.total")}</span>
                       <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">{formatAmount(totalIncome)}</span>
                     </div>
                   </div>
@@ -546,11 +549,11 @@ export default function IncomePage() {
                 <Sparkles className="w-4 h-4" style={{ color: BRAND }} />
               </div>
               <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">Portfolio Insight</p>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">{t("aiReports.insights")}</p>
                 <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                   {topSource
                     ? `Your top income source is ${topSource.name} (${totalIncome > 0 ? ((topSource.value / totalIncome) * 100).toFixed(0) : 0}% of total). Consider diversifying to reduce dependency on a single source.`
-                    : "Add your income entries to get personalized insights about your earning patterns."}
+                    : t("income.noEntries")}
                 </p>
               </div>
             </div>
@@ -566,18 +569,18 @@ export default function IncomePage() {
             {/* table header */}
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-base">Income Entries</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white text-base">{t("income.incomeEntries")}</h3>
                 <span className="text-xs text-gray-400 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded-full">
-                  {tableRows.length} entries
+                  {tableRows.length} {t("income.incomeEntries").toLowerCase()}
                 </span>
               </div>
               <div className="flex gap-2 items-center flex-wrap">
                 {/* search */}
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <Input placeholder="Search entries…" value={search}
+                  <Input placeholder={t("common.search")} value={search}
                     onChange={e => { setSearch(e.target.value); setPage(1); }}
-                    className="pl-8 h-8 text-xs w-44 rounded-xl" data-testid="input-search" />
+                    className="ps-8 h-8 text-xs w-44 rounded-xl" data-testid="input-search" />
                 </div>
               </div>
             </div>
@@ -591,7 +594,7 @@ export default function IncomePage() {
                     ? { backgroundColor: BRAND, color: "#fff" }
                     : { backgroundColor: "#F1F5F9", color: "#64748B" }}
                   data-testid={`filter-cat-${name}`}>
-                  {name === "all" ? "All" : name}
+                  {name === "all" ? t("common.all") : name}
                 </button>
               ))}
             </div>
@@ -602,13 +605,13 @@ export default function IncomePage() {
                 <div className="w-14 h-14 rounded-2xl bg-green-50 dark:bg-green-950/30 flex items-center justify-center">
                   <DollarSign className="w-7 h-7 text-green-400" />
                 </div>
-                <p className="font-semibold text-gray-700 dark:text-gray-300">No income logged for {selectedYear}</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300">{t("income.noEntries")}</p>
                 <p className="text-sm text-gray-400">Add your first income entry to start tracking.</p>
                 <AddIncomeDialog incomeCategories={incomeCats} userId={user?.id ?? ""} onSuccess={() => {}} />
               </div>
             ) : tableRows.length === 0 ? (
               <div className="flex items-center justify-center py-10 text-sm text-gray-400">
-                No entries match your filters.
+                {t("common.noData")}
               </div>
             ) : (
               <>
@@ -618,22 +621,22 @@ export default function IncomePage() {
                       <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                         <th className="py-2.5 px-4 text-left">
                           <button onClick={() => toggleSort("date")} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-colors" data-testid="sort-date">
-                            Date <ArrowUpDown className="w-3 h-3" />
+                            {t("common.date")} <ArrowUpDown className="w-3 h-3" />
                           </button>
                         </th>
-                        <th className="py-2.5 px-4 text-left text-[10px] font-bold uppercase tracking-wide text-gray-500">Description</th>
+                        <th className="py-2.5 px-4 text-left text-[10px] font-bold uppercase tracking-wide text-gray-500">{t("common.description")}</th>
                         <th className="py-2.5 px-4 text-left">
                           <button onClick={() => toggleSort("category")} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-colors" data-testid="sort-category">
-                            Category <ArrowUpDown className="w-3 h-3" />
+                            {t("common.category")} <ArrowUpDown className="w-3 h-3" />
                           </button>
                         </th>
                         <th className="py-2.5 px-4 text-right">
-                          <button onClick={() => toggleSort("amount")} className="flex items-center gap-1 ml-auto text-[10px] font-bold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-colors" data-testid="sort-amount">
-                            Amount <ArrowUpDown className="w-3 h-3" />
+                          <button onClick={() => toggleSort("amount")} className="flex items-center gap-1 ms-auto text-[10px] font-bold uppercase tracking-wide text-gray-500 hover:text-gray-700 transition-colors" data-testid="sort-amount">
+                            {t("common.amount")} <ArrowUpDown className="w-3 h-3" />
                           </button>
                         </th>
                         <th className="py-2.5 px-4 text-right text-[10px] font-bold uppercase tracking-wide text-gray-500">USD Value</th>
-                        <th className="py-2.5 px-4 text-center text-[10px] font-bold uppercase tracking-wide text-gray-500">Actions</th>
+                        <th className="py-2.5 px-4 text-center text-[10px] font-bold uppercase tracking-wide text-gray-500">{t("common.actions")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
@@ -656,10 +659,10 @@ export default function IncomePage() {
                               </span>
                             </td>
                             <td className="py-3.5 px-4 text-right font-bold tabular-nums" style={{ color: MINT }}>
-                              +{getCurrencySymbol(curr)}{Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                              +{getCurrencySymbol(curr)}<span dir="ltr">{Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                             </td>
                             <td className="py-3.5 px-4 text-right text-xs text-gray-400 tabular-nums">
-                              {curr !== "USD" ? formatAmount(t.amountUsd) : <span className="text-gray-300">—</span>}
+                              {curr !== "USD" ? <span dir="ltr">{formatAmount(t.amountUsd)}</span> : <span className="text-gray-300">—</span>}
                             </td>
                             <td className="py-3.5 px-4">
                               <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -723,37 +726,29 @@ export default function IncomePage() {
           const recurring = Object.values(freq).filter(f => f.count >= 2).sort((a, b) => b.count - a.count).slice(0, 4);
           if (recurring.length === 0) return null;
           return (
-            <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-recurring">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="font-semibold text-gray-900 dark:text-white text-base">Recurring Sources</h3>
-                    <p className="text-xs text-gray-400 mt-0.5">Income sources that appear multiple times</p>
-                  </div>
-                  <RefreshCw className="w-4 h-4 text-gray-400" />
-                </div>
-                <div className="space-y-3">
-                  {recurring.map((r, i) => {
-                    const style = catStyle(r.cat);
-                    return (
-                      <div key={i} className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: style.bg }}>
-                          <RefreshCw className="w-4 h-4" style={{ color: style.color }} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{r.desc}</p>
-                          <p className="text-xs text-gray-400">{r.count}× this year · <span style={{ color: style.color }}>{r.cat}</span></p>
-                        </div>
-                        <p className="text-sm font-bold tabular-nums" style={{ color: MINT }}>{formatAmount(r.amt)}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {recurring.map((f, i) => (
+                <Card key={i} className="border border-gray-100 dark:border-gray-800 rounded-2xl overflow-hidden bg-white/50 dark:bg-gray-900/50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+                        <RefreshCw className="w-5 h-5 text-blue-500" />
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">{t("income.recurringIncome")}</p>
+                        <p className="font-bold text-gray-900 dark:text-white truncate">{f.desc}</p>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-xs text-gray-500">{f.cat}</span>
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400" dir="ltr">{formatAmount(f.amt)}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           );
         })()}
-
       </div>
     </Layout>
   );

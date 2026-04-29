@@ -30,14 +30,9 @@ import { Input } from "@/components/ui/input";
 type TxFilter = "all" | "income" | "expense";
 type ChartRange = "1M" | "3M" | "6M" | "1Y";
 
-function greeting(name: string, isAr: boolean) {
+function greetKey() {
   const h = new Date().getHours();
-  if (isAr) {
-    const g = h < 12 ? "صباح الخير" : h < 17 ? "مساء الخير" : "مساء النور";
-    return `${g}، ${name}! 👋`;
-  }
-  const g = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
-  return `${g}, ${name}! 👋`;
+  return h < 12 ? "dashboard.greeting.morning" : h < 17 ? "dashboard.greeting.afternoon" : "dashboard.greeting.evening";
 }
 
 function StatSkeleton() {
@@ -62,8 +57,7 @@ export default function Dashboard() {
   const { data: debts = [] } = useDebts();
   const { data: goals = [] } = useGoals();
   const { formatAmount } = useCurrency();
-  const { t, lang } = useI18n();
-  const isAr = lang === "ar";
+  const { t, lang, isRtl } = useI18n();
   const aiInsights = useAIInsights();
   const createContribution = useCreateGoalContribution();
 
@@ -153,14 +147,14 @@ export default function Dashboard() {
 
   const wealthBreakdown = useMemo(() => {
     const d = [];
-    if (totalBankBalance > 0) d.push({ name: isAr ? "البنوك" : "Bank Accounts", value: totalBankBalance, color: "#1B4FE4" });
-    if (totalInvestmentsValue > 0) d.push({ name: isAr ? "الاستثمارات" : "Investments", value: totalInvestmentsValue, color: "#00C896" });
-    if (totalAssetsValue > 0) d.push({ name: isAr ? "الأصول" : "Assets", value: totalAssetsValue, color: "#F59E0B" });
-    if (d.length === 0) d.push({ name: isAr ? "لا بيانات" : "No Data", value: 1, color: "#EEF4FF" });
+    if (totalBankBalance > 0) d.push({ name: t("dashboard.bankAccounts"), value: totalBankBalance, color: "#1B4FE4" });
+    if (totalInvestmentsValue > 0) d.push({ name: t("dashboard.investments"), value: totalInvestmentsValue, color: "#00C896" });
+    if (totalAssetsValue > 0) d.push({ name: t("dashboard.assets"), value: totalAssetsValue, color: "#F59E0B" });
+    if (d.length === 0) d.push({ name: t("common.noData"), value: 1, color: "#EEF4FF" });
     return d;
-  }, [totalBankBalance, totalInvestmentsValue, totalAssetsValue, isAr]);
+  }, [totalBankBalance, totalInvestmentsValue, totalAssetsValue, lang]);
 
-  const wealthTotal = wealthBreakdown.reduce((s, w) => s + (w.name === (isAr ? "لا بيانات" : "No Data") ? 0 : w.value), 0);
+  const wealthTotal = wealthBreakdown.reduce((s, w) => s + (w.value === 1 && w.color === "#EEF4FF" ? 0 : w.value), 0);
 
   const chartData = useMemo(() => {
     const months = chartRange === "1M" ? 1 : chartRange === "3M" ? 3 : chartRange === "6M" ? 6 : 12;
@@ -238,7 +232,7 @@ export default function Dashboard() {
       const result = await aiInsights.mutateAsync(undefined);
       setAiInsight(result.insight);
     } catch {
-      setAiInsight(isAr ? "تعذّر تحميل التوصية. حاول مجدداً." : "Could not load insight. Try again.");
+      setAiInsight(t("common.errorGeneric"));
     } finally {
       setAiLoading(false);
     }
@@ -292,10 +286,10 @@ export default function Dashboard() {
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">
-            {greeting((user as any)?.firstName || "there", isAr)}
+            {t(greetKey())}, {(user as any)?.firstName || ""}! 👋
           </h2>
           <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            {format(now, "EEEE, MMMM d, yyyy")} — {isAr ? "نظرتك المالية اليوم" : "Here's your financial overview today"}
+            {format(now, "EEEE, MMMM d, yyyy")} — {t("dashboard.subtitle").replace("{date}", "")}
           </p>
         </div>
         <div className="hidden sm:block">
@@ -314,14 +308,14 @@ export default function Dashboard() {
             <Card className="cursor-pointer border-gray-100 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-blue-50 to-white dark:from-blue-950/30 dark:to-gray-900 hover:shadow-lg hover:shadow-blue-100 dark:hover:shadow-blue-900/20 hover:-translate-y-0.5 transition-all duration-200 group" data-testid="card-total-wealth">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{isAr ? "إجمالي الثروة" : "Total Wealth"}</span>
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboard.totalWealth")}</span>
                   <div className="w-9 h-9 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform" style={{ backgroundColor: "rgba(0,200,150,0.15)" }}>
                     <Gem className="w-4 h-4" style={{ color: "#00C896" }} />
                   </div>
                 </div>
                 <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-total-wealth">{formatAmount(totalWealth)}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-400">{isAr ? "بنوك + استثمارات + أصول - ديون" : "Assets + Banks + Invst - Debts"}</p>
+                  <p className="text-xs text-gray-400">{t("dashboard.totalWealthSubtitle")}</p>
                   <TrendBadge trend={wealthTrend} />
                 </div>
               </CardContent>
@@ -332,14 +326,14 @@ export default function Dashboard() {
             <Card className="cursor-pointer border-gray-100 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-green-50 to-white dark:from-green-950/30 dark:to-gray-900 hover:shadow-lg hover:shadow-green-100 dark:hover:shadow-green-900/20 hover:-translate-y-0.5 transition-all duration-200 group" data-testid="card-total-income">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{isAr ? "دخل الشهر" : "This Month's Income"}</span>
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboard.monthIncome")}</span>
                   <div className="w-9 h-9 rounded-xl bg-green-100 dark:bg-green-900 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Wallet className="w-4 h-4 text-green-600 dark:text-green-400" />
                   </div>
                 </div>
                 <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400">{formatAmount(curIncome)}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-400">{isAr ? "مقارنةً بالشهر الماضي" : "vs last month"}</p>
+                  <p className="text-xs text-gray-400">{t("dashboard.vsLastMonth")}</p>
                   <TrendBadge trend={incomeTrend} />
                 </div>
               </CardContent>
@@ -350,14 +344,14 @@ export default function Dashboard() {
             <Card className="cursor-pointer border-gray-100 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-red-50 to-white dark:from-red-950/30 dark:to-gray-900 hover:shadow-lg hover:shadow-red-100 dark:hover:shadow-red-900/20 hover:-translate-y-0.5 transition-all duration-200 group" data-testid="card-total-expenses">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{isAr ? "مصروفات الشهر" : "This Month's Expenses"}</span>
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboard.monthExpenses")}</span>
                   <div className="w-9 h-9 rounded-xl bg-red-100 dark:bg-red-900 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <Receipt className="w-4 h-4 text-red-600 dark:text-red-400" />
                   </div>
                 </div>
                 <p className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">{formatAmount(curExpenses)}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-400">{isAr ? "مقارنةً بالشهر الماضي" : "vs last month"}</p>
+                  <p className="text-xs text-gray-400">{t("dashboard.vsLastMonth")}</p>
                   <TrendBadge trend={expenseTrend} invert />
                 </div>
               </CardContent>
@@ -368,14 +362,14 @@ export default function Dashboard() {
             <Card className="cursor-pointer border-gray-100 dark:border-gray-800 rounded-2xl bg-gradient-to-br from-orange-50 to-white dark:from-orange-950/30 dark:to-gray-900 hover:shadow-lg hover:shadow-orange-100 dark:hover:shadow-orange-900/20 hover:-translate-y-0.5 transition-all duration-200 group" data-testid="card-total-debt">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{isAr ? "إجمالي الديون" : "Total Debt"}</span>
+                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{t("dashboard.totalDebt")}</span>
                   <div className="w-9 h-9 rounded-xl bg-orange-100 dark:bg-orange-900 flex items-center justify-center group-hover:scale-110 transition-transform">
                     <HandCoins className="w-4 h-4 text-orange-600 dark:text-orange-400" />
                   </div>
                 </div>
                 <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400" data-testid="text-total-debt">{formatAmount(totalDebt)}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-400">{(debts as any[]).filter((d: any) => d.status === "active").length} {isAr ? "ديون نشطة" : "active debts"}</p>
+                  <p className="text-xs text-gray-400">{t("dashboard.activeDebts", { count: String((debts as any[]).filter((d: any) => d.status === "active").length) })}</p>
                   <TrendBadge trend={debtTrend} />
                 </div>
               </CardContent>
@@ -406,7 +400,7 @@ export default function Dashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold" style={{ color: zakatCountdown.days <= 7 ? "#991B1B" : zakatCountdown.days <= 14 ? "#9A3412" : "#92400E" }}>
-                    {zakatCountdown.days === 0 ? "🎉 Today is your Zakat day!" : `Zakat due in ${zakatCountdown.days} day${zakatCountdown.days !== 1 ? "s" : ""}`}
+                    {zakatCountdown.days === 0 ? `🎉 ${t("dashboard.zakatDue")}!` : t("dashboard.zakatDays", { days: String(zakatCountdown.days) })}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: zakatCountdown.days <= 7 ? "#DC2626" : "#B45309" }}>
                     {format(zakatCountdown.nextDate, "EEEE, MMMM d, yyyy")}
@@ -433,7 +427,7 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-bold dark:text-white">{isAr ? "الدخل مقابل المصروفات" : "Income vs Expenses"}</CardTitle>
+                <CardTitle className="text-base font-bold dark:text-white">{t("dashboard.incomeVsExpenses")}</CardTitle>
               </div>
               <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1">
                 {(["1M","3M","6M","1Y"] as ChartRange[]).map((r) => (
@@ -451,12 +445,12 @@ export default function Dashboard() {
             <div className="flex items-center gap-4 mt-2">
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#00C896" }} />
-                <span className="text-xs text-gray-500 dark:text-gray-400">{isAr ? "الدخل:" : "Income:"}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{t("nav.income")}:</span>
                 <span className="text-xs font-bold" style={{ color: "#00C896" }}>{formatAmount(chartPeriodIncome)}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                <span className="text-xs text-gray-500 dark:text-gray-400">{isAr ? "المصروفات:" : "Expenses:"}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">{t("nav.expenses")}:</span>
                 <span className="text-xs font-bold text-red-600 dark:text-red-400">{formatAmount(chartPeriodExpenses)}</span>
               </div>
             </div>
@@ -473,13 +467,13 @@ export default function Dashboard() {
                       contentStyle={{ borderRadius: "12px", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,0.1)", fontSize: "12px" }}
                       formatter={(v: any) => formatAmount(v)}
                     />
-                    <Bar dataKey="income" fill="#00C896" fillOpacity={0.9} radius={[4,4,0,0]} name={isAr ? "الدخل" : "Income"} />
-                    <Bar dataKey="expenses" fill="#EF4444" fillOpacity={0.9} radius={[4,4,0,0]} name={isAr ? "المصروفات" : "Expenses"} />
+                    <Bar dataKey="income" fill="#00C896" fillOpacity={0.9} radius={[4,4,0,0]} name={t("nav.income")} />
+                    <Bar dataKey="expenses" fill="#EF4444" fillOpacity={0.9} radius={[4,4,0,0]} name={t("nav.expenses")} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-                  {isAr ? "لا توجد بيانات للفترة المحددة" : "No data for selected period"}
+                  {t("dashboard.noDataForPeriod")}
                 </div>
               )}
             </div>
@@ -489,8 +483,8 @@ export default function Dashboard() {
         {/* ── WEALTH BREAKDOWN ── */}
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm" data-testid="card-wealth-breakdown">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-bold dark:text-white">{isAr ? "توزيع الثروة" : "Wealth Breakdown"}</CardTitle>
-            <p className="text-sm text-gray-500 dark:text-gray-400">{isAr ? "إجمالي:" : "Total:"} <span className="font-bold text-gray-900 dark:text-white">{formatAmount(totalWealth)}</span></p>
+            <CardTitle className="text-base font-bold dark:text-white">{t("dashboard.wealthBreakdown")}</CardTitle>
+            <p className="text-sm text-gray-500 dark:text-gray-400">{t("common.total")}: <span className="font-bold text-gray-900 dark:text-white">{formatAmount(totalWealth)}</span></p>
           </CardHeader>
           <CardContent>
             <div className="h-44 flex items-center justify-center">
@@ -545,11 +539,11 @@ export default function Dashboard() {
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm" data-testid="card-recent-transactions">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-bold dark:text-white">{isAr ? "المعاملات الأخيرة" : "Recent Transactions"}</CardTitle>
+              <CardTitle className="text-base font-bold dark:text-white">{t("dashboard.recentTransactions")}</CardTitle>
               <TransactionDialog />
             </div>
             <div className="flex items-center gap-1 mt-2 bg-gray-100 dark:bg-gray-800 rounded-xl p-1 w-fit">
-              {([["all", isAr ? "الكل" : "All"], ["income", isAr ? "دخل" : "Income"], ["expense", isAr ? "مصروف" : "Expenses"]] as [TxFilter, string][]).map(([v, label]) => (
+              {([["all", t("common.all")], ["income", t("transactions.income")], ["expense", t("transactions.expense")]] as [TxFilter, string][]).map(([v, label]) => (
                 <button
                   key={v}
                   onClick={() => setTxFilter(v)}
@@ -563,7 +557,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             {filteredTx.length === 0 ? (
-              <p className="text-center text-gray-400 py-8 text-sm">{isAr ? "لا توجد معاملات" : "No transactions yet"}</p>
+              <p className="text-center text-gray-400 py-8 text-sm">{t("dashboard.noTransactions")}</p>
             ) : (
               <div className="space-y-1">
                 {filteredTx.map((tx: any) => (
@@ -586,7 +580,7 @@ export default function Dashboard() {
             )}
             <Link href="/income">
               <Button variant="ghost" className="w-full mt-2 text-sm text-gray-500 dark:text-gray-400 hover:text-primary" data-testid="button-view-all-transactions">
-                {isAr ? "عرض الكل" : "View All"} <ChevronRight className="w-4 h-4 ms-1" />
+                {t("common.viewAll")} <ChevronRight className="w-4 h-4 ms-1" />
               </Button>
             </Link>
           </CardContent>
@@ -596,17 +590,17 @@ export default function Dashboard() {
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm" data-testid="card-goals-progress">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-bold dark:text-white">{isAr ? "تقدم الأهداف" : "Goals Progress"}</CardTitle>
+              <CardTitle className="text-base font-bold dark:text-white">{t("dashboard.goalsProgress")}</CardTitle>
               <Link href="/goals">
                 <Button variant="ghost" size="sm" className="text-xs text-gray-500 hover:text-primary h-7">
-                  {isAr ? "الكل" : "All"} <ChevronRight className="w-3 h-3 ms-1" />
+                  {t("common.all")} <ChevronRight className="w-3 h-3 ms-1" />
                 </Button>
               </Link>
             </div>
           </CardHeader>
           <CardContent>
             {activeGoals.length === 0 ? (
-              <p className="text-center text-gray-400 py-8 text-sm">{isAr ? "لا توجد أهداف نشطة" : "No active goals"}</p>
+              <p className="text-center text-gray-400 py-8 text-sm">{t("dashboard.noActiveGoals")}</p>
             ) : (
               <div className="space-y-4">
                 {activeGoals.map((goal: any) => {
@@ -637,7 +631,7 @@ export default function Dashboard() {
                       </div>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-gray-400">{progress.toFixed(0)}% · {formatAmount(currentUsd)} / {formatAmount(targetUsd)}</span>
-                        {remaining > 0 && <span className="text-xs text-gray-400">{isAr ? `متبقي ${formatAmount(remaining)}` : `${formatAmount(remaining)} left`}</span>}
+                        {remaining > 0 && <span className="text-xs text-gray-400">{formatAmount(remaining)} {t("goals.left")}</span>}
                       </div>
                       {goal.deadline && (
                         <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
@@ -661,12 +655,12 @@ export default function Dashboard() {
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm" data-testid="card-upcoming-bills">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold dark:text-white flex items-center gap-2">
-              <span>💳</span> {isAr ? "الفواتير القادمة" : "Upcoming Bills"}
+              <span>💳</span> {t("dashboard.upcomingBills")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {upcomingBills.length === 0 ? (
-              <p className="text-xs text-gray-400 py-2 text-center">{isAr ? "لا توجد فواتير قريبة" : "No upcoming bills"}</p>
+              <p className="text-xs text-gray-400 py-2 text-center">{t("dashboard.noUpcomingBills")}</p>
             ) : (
               <div className="space-y-2.5">
                 {upcomingBills.map((debt: any) => {
@@ -677,7 +671,7 @@ export default function Dashboard() {
                       <div>
                         <p className="text-xs font-semibold text-gray-900 dark:text-white">{debt.creditorName}</p>
                         <p className={`text-xs ${urgency === "danger" ? "text-red-500" : urgency === "warning" ? "text-yellow-600" : "text-gray-400"}`}>
-                          {daysLeft <= 0 ? (isAr ? "متأخر" : "Overdue") : `${daysLeft}d left`}
+                          {daysLeft <= 0 ? t("common.overdue") : t("common.daysLeft", { days: String(daysLeft) })}
                         </p>
                       </div>
                       <span className="text-xs font-bold text-gray-900 dark:text-white">{formatAmount(toUsd(debt.remainingAmount, debt.exchangeRateToUsd))}</span>
@@ -688,7 +682,7 @@ export default function Dashboard() {
             )}
             <Link href="/debts">
               <Button variant="ghost" className="w-full mt-2 text-xs text-gray-400 h-7 hover:text-primary">
-                {isAr ? "عرض الديون" : "View Debts"} <ChevronRight className="w-3 h-3 ms-1" />
+                {t("dashboard.viewDebts")} <ChevronRight className="w-3 h-3 ms-1" />
               </Button>
             </Link>
           </CardContent>
@@ -698,7 +692,7 @@ export default function Dashboard() {
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm" data-testid="card-top-spending">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold dark:text-white flex items-center gap-2">
-              <span>🏆</span> {isAr ? "أعلى فئة إنفاق" : "Top Spending Category"}
+              <span>🏆</span> {t("dashboard.topSpending")}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -710,7 +704,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-sm font-bold text-gray-900 dark:text-white">{topSpendingCategory.name}</p>
-                    <p className="text-xs text-gray-400">{topSpendingCategory.pctOfTotal.toFixed(0)}% {isAr ? "من المصروفات" : "of expenses"}</p>
+                    <p className="text-xs text-gray-400">{topSpendingCategory.pctOfTotal.toFixed(0)}% {t("dashboard.ofExpenses")}</p>
                   </div>
                 </div>
                 <p className="text-lg font-bold text-gray-900 dark:text-white mb-2">{formatAmount(topSpendingCategory.amount)}</p>
@@ -719,7 +713,7 @@ export default function Dashboard() {
                 </div>
                 {topSpendingCategory.prevAmt > 0 && (
                   <p className="text-xs text-gray-400 mt-2">
-                    {isAr ? "الشهر الماضي:" : "Last month:"} {formatAmount(topSpendingCategory.prevAmt)}
+                    {t("common.lastMonth")}: {formatAmount(topSpendingCategory.prevAmt)}
                     <span className={`ms-1 font-semibold ${topSpendingCategory.amount > topSpendingCategory.prevAmt ? "text-red-500" : "text-green-600"}`}>
                       ({topSpendingCategory.amount > topSpendingCategory.prevAmt ? "+" : ""}{(((topSpendingCategory.amount - topSpendingCategory.prevAmt) / topSpendingCategory.prevAmt) * 100).toFixed(0)}%)
                     </span>
@@ -727,7 +721,7 @@ export default function Dashboard() {
                 )}
               </div>
             ) : (
-              <p className="text-xs text-gray-400 text-center py-4">{isAr ? "لا توجد بيانات لهذا الشهر" : "No expense data this month"}</p>
+              <p className="text-xs text-gray-400 text-center py-4">{t("dashboard.noExpenseData")}</p>
             )}
           </CardContent>
         </Card>
@@ -737,7 +731,7 @@ export default function Dashboard() {
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-bold dark:text-white flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-blue-500" /> {isAr ? "توصية ذكية" : "AI Quick Insight"}
+                <Sparkles className="w-4 h-4 text-blue-500" /> {t("dashboard.aiInsight")}
               </CardTitle>
               <button
                 onClick={loadAiInsight}
@@ -759,11 +753,11 @@ export default function Dashboard() {
             ) : aiInsight ? (
               <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">{aiInsight}</p>
             ) : (
-              <p className="text-xs text-gray-400 text-center py-2">{isAr ? "انقر تحديث" : "Click refresh to load"}</p>
+              <p className="text-xs text-gray-400 text-center py-2">{t("dashboard.clickRefresh")}</p>
             )}
             <Link href="/reports/ai">
               <Button variant="ghost" className="w-full mt-3 text-xs text-blue-600 dark:text-blue-400 h-7 hover:bg-blue-50 dark:hover:bg-blue-950/40">
-                {isAr ? "تقرير كامل" : "Full AI Report"} <ChevronRight className="w-3 h-3 ms-1" />
+                {t("dashboard.fullAiReport")} <ChevronRight className="w-3 h-3 ms-1" />
               </Button>
             </Link>
           </CardContent>
@@ -773,10 +767,10 @@ export default function Dashboard() {
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm" data-testid="card-net-worth-trend">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold dark:text-white flex items-center gap-2">
-              <span>📈</span> {isAr ? "اتجاه التدفق النقدي" : "Cashflow Trend"}
+              <span>📈</span> {t("dashboard.cashflowTrend")}
             </CardTitle>
             <p className="text-lg font-bold text-gray-900 dark:text-white mt-1">{formatAmount(totalWealth)}</p>
-            <p className="text-xs text-gray-400">{isAr ? "إجمالي الثروة الحالية" : "Current net worth"}</p>
+            <p className="text-xs text-gray-400">{t("dashboard.currentNetWorth")}</p>
           </CardHeader>
           <CardContent>
             <div className="h-24">
@@ -792,7 +786,7 @@ export default function Dashboard() {
                   <YAxis hide />
                   <Tooltip
                     contentStyle={{ borderRadius: "8px", border: "none", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", fontSize: "11px" }}
-                    formatter={(v: any) => [formatAmount(v), isAr ? "صافي" : "Net"]}
+                    formatter={(v: any) => [formatAmount(v), t("dashboard.net")]}
                   />
                 </ReLineChart>
               </ResponsiveContainer>
@@ -810,12 +804,12 @@ export default function Dashboard() {
       <Dialog open={contributeGoalId !== null} onOpenChange={() => { setContributeGoalId(null); setContributeAmount(""); }}>
         <DialogContent className="sm:max-w-xs">
           <DialogHeader>
-            <DialogTitle>{isAr ? "إضافة مساهمة للهدف" : "Add Goal Contribution"}</DialogTitle>
+            <DialogTitle>{t("dashboard.addGoalContribution")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <Input
               type="number"
-              placeholder={isAr ? "المبلغ" : "Amount"}
+              placeholder={t("common.amount")}
               value={contributeAmount}
               onChange={(e) => setContributeAmount(e.target.value)}
               data-testid="input-contribution-amount"
@@ -826,7 +820,7 @@ export default function Dashboard() {
               disabled={!contributeAmount || createContribution.isPending}
               data-testid="button-submit-contribution"
             >
-              {createContribution.isPending ? (isAr ? "جارٍ الحفظ..." : "Saving...") : (isAr ? "حفظ" : "Save Contribution")}
+              {createContribution.isPending ? t("common.saving") : t("dashboard.saveContribution")}
             </Button>
           </div>
         </DialogContent>

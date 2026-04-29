@@ -10,6 +10,7 @@ import {
 import { useCurrency, toUsd } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
 import {
   ChevronLeft, ChevronRight, Save, PiggyBank, AlertTriangle,
   TrendingDown, Wallet, PieChart, Sparkles, ArrowRight, Plus,
@@ -78,6 +79,7 @@ function BudgetRow({
   onEdit: (v: string) => void; onSave: () => void; isSaving: boolean;
 }) {
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const status = getStatus(spent, limit);
   const ss     = STATUS_STYLE[status];
   const pct    = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0;
@@ -108,8 +110,8 @@ function BudgetRow({
         {/* center — progress visualization */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1.5 text-xs">
-            <span className="text-gray-500">Spent <strong className="text-gray-700 dark:text-gray-300">{formatAmount(spent)}</strong></span>
-            <span className="text-gray-500">Limit <strong className="text-gray-700 dark:text-gray-300">{limit > 0 ? formatAmount(limit) : "—"}</strong></span>
+            <span className="text-gray-500">{t("expenses.spent")} <strong className="text-gray-700 dark:text-gray-300">{formatAmount(spent)}</strong></span>
+            <span className="text-gray-500">{t("expenses.budget")} <strong className="text-gray-700 dark:text-gray-300">{limit > 0 ? formatAmount(limit) : "—"}</strong></span>
           </div>
           <div className="h-3.5 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
             {limit > 0 && (
@@ -121,11 +123,11 @@ function BudgetRow({
           </div>
           <div className="flex items-center justify-between mt-1 text-xs">
             <span className="font-medium" style={{ color: status === "danger" ? DANGER : status === "warning" ? AMBER : "#64748B" }}>
-              {limit > 0 ? `${pct.toFixed(0)}% used` : "No limit set"}
+              {limit > 0 ? `${pct.toFixed(0)}% ${t("expenses.spent").toLowerCase()}` : t("budget.noLimit") || "No limit set"}
             </span>
             {limit > 0 && (
               <span className="font-semibold" style={{ color: spent > limit ? DANGER : MINT }}>
-                {spent > limit ? `Over by ${formatAmount(spent - limit)}` : `${formatAmount(limit - spent)} left`}
+                {spent > limit ? `${t("budget.overBudget")} ${formatAmount(spent - limit)}` : `${formatAmount(limit - spent)} ${t("expenses.remaining").toLowerCase()}`}
               </span>
             )}
           </div>
@@ -140,7 +142,7 @@ function BudgetRow({
               min="0"
               step="1"
               className="w-24 h-8 text-xs text-right rounded-xl"
-              placeholder="Set limit"
+              placeholder={t("budget.setLimit") || "Set limit"}
               value={isEditing ? editingValue : (limit > 0 ? String(limit) : "")}
               onChange={e => onEdit(e.target.value)}
               data-testid={`input-budget-${category.id}`}
@@ -168,6 +170,7 @@ function SpendingPaceChart({ transactions, budgets, month, year }: {
   transactions: any[]; budgets: any[]; month: number; year: number;
 }) {
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
   const totalBudget = budgets.reduce((s: number, b: any) => s + Number(b.amount), 0);
   const today = new Date();
@@ -219,7 +222,7 @@ function SpendingPaceChart({ transactions, budgets, month, year }: {
         <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false}
           tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} />
         <Tooltip
-          formatter={(v: any, name: string) => [formatAmount(v), name === "expected" ? "Expected" : "Actual"]}
+          formatter={(v: any, name: string) => [formatAmount(v), name === "expected" ? (t("budget.expected") || "Expected") : (t("budget.actual") || "Actual")]}
           contentStyle={{ fontSize: 11, borderRadius: 8 }} />
         <Area type="monotone" dataKey="expected" stroke={BRAND} strokeWidth={1.5} strokeDasharray="4 3" fill="url(#expGrad)" name="expected" dot={false} />
         <Area type="monotone" dataKey="actual" stroke={MINT} strokeWidth={2} fill="url(#actGrad)" name="actual" dot={false} connectNulls={false} />
@@ -233,6 +236,7 @@ export default function BudgetPage() {
   const { user }   = useAuth();
   const { formatAmount } = useCurrency();
   const { toast }  = useToast();
+  const { t, lang, isRtl } = useI18n();
 
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
@@ -322,15 +326,15 @@ export default function BudgetPage() {
   const handleSaveBudget = async (categoryId: number) => {
     const amountStr = editingAmounts[categoryId];
     if (!amountStr || isNaN(Number(amountStr)) || Number(amountStr) < 0) {
-      toast({ title: "Enter a valid amount", variant: "destructive" }); return;
+      toast({ title: t("common.errorGeneric"), variant: "destructive" }); return;
     }
     try {
       const existing = budgetMap.get(categoryId) as any;
       if (existing) await updateBudget.mutateAsync({ id: existing.id, amount: amountStr });
       else          await createBudget.mutateAsync({ userId: user!.id, categoryId, month, year, amount: amountStr });
       setEditingAmounts(prev => { const n = { ...prev }; delete n[categoryId]; return n; });
-      toast({ title: "Budget saved" });
-    } catch { toast({ title: "Failed to save", variant: "destructive" }); }
+      toast({ title: t("common.saveSuccess") });
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const isSaving = createBudget.isPending || updateBudget.isPending;
@@ -348,19 +352,21 @@ export default function BudgetPage() {
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Budget Planning</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Allocate your income, track spending live, stay in control.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("budget.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("budget.subtitle")}</p>
           </div>
           {/* month navigator */}
           <div className="flex items-center gap-2">
             <button onClick={prevMonth} className="w-8 h-8 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" data-testid="button-prev-month">
-              <ChevronLeft className="w-4 h-4 text-gray-500" />
+              {isRtl ? <ChevronRight className="w-4 h-4 text-gray-500" /> : <ChevronLeft className="w-4 h-4 text-gray-500" />}
             </button>
             <span className="font-semibold text-sm text-gray-900 dark:text-white min-w-[130px] text-center bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-1.5 rounded-xl" data-testid="text-month-year">
-              {MONTH_NAMES[month - 1]} {year}
+              {lang === "ar" 
+                ? new Intl.DateTimeFormat("ar-SA", { month: "long" }).format(new Date(year, month - 1))
+                : MONTH_NAMES[month - 1]} {year}
             </span>
             <button onClick={nextMonth} className="w-8 h-8 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors" data-testid="button-next-month">
-              <ChevronRight className="w-4 h-4 text-gray-500" />
+              {isRtl ? <ChevronLeft className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />}
             </button>
           </div>
         </div>
@@ -372,15 +378,17 @@ export default function BudgetPage() {
               {/* left section */}
               <div className="flex-1">
                 <p className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                  {MONTH_NAMES[month - 1]} {year} Budget
+                  {lang === "ar" 
+                    ? new Intl.DateTimeFormat("ar-SA", { month: "long" }).format(new Date(year, month - 1))
+                    : MONTH_NAMES[month - 1]} {year} {t("budget.title")}
                 </p>
-                <h2 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-4">Income Allocation</h2>
+                <h2 className="font-bold text-gray-900 dark:text-gray-100 text-lg mb-4">{t("budget.allocateBudget")}</h2>
 
                 {/* allocation bar */}
                 <div className="mb-3">
                   <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Budgeted {allocPct.toFixed(0)}%</span>
-                    <span>Unallocated {Math.max(0, 100 - allocPct).toFixed(0)}%</span>
+                    <span>{t("budget.onTrack")} {allocPct.toFixed(0)}%</span>
+                    <span>{t("budget.unallocated") || "Unallocated"} {Math.max(0, 100 - allocPct).toFixed(0)}%</span>
                   </div>
                   <div className="h-4 rounded-full overflow-hidden flex" style={{ backgroundColor: "#E2E8F0" }}>
                     <div className="h-full transition-all duration-700"
@@ -391,20 +399,20 @@ export default function BudgetPage() {
                 {/* 3-column stat grid */}
                 <div className="grid grid-cols-3 gap-4 mt-4">
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400">Monthly Income</p>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400">{t("income.title")}</p>
                     <p className="font-bold text-gray-900 dark:text-white tabular-nums mt-0.5">
-                      {monthlyIncome > 0 ? formatAmount(monthlyIncome) : <span className="text-gray-400 text-sm font-normal">Log income first</span>}
+                      {monthlyIncome > 0 ? formatAmount(monthlyIncome) : <span className="text-gray-400 text-sm font-normal">{t("income.noEntries")}</span>}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400">Total Budgeted</p>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400">{t("budget.totalBudget")}</p>
                     <p className="font-bold tabular-nums mt-0.5" style={{ color: BRAND }}>{formatAmount(totalBudgeted)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-gray-400">Unallocated</p>
+                    <p className="text-[10px] uppercase tracking-wider text-gray-400">{t("budget.unallocated") || "Unallocated"}</p>
                     <p className="font-bold tabular-nums mt-0.5" style={{ color: unallocated >= 0 ? MINT : DANGER }}>
                       {unallocated >= 0 ? "+" : ""}{formatAmount(Math.abs(unallocated))}
-                      {unallocated < 0 && <span className="text-xs ml-1">⚠ Over-allocated</span>}
+                      {unallocated < 0 && <span className="text-xs ms-1">⚠ {t("budget.overBudget")}</span>}
                     </p>
                   </div>
                 </div>
@@ -430,11 +438,11 @@ export default function BudgetPage() {
                       </Pie>
                     </RePieChart>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[10px] text-gray-400">budgeted</span>
+                      <span className="text-[10px] text-gray-400">{t("expenses.budget")}</span>
                       <span className="text-xs font-bold text-gray-900 dark:text-white tabular-nums">{formatAmount(totalBudgeted)}</span>
                     </div>
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1 text-center">{expCats.filter((c: any) => budgetMap.has(c.id)).length} categories</p>
+                  <p className="text-[10px] text-gray-400 mt-1 text-center">{expCats.filter((c: any) => budgetMap.has(c.id)).length} {t("common.category").toLowerCase()}s</p>
                 </div>
               )}
             </div>
@@ -444,17 +452,17 @@ export default function BudgetPage() {
         {/* ── KPI STRIP ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            label="Total Budgeted"
+            label={t("budget.totalBudget")}
             value={formatAmount(totalBudgeted)}
-            sub={`Across ${expCats.filter((c: any) => budgetMap.has(c.id)).length} categories`}
+            sub={`${t("common.from")} ${expCats.filter((c: any) => budgetMap.has(c.id)).length} ${t("common.category").toLowerCase()}`}
             icon={PieChart}
             color={BRAND}
             bg="#EEF4FF"
           />
           <KpiCard
-            label="Spent This Month"
+            label={t("budget.totalSpent")}
             value={formatAmount(totalSpent)}
-            sub={`${spentPct.toFixed(0)}% of budget used`}
+            sub={`${spentPct.toFixed(0)}% ${t("expenses.budget").toLowerCase()}`}
             icon={TrendingDown}
             color={AMBER}
             bg="#FFFBEB"
@@ -465,17 +473,17 @@ export default function BudgetPage() {
             }
           />
           <KpiCard
-            label="Remaining Budget"
+            label={t("budget.totalRemaining")}
             value={formatAmount(Math.max(0, remaining))}
             sub={isCurrentMonth && dayOfMonth < daysInMonth
-              ? `${daysInMonth - dayOfMonth} days left · ${formatAmount(Math.max(0, remaining) / Math.max(1, daysInMonth - dayOfMonth))}/day`
-              : remaining < 0 ? "Over budget ⚠" : "Budget period"}
+              ? `${daysInMonth - dayOfMonth} ${t("common.daysLeft", { days: "" }).replace("d left", "")} · ${formatAmount(Math.max(0, remaining) / Math.max(1, daysInMonth - dayOfMonth))}/${t("common.day")}`
+              : remaining < 0 ? `⚠ ${t("budget.overBudget")}` : t("budget.title")}
             icon={Wallet}
             color={remaining >= 0 ? "#10B981" : DANGER}
             bg={remaining >= 0 ? "#ECFDF5" : "#FEF2F2"}
           />
           <KpiCard
-            label="Categories at Risk"
+            label={t("budget.atRisk") || "Categories at Risk"}
             value={String(atRisk)}
             sub={`${warningCats.length} warning · ${dangerCats.length} over budget`}
             icon={AlertTriangle}

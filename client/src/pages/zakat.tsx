@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout-sidebar";
+import { useI18n } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -132,7 +133,7 @@ function InfoRow({ label, value, strong }: { label: string; value: string; stron
   return (
     <div className="flex justify-between items-center py-1.5 border-b last:border-0 dark:border-gray-800">
       <span className={`text-sm ${strong ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{label}</span>
-      <span className={`text-sm font-mono ${strong ? "font-bold text-foreground" : ""}`}>{value}</span>
+      <span className={`text-sm font-mono ${strong ? "font-bold text-foreground" : ""}`} dir="ltr">{value}</span>
     </div>
   );
 }
@@ -211,6 +212,7 @@ function HawlSetupCard({
   onChange: (key: string, val: string) => void;
   onSave: () => void; saving: boolean;
 }) {
+  const { t } = useI18n();
   const PRESET_DATES: { label: string; month: number; day: number }[] = [
     { label: "1 Ramadan", month: 3, day: 2 },    // approximate Gregorian
     { label: "1 Muharram", month: 7, day: 6 },
@@ -350,6 +352,7 @@ function HawlCountdownCard({
 }: {
   hawlDate: string; hawlDateType: string; hawlStartDate: string; zakatDue: number;
 }) {
+  const { t } = useI18n();
   const [, navigate] = useLocation();
   const today = new Date(); today.setHours(0, 0, 0, 0);
 
@@ -467,6 +470,7 @@ function HawlCountdownCard({
    ZAKAT JOURNEY (multi-year history)
 ══════════════════════════════════════════════════════════ */
 function ZakatJourney({ snapshots }: { snapshots: any[] }) {
+  const { t } = useI18n();
   if (!snapshots || snapshots.length === 0) return null;
 
   const total = snapshots.reduce((s, snap) => s + Number(snap.zakatDue || 0), 0);
@@ -574,6 +578,7 @@ function DeleteSnapshotBtn({ id }: { id: number }) {
    MAIN COMPONENT
 ══════════════════════════════════════════════════════════ */
 export default function ZakatPage() {
+  const { t, lang, isRtl } = useI18n();
   const { toast } = useToast();
   const qc = useQueryClient();
 
@@ -783,13 +788,13 @@ export default function ZakatPage() {
       <div className="flex justify-between items-center mb-6">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white" data-testid="text-page-title">
-            Zakat Calculator <span className="text-gray-400 text-lg font-normal">حاسبة الزكاة</span>
+            {t("zakat.title")} <span className="text-gray-400 text-lg font-normal">حاسبة الزكاة</span>
           </h2>
-          <p className="text-sm text-gray-500 mt-0.5">Calculate your annual Zakat obligation based on your financial holdings.</p>
+          <p className="text-sm text-gray-500 mt-0.5">{t("zakat.subtitle")}</p>
         </div>
         <Button onClick={handleSaveSnapshot} disabled={saveSnapshot.isPending}
           className="gap-2 text-white" style={{ backgroundColor: MINT }} data-testid="button-save-snapshot">
-          <Save className="w-4 h-4" /> Save Snapshot
+          <Save className="w-4 h-4" /> {t("zakat.saveSnapshot")}
         </Button>
       </div>
 
@@ -803,16 +808,16 @@ export default function ZakatPage() {
           <AlertTriangle className="w-5 h-5 shrink-0" style={{ color: hawlDaysLeft <= 7 ? DANGER : AMBER }} />
           <div>
             <p className="text-sm font-semibold" style={{ color: hawlDaysLeft <= 7 ? DANGER : "#92400E" }}>
-              {hawlDaysLeft === 0 ? "Today is your Zakat day!" : `Zakat due in ${hawlDaysLeft} days`}
+              {hawlDaysLeft === 0 ? t("zakat.dueToday") : t("zakat.dueInDays", { days: hawlDaysLeft })}
             </p>
             <p className="text-xs" style={{ color: hawlDaysLeft <= 7 ? "#DC2626" : "#B45309" }}>
-              {hawlDaysLeft <= 7 ? "Begin distributing to eligible recipients (Asnaf) today." : "Review your calculation and prepare for distribution."}
-              {result.zakatDue > 0 && ` Estimated: ${fmt(result.zakatDue)}`}
+              {hawlDaysLeft <= 7 ? t("zakat.distributionAdvice") : t("zakat.reviewAdvice")}
+              {result.zakatDue > 0 && ` ${t("zakat.estimated")}: ${fmt(result.zakatDue)}`}
             </p>
           </div>
-          <Button size="sm" className="ml-auto gap-1.5 rounded-xl text-xs shrink-0" onClick={handleSaveSnapshot}
+          <Button size="sm" className="ms-auto gap-1.5 rounded-xl text-xs shrink-0" onClick={handleSaveSnapshot}
             style={{ backgroundColor: hawlDaysLeft <= 7 ? DANGER : AMBER, color: "#fff" }}>
-            <Target className="w-3.5 h-3.5" /> Finalize →
+            <Target className="w-3.5 h-3.5" /> {t("zakat.finalize")} →
           </Button>
         </div>
       )}
@@ -825,7 +830,7 @@ export default function ZakatPage() {
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardHeader className="cursor-pointer" onClick={() => setSettingsOpen(o => !o)}>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-base">Settings & Metal Prices</CardTitle>
+                <CardTitle className="text-base">{t("zakat.settingsPrices")}</CardTitle>
                 {settingsOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
               </div>
             </CardHeader>
@@ -833,27 +838,27 @@ export default function ZakatPage() {
               <CardContent className="space-y-5 pt-0">
                 {/* Nisab */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Nisab Standard</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">{t("zakat.nisabStandard")}</label>
                   <div className="flex gap-2">
                     {(["gold", "silver"] as const).map(s => (
                       <Button key={s} variant={settings.nisabStandard === s ? "default" : "outline"} className="capitalize rounded-xl"
                         onClick={() => setSettings(p => ({ ...p, nisabStandard: s }))} data-testid={`button-nisab-${s}`}>
-                        {s === "gold" ? "🥇 Gold (85g)" : "🥈 Silver (595g)"}
+                        {s === "gold" ? `🥇 ${t("zakat.goldStandard")}` : `🥈 ${t("zakat.silverStandard")}`}
                       </Button>
                     ))}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">Gold standard (AAOIFI/contemporary) sets a higher threshold; silver standard (classical) is more conservative.</p>
+                  <p className="text-xs text-gray-400 mt-1">{t("zakat.nisabHelp")}</p>
                 </div>
 
                 {/* Real estate */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Real Estate Treatment</label>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">{t("zakat.realEstateTreatment")}</label>
                   <Select value={settings.realEstateMode} onValueChange={v => setSettings(p => ({ ...p, realEstateMode: v as any }))}>
                     <SelectTrigger className="rounded-xl" data-testid="select-real-estate-mode"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="exempt">Exempt — Primary residence / personal use</SelectItem>
-                      <SelectItem value="rental_income">Rental — Only net rental income is zakatable</SelectItem>
-                      <SelectItem value="trading">Trading — Property held for resale (full market value)</SelectItem>
+                      <SelectItem value="exempt">{t("zakat.reExempt")}</SelectItem>
+                      <SelectItem value="rental_income">{t("zakat.reRental")}</SelectItem>
+                      <SelectItem value="trading">{t("zakat.reTrading")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -862,8 +867,8 @@ export default function ZakatPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                     <div>
-                      <p className="text-sm font-medium">Deduct Short-term Debts</p>
-                      <p className="text-xs text-gray-400">Debts due within 12 months</p>
+                      <p className="text-sm font-medium">{t("zakat.deductDebts")}</p>
+                      <p className="text-xs text-gray-400">{t("zakat.shortTermDebts")}</p>
                     </div>
                     <Switch checked={settings.includeDebts}
                       onCheckedChange={v => setSettings(p => ({ ...p, includeDebts: v }))} data-testid="switch-include-debts" />
@@ -871,9 +876,9 @@ export default function ZakatPage() {
                   <div className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800"
                     style={{ backgroundColor: derivedHawlMet ? "#F0FDF4" : "transparent", borderColor: derivedHawlMet ? "#BBF7D0" : undefined }}>
                     <div>
-                      <p className="text-sm font-medium">Hawl Status</p>
+                      <p className="text-sm font-medium">{t("zakat.hawlStatus")}</p>
                       <p className="text-xs" style={{ color: derivedHawlMet ? "#059669" : "#94A3B8" }}>
-                        {derivedHawlMet ? "✓ Full lunar year confirmed" : "Set date below to track automatically"}
+                        {derivedHawlMet ? `✓ ${t("zakat.hawlConfirmed")}` : t("zakat.hawlPending")}
                       </p>
                     </div>
                     <Switch checked={settings.hawlMet}
@@ -884,20 +889,20 @@ export default function ZakatPage() {
                 {/* Metal prices */}
                 <div>
                   <div className="flex items-center justify-between mb-2">
-                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Metal Prices (USD per gram)</label>
+                    <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{t("zakat.metalPrices")}</label>
                     <Button variant="outline" size="sm" onClick={fetchLivePrices} disabled={pricesLoading}
                       className="rounded-xl gap-1.5 text-xs h-7" data-testid="button-fetch-prices">
-                      <RefreshCw className={`w-3 h-3 ${pricesLoading ? "animate-spin" : ""}`} /> Fetch Live
+                      <RefreshCw className={`w-3 h-3 ${pricesLoading ? "animate-spin" : ""}`} /> {t("common.fetchLive")}
                     </Button>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Gold ($/g)</label>
+                      <label className="text-xs text-gray-400 mb-1 block">{t("zakat.goldPrice")}</label>
                       <Input type="number" min="0" step="0.01" value={prices.goldPricePerGram}
                         onChange={e => setPrices(p => ({ ...p, goldPricePerGram: Number(e.target.value) }))} data-testid="input-gold-price" />
                     </div>
                     <div>
-                      <label className="text-xs text-gray-400 mb-1 block">Silver ($/g)</label>
+                      <label className="text-xs text-gray-400 mb-1 block">{t("zakat.silverPrice")}</label>
                       <Input type="number" min="0" step="0.001" value={prices.silverPricePerGram}
                         onChange={e => setPrices(p => ({ ...p, silverPricePerGram: Number(e.target.value) }))} data-testid="input-silver-price" />
                     </div>
@@ -905,7 +910,7 @@ export default function ZakatPage() {
                 </div>
 
                 <Button onClick={handleSaveSettings} disabled={saveSettings.isPending} variant="outline" className="w-full rounded-xl" data-testid="button-save-settings">
-                  <Save className="w-4 h-4 mr-2" /> Save Settings
+                  <Save className="w-4 h-4 me-2" /> {t("common.saveSettings")}
                 </Button>
               </CardContent>
             )}
@@ -919,20 +924,20 @@ export default function ZakatPage() {
 
           {/* Cash & Bank Accounts */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-            <CardHeader><CardTitle>💵 Cash & Bank Accounts</CardTitle></CardHeader>
+            <CardHeader><CardTitle>💵 {t("zakat.cashBankAccounts")}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {(bankAccounts as any[]).map((a: any) => (
                 <div key={a.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800">
                   <div>
                     <p className="font-medium text-sm">{a.bankName} — {a.accountType}</p>
-                    <p className="text-xs text-gray-400">Balance: {fmt(toUsd(a.balance, a.exchangeRateToUsd))}</p>
+                    <p className="text-xs text-gray-400">{t("common.balance")}: {fmt(toUsd(a.balance, a.exchangeRateToUsd))}</p>
                   </div>
                   <Switch checked={accountZakatable[a.id] !== false}
                     onCheckedChange={v => handleToggleAccount(a.id, v)} data-testid={`switch-account-${a.id}`} />
                 </div>
               ))}
               <div>
-                <label className="text-sm font-medium mb-1 block">Cash on Hand / E-wallets (USD)</label>
+                <label className="text-sm font-medium mb-1 block">{t("zakat.cashOnHand")}</label>
                 <Input type="number" min="0" step="1" value={cashOnHand}
                   onChange={e => setCashOnHand(e.target.value)} data-testid="input-cash-on-hand" placeholder="0" />
               </div>
@@ -941,15 +946,15 @@ export default function ZakatPage() {
 
           {/* Gold & Silver */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-            <CardHeader><CardTitle>🥇 Gold & Silver</CardTitle></CardHeader>
+            <CardHeader><CardTitle>🥇 {t("zakat.goldSilver")}</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Gold (grams)</label>
+                  <label className="text-sm font-medium mb-1 block">{t("zakat.goldGrams")}</label>
                   <Input type="number" min="0" step="0.1" value={goldGrams} onChange={e => setGoldGrams(e.target.value)} data-testid="input-gold-grams" placeholder="0" />
                 </div>
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Gold Karat</label>
+                  <label className="text-sm font-medium mb-1 block">{t("zakat.goldKarat")}</label>
                   <Select value={goldKarat} onValueChange={setGoldKarat}>
                     <SelectTrigger data-testid="select-gold-karat"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -962,11 +967,11 @@ export default function ZakatPage() {
               </div>
               {Number(goldGrams) > 0 && (
                 <p className="text-xs text-gray-400">
-                  Pure gold: {(Number(goldGrams) * (Number(goldKarat) / 24)).toFixed(3)}g → {fmt(Number(goldGrams) * (Number(goldKarat) / 24) * prices.goldPricePerGram)}
+                  {t("zakat.pureGold")}: {(Number(goldGrams) * (Number(goldKarat) / 24)).toFixed(3)}g → {fmt(Number(goldGrams) * (Number(goldKarat) / 24) * prices.goldPricePerGram)}
                 </p>
               )}
               <div>
-                <label className="text-sm font-medium mb-1 block">Silver (grams)</label>
+                <label className="text-sm font-medium mb-1 block">{t("zakat.silverGrams")}</label>
                 <Input type="number" min="0" step="0.1" value={silverGrams} onChange={e => setSilverGrams(e.target.value)} data-testid="input-silver-grams" placeholder="0" />
               </div>
             </CardContent>
@@ -974,11 +979,11 @@ export default function ZakatPage() {
 
           {/* Investments */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-            <CardHeader><CardTitle>📈 Investments</CardTitle></CardHeader>
+            <CardHeader><CardTitle>📈 {t("nav.investments")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start gap-2 p-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 text-xs text-blue-700 dark:text-blue-300">
                 <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>For stocks/ETFs, using full market value is a conservative simplification. Consult a scholar for your specific holdings.</span>
+                <span>{t("zakat.investmentAdvice")}</span>
               </div>
               {(investments as any[]).filter((i: any) => i.status === "active").map((inv: any) => (
                 <div key={inv.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 dark:border-gray-800 gap-3">
@@ -989,50 +994,50 @@ export default function ZakatPage() {
                   <Select value={investmentZakatMethod[inv.id] || "market_value"} onValueChange={v => handleInvestmentMethod(inv.id, v)}>
                     <SelectTrigger className="w-40 text-xs" data-testid={`select-inv-method-${inv.id}`}><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="market_value">Full Market Value</SelectItem>
-                      <SelectItem value="exempt">Exempt</SelectItem>
+                      <SelectItem value="market_value">{t("zakat.marketValue")}</SelectItem>
+                      <SelectItem value="exempt">{t("zakat.reExempt")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               ))}
               {(investments as any[]).filter((i: any) => i.status === "active").length === 0 && (
-                <p className="text-sm text-gray-400 text-center py-2">No active investments found.</p>
+                <p className="text-sm text-gray-400 text-center py-2">{t("zakat.noActiveInvestments")}</p>
               )}
             </CardContent>
           </Card>
 
           {/* Business Receivables */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-            <CardHeader><CardTitle>📋 Business Receivables</CardTitle></CardHeader>
+            <CardHeader><CardTitle>📋 {t("zakat.businessReceivables")}</CardTitle></CardHeader>
             <CardContent>
-              <label className="text-sm font-medium mb-1 block">Expected collectible receivables (USD)</label>
+              <label className="text-sm font-medium mb-1 block">{t("zakat.receivablesHelp")}</label>
               <Input type="number" min="0" step="1" value={receivables} onChange={e => setReceivables(e.target.value)} data-testid="input-receivables" placeholder="0" />
-              <p className="text-xs text-gray-400 mt-1">Include only amounts you reasonably expect to collect.</p>
+              <p className="text-xs text-gray-400 mt-1">{t("zakat.receivablesAdvice")}</p>
             </CardContent>
           </Card>
 
           {/* Real Estate (conditional) */}
           {settings.realEstateMode !== "exempt" && (
             <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-              <CardHeader><CardTitle>🏠 Real Estate</CardTitle></CardHeader>
+              <CardHeader><CardTitle>🏠 {t("zakat.realEstate")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {settings.realEstateMode === "rental_income" && (
                   <div>
-                    <label className="text-sm font-medium mb-1 block">Net rental income cash on hand (USD)</label>
+                    <label className="text-sm font-medium mb-1 block">{t("zakat.rentalIncomeCash")}</label>
                     <Input type="number" min="0" step="1" value={rentalIncomeCash} onChange={e => setRentalIncomeCash(e.target.value)} data-testid="input-rental-income" placeholder="0" />
-                    <p className="text-xs text-gray-400 mt-1">Enter net rental income held for a full lunar year.</p>
+                    <p className="text-xs text-gray-400 mt-1">{t("zakat.rentalAdvice")}</p>
                   </div>
                 )}
                 {settings.realEstateMode === "trading" && (
                   <div>
-                    <p className="text-sm text-gray-400 mb-3">Properties held for resale from your Assets:</p>
+                    <p className="text-sm text-gray-400 mb-3">{t("zakat.resaleProperties")}:</p>
                     {realEstateAssets.map((a: any) => (
                       <div key={a.id} className="flex justify-between items-center p-2 rounded-lg border border-gray-100 dark:border-gray-800 mb-2">
                         <span className="text-sm font-medium">{a.name}</span>
                         <span className="text-sm">{fmt(toUsd(a.currentValue, a.exchangeRateToUsd))}</span>
                       </div>
                     ))}
-                    {realEstateAssets.length === 0 && <p className="text-sm text-gray-400">No real estate assets found.</p>}
+                    {realEstateAssets.length === 0 && <p className="text-sm text-gray-400">{t("zakat.noRealEstate")}</p>}
                   </div>
                 )}
               </CardContent>
@@ -1042,9 +1047,9 @@ export default function ZakatPage() {
           {/* Deductible Debts */}
           {settings.includeDebts && (
             <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-              <CardHeader><CardTitle>💳 Deductible Liabilities</CardTitle></CardHeader>
+              <CardHeader><CardTitle>💳 {t("zakat.deductibleLiabilities")}</CardTitle></CardHeader>
               <CardContent>
-                <p className="text-xs text-gray-400 mb-3">Short-term debts due within 12 months.</p>
+                <p className="text-xs text-gray-400 mb-3">{t("zakat.shortTermDebtsHelp")}</p>
                 {(debts as any[]).filter((d: any) => d.status === "active").map((d: any) => (
                   <div key={d.id} className="flex justify-between items-center py-2 border-b last:border-0 dark:border-gray-800">
                     <div>
@@ -1055,10 +1060,10 @@ export default function ZakatPage() {
                   </div>
                 ))}
                 {(debts as any[]).filter((d: any) => d.status === "active").length === 0 && (
-                  <p className="text-sm text-gray-400">No active debts found.</p>
+                  <p className="text-sm text-gray-400">{t("zakat.noActiveDebts")}</p>
                 )}
                 <div className="flex justify-between items-center pt-2 font-semibold">
-                  <span className="text-sm">Total deductible</span>
+                  <span className="text-sm">{t("zakat.totalDeductible")}</span>
                   <span className="text-sm font-mono text-red-500">−{fmt(deductibleDebts)}</span>
                 </div>
               </CardContent>
@@ -1078,65 +1083,65 @@ export default function ZakatPage() {
           {/* Results Card */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl sticky top-6">
             <CardHeader>
-              <CardTitle className="text-base">Zakat Results</CardTitle>
+              <CardTitle className="text-base">{t("zakat.results")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5">
                   {result.nisabMet ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
-                  <span className="text-sm font-medium">Nisab {result.nisabMet ? "Met ✓" : "Not Met"}</span>
+                  <span className="text-sm font-medium">{t("zakat.nisabStatus")} {result.nisabMet ? `${t("common.met")} ✓` : t("common.notMet")}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {derivedHawlMet ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <XCircle className="w-4 h-4 text-red-500" />}
-                  <span className="text-sm font-medium">Hawl {derivedHawlMet ? "Met ✓" : "Not Met"}</span>
+                  <span className="text-sm font-medium">{t("zakat.hawlStatus")} {derivedHawlMet ? `${t("common.met")} ✓` : t("common.notMet")}</span>
                 </div>
               </div>
 
               <div className="p-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-                <p className="text-xs text-gray-400">Nisab threshold ({settings.nisabStandard})</p>
+                <p className="text-xs text-gray-400">{t("zakat.nisabThreshold")} ({settings.nisabStandard})</p>
                 <p className="text-lg font-bold">{fmt(result.nisabValueUsd)}</p>
               </div>
 
               <Separator />
 
               <div className="space-y-0.5">
-                <InfoRow label="Cash (bank + on hand)" value={fmt(result.breakdown.cashTotal)} />
-                {result.breakdown.goldValue > 0 && <InfoRow label="Gold value" value={fmt(result.breakdown.goldValue)} />}
-                {result.breakdown.silverValue > 0 && <InfoRow label="Silver value" value={fmt(result.breakdown.silverValue)} />}
-                {result.breakdown.investmentsTotal > 0 && <InfoRow label="Investments" value={fmt(result.breakdown.investmentsTotal)} />}
-                {result.breakdown.receivablesTotal > 0 && <InfoRow label="Receivables" value={fmt(result.breakdown.receivablesTotal)} />}
-                {result.breakdown.realEstateValue > 0 && <InfoRow label="Real estate" value={fmt(result.breakdown.realEstateValue)} />}
-                <InfoRow label="Total zakatable assets" value={fmt(result.breakdown.totalZakatableAssets)} strong />
-                {result.breakdown.deductibleDebts > 0 && <InfoRow label="Deductible debts" value={`−${fmt(result.breakdown.deductibleDebts)}`} />}
-                <InfoRow label="Net zakatable amount" value={fmt(result.breakdown.netZakatable)} strong />
+                <InfoRow label={t("zakat.cashTotal")} value={fmt(result.breakdown.cashTotal)} />
+                {result.breakdown.goldValue > 0 && <InfoRow label={t("zakat.goldValue")} value={fmt(result.breakdown.goldValue)} />}
+                {result.breakdown.silverValue > 0 && <InfoRow label={t("zakat.silverValue")} value={fmt(result.breakdown.silverValue)} />}
+                {result.breakdown.investmentsTotal > 0 && <InfoRow label={t("nav.investments")} value={fmt(result.breakdown.investmentsTotal)} />}
+                {result.breakdown.receivablesTotal > 0 && <InfoRow label={t("zakat.receivables")} value={fmt(result.breakdown.receivablesTotal)} />}
+                {result.breakdown.realEstateValue > 0 && <InfoRow label={t("zakat.realEstate")} value={fmt(result.breakdown.realEstateValue)} />}
+                <InfoRow label={t("zakat.totalAssets")} value={fmt(result.breakdown.totalZakatableAssets)} strong />
+                {result.breakdown.deductibleDebts > 0 && <InfoRow label={t("zakat.deductibleLiabilities")} value={`−${fmt(result.breakdown.deductibleDebts)}`} />}
+                <InfoRow label={t("zakat.netZakatable")} value={fmt(result.breakdown.netZakatable)} strong />
               </div>
 
               <Separator />
 
               <div className={`p-4 rounded-xl text-center ${result.zakatDue > 0 ? "bg-emerald-50 dark:bg-emerald-950/30" : "bg-gray-50 dark:bg-gray-800"}`}>
-                <p className="text-xs text-gray-400 mb-1">Zakat Due (2.5%)</p>
+                <p className="text-xs text-gray-400 mb-1">{t("zakat.dueAmount")} (2.5%)</p>
                 <p className={`text-3xl font-bold ${result.zakatDue > 0 ? "text-emerald-700 dark:text-emerald-400" : "text-gray-400"}`} data-testid="text-zakat-due">
-                  {result.zakatDue > 0 ? fmt(result.zakatDue) : "Not Due"}
+                  {result.zakatDue > 0 ? fmt(result.zakatDue) : t("zakat.notDue")}
                 </p>
                 {result.zakatDue > 0 && (
                   <p className="text-xs text-gray-400 mt-1">
-                    ≈ {fmt(result.zakatDue / 12)}/month if saved monthly
+                    ≈ {fmt(result.zakatDue / 12)}/{t("common.month")} {t("zakat.ifSavedMonthly")}
                   </p>
                 )}
               </div>
 
               <div>
-                <label className="text-xs text-gray-400 mb-1 block">Notes (optional)</label>
-                <Input placeholder="e.g. Ramadan 1446" value={notes} onChange={e => setNotes(e.target.value)} data-testid="input-notes" />
+                <label className="text-xs text-gray-400 mb-1 block">{t("zakat.notesPlaceholder")} ({t("common.optional")})</label>
+                <Input placeholder={t("zakat.notesPlaceholder")} value={notes} onChange={e => setNotes(e.target.value)} data-testid="input-notes" />
               </div>
 
               <Button onClick={handleSaveSnapshot} className="w-full rounded-xl gap-2 text-white"
                 style={{ backgroundColor: MINT }} disabled={saveSnapshot.isPending} data-testid="button-save-snapshot-result">
-                <Save className="w-4 h-4" /> Save Snapshot
+                <Save className="w-4 h-4" /> {t("zakat.saveSnapshot")}
               </Button>
 
               <details className="text-xs">
-                <summary className="cursor-pointer text-gray-400 hover:text-gray-600">Show calculation details</summary>
+                <summary className="cursor-pointer text-gray-400 hover:text-gray-600">{t("zakat.showDetails")}</summary>
                 <div className="mt-2 space-y-1 text-gray-400">
                   {result.explanations.map((e, i) => <p key={i}>• {e}</p>)}
                 </div>
@@ -1146,13 +1151,13 @@ export default function ZakatPage() {
 
           {/* Assumptions */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-            <CardHeader><CardTitle className="text-sm">Assumptions & Disclaimer</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="text-sm">{t("zakat.disclaimerTitle")}</CardTitle></CardHeader>
             <CardContent className="text-xs text-gray-400 space-y-1">
-              <p>• <strong className="text-gray-600 dark:text-gray-300">Nisab:</strong> {settings.nisabStandard === "gold" ? "85g gold (AAOIFI contemporary)" : "595g silver (classical)"}</p>
-              <p>• <strong className="text-gray-600 dark:text-gray-300">Debts:</strong> {settings.includeDebts ? "Short-term debts deducted" : "Debts not deducted"}</p>
-              <p>• <strong className="text-gray-600 dark:text-gray-300">Real estate:</strong> {settings.realEstateMode === "exempt" ? "Exempt" : settings.realEstateMode === "rental_income" ? "Rental income only" : "Trading inventory (full market value)"}</p>
-              <p>• <strong className="text-gray-600 dark:text-gray-300">Gold:</strong> ${prices.goldPricePerGram}/g · <strong className="text-gray-600 dark:text-gray-300">Silver:</strong> ${prices.silverPricePerGram}/g</p>
-              <p className="pt-1 italic">This is an estimate. Consult a qualified Islamic scholar for your specific situation.</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">{t("zakat.nisabStatus")}:</strong> {settings.nisabStandard === "gold" ? "85g gold (AAOIFI contemporary)" : "595g silver (classical)"}</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">{t("zakat.deductDebts")}:</strong> {settings.includeDebts ? "Short-term debts deducted" : "Debts not deducted"}</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">{t("zakat.realEstate")}:</strong> {settings.realEstateMode === "exempt" ? "Exempt" : settings.realEstateMode === "rental_income" ? "Rental income only" : "Trading inventory (full market value)"}</p>
+              <p>• <strong className="text-gray-600 dark:text-gray-300">{t("zakat.goldStandard")}:</strong> ${prices.goldPricePerGram}/g · <strong className="text-gray-600 dark:text-gray-300">{t("zakat.silverStandard")}:</strong> ${prices.silverPricePerGram}/g</p>
+              <p className="pt-1 italic">{t("zakat.disclaimerAdvice")}</p>
             </CardContent>
           </Card>
         </div>

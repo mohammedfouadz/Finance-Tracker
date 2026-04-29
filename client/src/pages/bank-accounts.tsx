@@ -11,6 +11,7 @@ import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { useI18n } from "@/lib/i18n";
 import {
   Plus, Trash2, Pencil, Landmark, Wallet, CreditCard, TrendingUp, Hash,
   Eye, EyeOff, Copy, Check, AlertTriangle, CheckCircle2, Lightbulb, Shield,
@@ -29,16 +30,22 @@ const DANGER = "#EF4444";
 
 /* ── account type config ── */
 type AccType = "Savings" | "Checking" | "Investment" | "Credit Card";
-const TYPE_CFG: Record<AccType, { icon: any; color: string; fromColor: string; toColor: string; label: string }> = {
-  Checking:      { icon: Landmark,   color: BRAND,   fromColor: "#1B4FE4", toColor: "#3B82F6", label: "Checking" },
-  Savings:       { icon: Wallet,     color: "#10B981", fromColor: "#059669", toColor: "#34D399", label: "Savings" },
-  Investment:    { icon: TrendingUp, color: PURPLE,  fromColor: "#7C3AED", toColor: "#A78BFA", label: "Investment" },
-  "Credit Card": { icon: CreditCard, color: "#EF4444", fromColor: "#DC2626", toColor: "#F87171", label: "Credit" },
-};
-const ACCOUNT_TYPES = Object.keys(TYPE_CFG);
 
-function typeConfig(type: string) {
-  return TYPE_CFG[type as AccType] || TYPE_CFG.Savings;
+function useAccountTypeConfig() {
+  const { t } = useI18n();
+  const TYPE_CFG: Record<AccType, { icon: any; color: string; fromColor: string; toColor: string; label: string }> = {
+    Checking:      { icon: Landmark,   color: BRAND,   fromColor: "#1B4FE4", toColor: "#3B82F6", label: t("accounts.checking") },
+    Savings:       { icon: Wallet,     color: "#10B981", fromColor: "#059669", toColor: "#34D399", label: t("accounts.savings") },
+    Investment:    { icon: TrendingUp, color: PURPLE,  fromColor: "#7C3AED", toColor: "#A78BFA", label: t("investments.title") },
+    "Credit Card": { icon: CreditCard, color: "#EF4444", fromColor: "#DC2626", toColor: "#F87171", label: t("accounts.creditCard") },
+  };
+  return TYPE_CFG;
+}
+
+const ACCOUNT_TYPES_LITERAL: AccType[] = ["Checking", "Savings", "Investment", "Credit Card"];
+
+function typeConfig(type: string, cfg: any) {
+  return cfg[type as AccType] || cfg.Savings;
 }
 
 const CURRENCY_FLAGS: Record<string, string> = {
@@ -132,9 +139,11 @@ function AccountCard({
   account: any; masked: boolean;
   onEdit: () => void; onDelete: () => void;
 }) {
+  const { t } = useI18n();
   const { formatAmount } = useCurrency();
   const { toast } = useToast();
-  const cfg   = typeConfig(account.accountType);
+  const TYPE_CFG = useAccountTypeConfig();
+  const cfg   = typeConfig(account.accountType, TYPE_CFG);
   const Icon  = cfg.icon;
   const bal   = Number(account.balance);
   const usd   = toUsd(bal, Number(account.exchangeRateToUsd));
@@ -155,14 +164,14 @@ function AccountCard({
           <div className="w-10 h-10 rounded-xl bg-white/25 flex items-center justify-center">
             <Icon className="w-5 h-5 text-white" />
           </div>
-          <div>
+          <div className="text-start">
             <p className="text-white font-bold text-sm leading-tight">{account.bankName}</p>
-            <p className="text-white/70 text-xs">{account.accountType}</p>
+            <p className="text-white/70 text-xs">{cfg.label}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <span className="bg-white/20 text-white text-[10px] font-semibold px-2.5 py-0.5 rounded-full">
-            {account.accountType}
+            {cfg.label}
           </span>
           <div className="relative">
             <button
@@ -172,12 +181,12 @@ function AccountCard({
               <MoreVertical className="w-4 h-4" />
             </button>
             {menuOpen && (
-              <div className="absolute right-0 top-8 z-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg py-1 w-36" onMouseLeave={() => setMenuOpen(false)}>
-                <button className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2" onClick={() => { setMenuOpen(false); onEdit(); }} data-testid={`button-edit-${account.id}`}>
-                  <Pencil className="w-3.5 h-3.5" /> Edit
+              <div className="absolute end-0 top-8 z-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg py-1 w-36" onMouseLeave={() => setMenuOpen(false)}>
+                <button className="w-full text-start px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2" onClick={() => { setMenuOpen(false); onEdit(); }} data-testid={`button-edit-${account.id}`}>
+                  <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
                 </button>
-                <button className="w-full text-left px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2" onClick={() => { setMenuOpen(false); onDelete(); }} data-testid={`button-delete-${account.id}`}>
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                <button className="w-full text-start px-3 py-2 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2" onClick={() => { setMenuOpen(false); onDelete(); }} data-testid={`button-delete-${account.id}`}>
+                  <Trash2 className="w-3.5 h-3.5" /> {t("common.delete")}
                 </button>
               </div>
             )}
@@ -186,13 +195,13 @@ function AccountCard({
 
         {/* low / negative badges */}
         {isNeg && (
-          <span className="absolute bottom-2 left-4 bg-red-500/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <AlertTriangle className="w-2.5 h-2.5" /> Negative
+          <span className="absolute bottom-2 start-4 bg-red-500/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <AlertTriangle className="w-2.5 h-2.5" /> {t("common.overdue")}
           </span>
         )}
         {isLow && !isNeg && (
-          <span className="absolute bottom-2 left-4 bg-amber-400/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-            <AlertTriangle className="w-2.5 h-2.5" /> Low balance
+          <span className="absolute bottom-2 start-4 bg-amber-400/90 text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+            <AlertTriangle className="w-2.5 h-2.5" /> {t("budget.underBudget")}
           </span>
         )}
       </div>
@@ -201,23 +210,23 @@ function AccountCard({
       <CardContent className="p-4 flex flex-col flex-1 gap-3">
         {/* masked account number */}
         <div className="flex items-center gap-1">
-          <span className="font-mono text-xs text-gray-500 tracking-widest">{masked ? "•••• •••• •••• ••••" : masked4}</span>
+          <span className="font-mono text-xs text-gray-500 tracking-widest" dir="ltr">{masked ? "•••• •••• •••• ••••" : masked4}</span>
           {!masked && <CopyBtn text={account.accountNumber} />}
         </div>
 
         {/* balance */}
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">Balance</p>
+        <div className="text-start">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-0.5">{t("accounts.balance")}</p>
           <div className="flex items-baseline gap-1.5">
             <span className={`text-2xl font-bold tabular-nums ${isNeg ? "text-red-500" : "text-gray-900 dark:text-white"}`}
-              data-testid={`text-balance-${account.id}`}>
+              data-testid={`text-balance-${account.id}`} dir="ltr">
               {masked ? "••••••" : `${getCurrencySymbol(curr)}${Math.abs(bal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               {isNeg && " ⚠"}
             </span>
             <span className="text-xs text-gray-400">{curr}</span>
           </div>
           {curr !== "USD" && !masked && (
-            <p className="text-xs text-gray-400 mt-0.5">≈ {formatAmount(usd)} USD</p>
+            <p className="text-xs text-gray-400 mt-0.5">≈ <span dir="ltr">{formatAmount(usd)}</span> USD</p>
           )}
         </div>
 
@@ -227,22 +236,22 @@ function AccountCard({
         </div>
 
         {/* meta row */}
-        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-start">
           <div>
-            <span className="text-gray-400">Updated</span>
+            <span className="text-gray-400">{t("accounts.lastUpdated")}</span>
             <p className="font-medium text-gray-700 dark:text-gray-300">
               {account.lastUpdated ? format(new Date(account.lastUpdated), "MMM d, yyyy") : "—"}
             </p>
           </div>
           <div>
-            <span className="text-gray-400">Currency</span>
+            <span className="text-gray-400">{t("accounts.currency")}</span>
             <p className="font-medium text-gray-700 dark:text-gray-300">
               {CURRENCY_FLAGS[curr] || "🌐"} {curr}
             </p>
           </div>
           {account.notes && (
             <div className="col-span-2 mt-1 pt-2 border-t border-gray-50 dark:border-gray-800">
-              <span className="text-gray-400">Notes</span>
+              <span className="text-gray-400">{t("common.notes")}</span>
               <p className="text-gray-600 dark:text-gray-300 truncate">{account.notes}</p>
             </div>
           )}
@@ -260,7 +269,9 @@ function AccountDialog({ open, onOpenChange, editingAccount, userId, onCreate, o
   editingAccount: any | null; userId: string;
   onCreate: (data: any) => void; onUpdate: (data: any) => void; isPending: boolean;
 }) {
+  const { t } = useI18n();
   const [form, setForm] = useState(emptyForm);
+  const TYPE_CFG = useAccountTypeConfig();
 
   useMemo(() => {
     if (editingAccount) {
@@ -292,34 +303,34 @@ function AccountDialog({ open, onOpenChange, editingAccount, userId, onCreate, o
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>{editingAccount ? "Edit Account" : "Add Bank Account"}</DialogTitle>
+          <DialogTitle className="text-start">{editingAccount ? t("accounts.editAccount") : t("accounts.addAccount")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 text-start">
             <div className="col-span-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Bank Name</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("accounts.bankName")}</label>
               <Input placeholder="e.g. Chase, BOP, AIB" value={form.bankName} onChange={e => setForm({ ...form, bankName: e.target.value })} data-testid="input-bank-name" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Account Type</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("accounts.accountType")}</label>
               <Select value={form.accountType} onValueChange={v => setForm({ ...form, accountType: v })}>
                 <SelectTrigger data-testid="select-account-type"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {ACCOUNT_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  {ACCOUNT_TYPES_LITERAL.map(t_lit => <SelectItem key={t_lit} value={t_lit}>{TYPE_CFG[t_lit].label}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Account Number</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("accounts.accountNumber")}</label>
               <Input placeholder="Last 4 digits or full" value={form.accountNumber} onChange={e => setForm({ ...form, accountNumber: e.target.value })} data-testid="input-account-number" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Balance</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("accounts.balance")}</label>
               <Input type="number" step="0.01" placeholder="0.00" value={form.balance} onChange={e => setForm({ ...form, balance: e.target.value })} data-testid="input-balance" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Notes</label>
-              <Input placeholder="Optional" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} data-testid="input-notes" />
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.notes")}</label>
+              <Input placeholder={t("common.optional")} value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} data-testid="input-notes" />
             </div>
           </div>
           <CurrencyFields
@@ -331,9 +342,9 @@ function AccountDialog({ open, onOpenChange, editingAccount, userId, onCreate, o
             showUsdPreview={true}
           />
           <div className="flex gap-2 pt-1">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }} disabled={!valid || isPending} data-testid="button-submit-account">
-              {isPending ? "Saving…" : editingAccount ? "Update" : "Add Account"}
+              {isPending ? t("common.saving") : editingAccount ? t("common.save") : t("accounts.addAccount")}
             </Button>
           </div>
         </form>
@@ -344,6 +355,7 @@ function AccountDialog({ open, onOpenChange, editingAccount, userId, onCreate, o
 
 /* ── main page ── */
 export default function BankAccountsPage() {
+  const { t } = useI18n();
   const { user } = useAuth();
   const { data: accounts = [], isLoading } = useBankAccounts();
   const createAccount = useCreateBankAccount();
@@ -351,6 +363,7 @@ export default function BankAccountsPage() {
   const deleteAccount = useDeleteBankAccount();
   const { toast } = useToast();
   const { formatAmount } = useCurrency();
+  const TYPE_CFG = useAccountTypeConfig();
 
   const allAccounts = accounts as any[];
 
@@ -372,8 +385,8 @@ export default function BankAccountsPage() {
   const typeBreakdown = useMemo(() => {
     const map: Record<string, number> = {};
     allAccounts.forEach(a => { map[a.accountType] = (map[a.accountType] || 0) + 1; });
-    return Object.entries(map).map(([t, c]) => `${c} ${t}`).join(" · ");
-  }, [allAccounts]);
+    return Object.entries(map).map(([t_key, c]) => `${c} ${TYPE_CFG[t_key as AccType]?.label || t_key}`).join(" · ");
+  }, [allAccounts, TYPE_CFG]);
 
   /* currency distribution */
   const currencyDist = useMemo(() => {
@@ -397,25 +410,25 @@ export default function BankAccountsPage() {
   const handleCreate = async (data: any) => {
     try {
       await createAccount.mutateAsync(data);
-      toast({ title: "Account added" });
+      toast({ title: t("common.saveSuccess") });
       setDialogOpen(false);
-    } catch { toast({ title: "Failed to add", variant: "destructive" }); }
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const handleUpdate = async (data: any) => {
     try {
       await updateAccount.mutateAsync(data);
-      toast({ title: "Account updated" });
+      toast({ title: t("common.saveSuccess") });
       setDialogOpen(false);
-    } catch { toast({ title: "Failed to update", variant: "destructive" }); }
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this account? This cannot be undone.")) return;
+    if (!confirm(t("common.confirmDelete"))) return;
     try {
       await deleteAccount.mutateAsync(id);
-      toast({ title: "Account deleted" });
-    } catch { toast({ title: "Failed to delete", variant: "destructive" }); }
+      toast({ title: t("common.deleteSuccess") });
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   /* health insights */
@@ -447,9 +460,9 @@ export default function BankAccountsPage() {
 
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Bank Accounts</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Manage your accounts and balances across currencies.</p>
+          <div className="text-start">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("accounts.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("accounts.subtitle")}</p>
           </div>
           <div className="flex gap-2 items-center">
             {/* balance privacy toggle */}
@@ -461,7 +474,7 @@ export default function BankAccountsPage() {
               {masked ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
             <Button onClick={openCreate} className="gap-2 rounded-xl shadow-sm" style={{ backgroundColor: BRAND }} data-testid="button-add-account">
-              <Plus className="w-4 h-4" /> Add Account
+              <Plus className="w-4 h-4" /> {t("accounts.addAccount")}
             </Button>
           </div>
         </div>
@@ -469,31 +482,31 @@ export default function BankAccountsPage() {
         {/* ── KPI STRIP ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            label="Total Balance (USD)"
+            label={t("accounts.totalBalance") + " (USD)"}
             value={masked ? "••••••" : formatAmount(totalUsd)}
-            sub={`Across ${allAccounts.length} account${allAccounts.length !== 1 ? "s" : ""} · ${currencyDist.length} currenc${currencyDist.length !== 1 ? "ies" : "y"}`}
+            sub={`${t("common.total")}: ${allAccounts.length} · ${currencyDist.length} ${t("accounts.currency")}`}
             icon={Wallet}
             color="#10B981"
             bg="#ECFDF5"
           />
           <KpiCard
-            label="Number of Accounts"
+            label={t("accounts.title")}
             value={String(allAccounts.length)}
-            sub={typeBreakdown || "No accounts yet"}
+            sub={typeBreakdown || t("accounts.noAccounts")}
             icon={Hash}
             color={BRAND}
             bg="#EEF4FF"
           />
           <KpiCard
-            label="Highest Balance"
+            label={t("investments.currentValue")}
             value={masked ? "••••••" : (highestAcc ? formatAmount(toUsd(Number(highestAcc.balance), Number(highestAcc.exchangeRateToUsd))) : formatAmount(0))}
-            sub={highestAcc ? `${highestAcc.bankName} · ${highestAcc.accountType}` : "No accounts"}
+            sub={highestAcc ? `${highestAcc.bankName} · ${TYPE_CFG[highestAcc.accountType as AccType]?.label || highestAcc.accountType}` : t("accounts.noAccounts")}
             icon={TrendingUp}
             color={AMBER}
             bg="#FFFBEB"
           />
           <KpiCard
-            label="Currencies"
+            label={t("accounts.currency")}
             value={String(currencyDist.length)}
             sub={currencyDist.map(c => `${CURRENCY_FLAGS[c.curr] || ""}${c.curr}`).join(" · ") || "—"}
             icon={Activity}
@@ -507,13 +520,13 @@ export default function BankAccountsPage() {
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-3">
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm">Currency Distribution</h3>
+                <div className="text-start">
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{t("reports.categoryBreakdown")}</h3>
                   <p className="text-xs text-gray-400">USD-equivalent breakdown across your accounts</p>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-gray-400">
                   <RefreshCw className="w-3 h-3" />
-                  <span>Live rates</span>
+                  <span>{t("common.active")}</span>
                 </div>
               </div>
               {/* stacked bar */}
@@ -530,7 +543,7 @@ export default function BankAccountsPage() {
                     <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
                       {CURRENCY_FLAGS[c.curr] || ""} {c.curr}
                     </span>
-                    <span className="text-xs text-gray-400">{c.pct.toFixed(0)}% · {masked ? "•••" : formatAmount(c.usd)}</span>
+                    <span className="text-xs text-gray-400 tabular-nums">{c.pct.toFixed(0)}% · <span dir="ltr">{masked ? "••••" : formatAmount(c.usd)}</span></span>
                   </div>
                 ))}
               </div>
@@ -547,11 +560,11 @@ export default function BankAccountsPage() {
                 <Landmark className="w-8 h-8" style={{ color: BRAND }} />
               </div>
               <div>
-                <p className="font-semibold text-gray-700 dark:text-gray-300 text-lg">No bank accounts yet</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 text-lg">{t("accounts.noAccounts")}</p>
                 <p className="text-sm text-gray-400 mt-1">Add your first account to start tracking your wealth.</p>
               </div>
               <Button onClick={openCreate} className="gap-2 rounded-xl mt-2" style={{ backgroundColor: BRAND }}>
-                <Plus className="w-4 h-4" /> Connect First Account
+                <Plus className="w-4 h-4" /> {t("accounts.addFirstAccount")}
               </Button>
             </CardContent>
           </Card>
@@ -575,7 +588,7 @@ export default function BankAccountsPage() {
               <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
                 <Plus className="w-5 h-5" />
               </div>
-              <p className="text-sm font-medium">Add Account</p>
+              <p className="text-sm font-medium">{t("accounts.addAccount")}</p>
             </button>
           </div>
         )}
@@ -585,49 +598,49 @@ export default function BankAccountsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* account summary — 2/3 */}
             <Card className="lg:col-span-2 border border-gray-100 dark:border-gray-800 rounded-2xl">
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">Accounts Summary</h3>
+              <CardContent className="p-5 text-start">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">{t("dashboard.recentTransactions")}</h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-50 dark:border-gray-800">
-                        <th className="pb-2 text-left text-[10px] font-bold uppercase tracking-wide text-gray-400">Account</th>
-                        <th className="pb-2 text-left text-[10px] font-bold uppercase tracking-wide text-gray-400">Type</th>
-                        <th className="pb-2 text-right text-[10px] font-bold uppercase tracking-wide text-gray-400">Balance</th>
-                        <th className="pb-2 text-right text-[10px] font-bold uppercase tracking-wide text-gray-400">USD Value</th>
+                        <th className="pb-2 text-start text-[10px] font-bold uppercase tracking-wide text-gray-400">{t("nav.group.overview")}</th>
+                        <th className="pb-2 text-start text-[10px] font-bold uppercase tracking-wide text-gray-400">{t("common.type")}</th>
+                        <th className="pb-2 text-end text-[10px] font-bold uppercase tracking-wide text-gray-400">{t("accounts.balance")}</th>
+                        <th className="pb-2 text-end text-[10px] font-bold uppercase tracking-wide text-gray-400">USD Value</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 dark:divide-gray-800">
                       {allAccounts.map((a: any) => {
-                        const cfg = typeConfig(a.accountType);
+                        const cfg = typeConfig(a.accountType, TYPE_CFG);
                         const bal = Number(a.balance);
                         const usd = toUsd(bal, Number(a.exchangeRateToUsd));
                         const curr = a.currency || "USD";
                         return (
                           <tr key={a.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
-                            <td className="py-3 pr-4">
+                            <td className="py-3 pe-4">
                               <div className="flex items-center gap-2">
                                 <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${cfg.color}20` }}>
                                   <cfg.icon className="w-3.5 h-3.5" style={{ color: cfg.color }} />
                                 </div>
                                 <div>
                                   <p className="font-semibold text-gray-900 dark:text-white text-xs">{a.bankName}</p>
-                                  <p className="text-[10px] text-gray-400 font-mono">{"•••• " + (a.accountNumber?.slice(-4) || "????" )}</p>
+                                  <p className="text-[10px] text-gray-400 font-mono" dir="ltr">{"•••• " + (a.accountNumber?.slice(-4) || "????" )}</p>
                                 </div>
                               </div>
                             </td>
-                            <td className="py-3 pr-4">
+                            <td className="py-3 pe-4 text-start">
                               <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold" style={{ backgroundColor: `${cfg.color}15`, color: cfg.color }}>
-                                {a.accountType}
+                                {cfg.label}
                               </span>
                             </td>
-                            <td className="py-3 text-right tabular-nums">
-                              <span className={`font-bold text-sm ${bal < 0 ? "text-red-500" : "text-gray-900 dark:text-white"}`}>
+                            <td className="py-3 text-end tabular-nums">
+                              <span className={`font-bold text-sm ${bal < 0 ? "text-red-500" : "text-gray-900 dark:text-white"}`} dir="ltr">
                                 {masked ? "••••" : `${getCurrencySymbol(curr)}${Math.abs(bal).toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
                               </span>
-                              <span className="text-xs text-gray-400 ml-1">{curr}</span>
+                              <span className="text-xs text-gray-400 ms-1">{curr}</span>
                             </td>
-                            <td className="py-3 text-right tabular-nums text-xs text-gray-500">
+                            <td className="py-3 text-end tabular-nums text-xs text-gray-500" dir="ltr">
                               {masked ? "••••" : formatAmount(usd)}
                             </td>
                           </tr>
@@ -636,8 +649,8 @@ export default function BankAccountsPage() {
                     </tbody>
                     <tfoot>
                       <tr className="border-t-2 border-gray-100 dark:border-gray-700">
-                        <td colSpan={3} className="pt-3 text-xs font-bold text-gray-500 uppercase tracking-wide">Total (USD)</td>
-                        <td className="pt-3 text-right font-bold tabular-nums" style={{ color: MINT }}>
+                        <td colSpan={3} className="pt-3 text-xs font-bold text-gray-500 uppercase tracking-wide text-start">{t("common.total")} (USD)</td>
+                        <td className="pt-3 text-end font-bold tabular-nums" style={{ color: MINT }} dir="ltr">
                           {masked ? "••••••" : formatAmount(totalUsd)}
                         </td>
                       </tr>
@@ -649,8 +662,8 @@ export default function BankAccountsPage() {
 
             {/* account health — 1/3 */}
             <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
-              <CardContent className="p-5">
-                <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">Account Health</h3>
+              <CardContent className="p-5 text-start">
+                <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-1">{t("aiReports.insights")}</h3>
                 <p className="text-xs text-gray-400 mb-4">Insights about your accounts</p>
                 <div className="space-y-3">
                   {healthItems.map((item, i) => (
@@ -658,7 +671,7 @@ export default function BankAccountsPage() {
                       <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ backgroundColor: item.bg }}>
                         <item.icon className="w-3.5 h-3.5" style={{ color: item.color }} />
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{item.text}</p>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed text-start">{item.text}</p>
                     </div>
                   ))}
                 </div>

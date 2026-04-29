@@ -5,10 +5,12 @@ import { useTransactions, useCategories } from "@/hooks/use-finance";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 const cn = (...classes: any[]) => classes.filter(Boolean).join(' ');
 
 export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
+  const { t } = useI18n();
   const { data: transactions } = useTransactions();
   const { data: categories } = useCategories();
 
@@ -84,7 +86,7 @@ export function DashboardCharts({ type = "bar" }: { type?: "bar" | "list" }) {
           </div>
         ))}
         <div className="pt-4 border-t border-dashed flex justify-between items-center">
-          <span className="font-bold text-[#1a1a1a]">Remaining (Net)</span>
+          <span className="font-bold text-[#1a1a1a]">{t("dashboard.net")}</span>
           <span className={cn("font-bold", breakdownData.net < 0 ? "text-[#e11d48]" : "text-[#10b981]")}>
             {formatCurrency(breakdownData.net)}
           </span>

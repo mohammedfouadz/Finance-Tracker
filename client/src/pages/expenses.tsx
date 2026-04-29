@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 import { format, getDaysInMonth } from "date-fns";
 import {
   Plus, Trash2, AlertTriangle, Wallet, TrendingDown, Calculator, Shield,
@@ -22,32 +23,31 @@ import {
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
-  PieChart, Pie, Cell, Legend,
+  PieChart, Pie, Cell,
 } from "recharts";
 
+/* ── palette ── */
 const BRAND  = "#1B4FE4";
 const MINT   = "#00C896";
 const AMBER  = "#F59E0B";
-const DANGER = "#EF4444";
 const PURPLE = "#8B5CF6";
+const DANGER = "#EF4444";
 
-const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-
-function KpiCard({ label, value, sub, icon: Icon, color, bg, extra }: {
-  label: string; value: string; sub?: string; icon: any; color: string; bg: string; extra?: React.ReactNode;
+function KpiCard({ label, value, sub, icon: Icon, color, bg }: {
+  label: string; value: string; sub?: string;
+  icon: any; color: string; bg: string;
 }) {
   return (
-    <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl hover:-translate-y-0.5 hover:shadow-md transition-all">
-      <CardContent className="p-5" style={{ background: `linear-gradient(135deg, ${bg}88, transparent)` }}>
+    <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between mb-3">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-500">{label}</p>
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ backgroundColor: `${color}22` }}>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400">{label}</p>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: bg }}>
             <Icon className="w-4 h-4" style={{ color }} />
           </div>
         </div>
-        <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white">{value}</p>
-        {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
-        {extra}
+        <p className="text-2xl font-bold tabular-nums text-gray-900 dark:text-white" dir="ltr">{value}</p>
+        {sub && <p className="text-[10px] text-gray-400 mt-1 truncate">{sub}</p>}
       </CardContent>
     </Card>
   );
@@ -63,6 +63,7 @@ export default function ExpensesPage() {
   const deleteTransaction  = useDeleteTransaction();
   const { toast }          = useToast();
   const { formatAmount }   = useCurrency();
+  const { t, lang, isRtl } = useI18n();
 
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
@@ -70,75 +71,86 @@ export default function ExpensesPage() {
   const [showForm,      setShowForm]      = useState(false);
   const [catFilter,     setCatFilter]     = useState<number | "all">("all");
   const [alertDismissed, setAlertDismissed] = useState(false);
+
   const [formData, setFormData] = useState({
-    description: "", amount: "", categoryId: "",
-    date: now.toISOString().split("T")[0], currencyCode: "USD", exchangeRateToUsd: "1",
+    description: "",
+    amount: "",
+    categoryId: "",
+    date: now.toISOString().split("T")[0],
+    currencyCode: "USD",
+    exchangeRateToUsd: "1",
   });
 
-  const { data: budgetData = [] } = useBudgets(selectedMonth, selectedYear);
-  const allBudgets = budgetData as any[];
+  const MONTHS = t("common.monthsFull");
 
-  const expenseCategories = useMemo(() => categories?.filter((c: any) => c.type === "expense") || [], [categories]);
-  const incomeCategories  = useMemo(() => categories?.filter((c: any) => c.type === "income")  || [], [categories]);
+  const { data: budgets = [] } = useBudgets();
+  const budgetMap = useMemo(() => new Map(budgets.map(b => [b.categoryId, Number(b.limit)])), [budgets]);
 
+  /* filtered transactions */
   const monthTx = useMemo(() => {
     if (!transactions) return [];
     return (transactions as any[]).filter(t => {
       const d = new Date(t.date);
-      return d.getMonth() + 1 === selectedMonth && d.getFullYear() === selectedYear;
+      return (d.getMonth() + 1) === selectedMonth && d.getFullYear() === selectedYear;
     });
   }, [transactions, selectedMonth, selectedYear]);
 
-  const incomeCatIds  = useMemo(() => new Set(incomeCategories.map((c: any) => c.id)), [incomeCategories]);
-  const expenseCatIds = useMemo(() => new Set(expenseCategories.map((c: any) => c.id)), [expenseCategories]);
+  const expenseCategories = useMemo(() =>
+    (categories as any[])?.filter(c => c.type === "expense") || [], [categories]);
 
-  const totalIncome  = useMemo(() => monthTx.filter(t => incomeCatIds.has(t.categoryId)).reduce((s, t) => s + toUsd(Number(t.amount), Number(t.exchangeRateToUsd)), 0), [monthTx, incomeCatIds]);
-  const expenseTx    = useMemo(() => monthTx.filter(t => expenseCatIds.has(t.categoryId)), [monthTx, expenseCatIds]);
+  const expenseCatIds = useMemo(() => new Set(expenseCategories.map(c => c.id)), [expenseCategories]);
+
+  const expenseTx = useMemo(() => monthTx.filter(t => expenseCatIds.has(t.categoryId)), [monthTx, expenseCatIds]);
+  const incomeTx  = useMemo(() => monthTx.filter(t => !expenseCatIds.has(t.categoryId)), [monthTx, expenseCatIds]);
+
   const totalExpenses = useMemo(() => expenseTx.reduce((s, t) => s + toUsd(Number(t.amount), Number(t.exchangeRateToUsd)), 0), [expenseTx]);
-  const remaining    = totalIncome - totalExpenses;
+  const totalIncome   = useMemo(() => incomeTx.reduce((s, t) => s + toUsd(Number(t.amount), Number(t.exchangeRateToUsd)), 0), [incomeTx]);
+  const remaining     = totalIncome - totalExpenses;
 
-  /* budget map */
-  const budgetMap = useMemo(() => new Map(allBudgets.map((b: any) => [b.categoryId, Number(b.amount)])), [allBudgets]);
+  const daysInMonth   = getDaysInMonth(new Date(selectedYear, selectedMonth - 1));
+  const dayOfMonth    = (selectedMonth === now.getMonth() + 1 && selectedYear === now.getFullYear()) ? now.getDate() : daysInMonth;
+  const daysLeft      = daysInMonth - dayOfMonth;
 
-  /* per-category analysis */
-  const catData = useMemo(() => expenseCategories.map((cat: any) => {
-    const catTx = expenseTx.filter(t => t.categoryId === cat.id);
-    const spent = catTx.reduce((s, t) => s + toUsd(Number(t.amount), Number(t.exchangeRateToUsd)), 0);
-    const limit = budgetMap.get(cat.id) || 0;
-    const pct   = limit > 0 ? (spent / limit) * 100 : 0;
-    const status: "safe"|"warning"|"danger" = limit > 0 ? (pct >= 95 ? "danger" : pct >= 75 ? "warning" : "safe") : "safe";
-    return { cat, spent, limit, pct, status, txCount: catTx.length };
-  }).filter(d => d.spent > 0 || d.limit > 0), [expenseCategories, expenseTx, budgetMap]);
+  /* budget status by category */
+  const catData = useMemo(() => {
+    return expenseCategories.map(c => {
+      const spent = expenseTx.filter(t => t.categoryId === c.id).reduce((s, t) => s + toUsd(Number(t.amount), Number(t.exchangeRateToUsd)), 0);
+      const limit = budgetMap.get(c.id) || 0;
+      const pct   = limit > 0 ? (spent / limit) * 100 : 0;
+      const txCount = expenseTx.filter(t => t.categoryId === c.id).length;
+      let status: "safe" | "warning" | "danger" = "safe";
+      if (limit > 0) {
+        if (pct >= 100) status = "danger";
+        else if (pct >= 85) status = "warning";
+      }
+      return { cat: c, spent, limit, pct, status, txCount };
+    }).sort((a, b) => b.spent - a.spent);
+  }, [expenseCategories, expenseTx, budgetMap]);
 
-  const warnCats   = catData.filter(d => d.status === "warning");
+  const atRisk     = catData.filter(d => d.status !== "safe").length;
   const dangerCats = catData.filter(d => d.status === "danger");
-  const atRisk     = warnCats.length + dangerCats.length;
+  const warnCats   = catData.filter(d => d.status === "warning");
 
-  /* days remaining */
-  const daysInMonth = getDaysInMonth(new Date(selectedYear, selectedMonth - 1));
-  const isCurrentMonth = now.getMonth() + 1 === selectedMonth && now.getFullYear() === selectedYear;
-  const dayOfMonth  = isCurrentMonth ? now.getDate() : daysInMonth;
-  const daysLeft    = daysInMonth - dayOfMonth;
-
-  /* daily spending chart */
+  /* chart: daily spending */
   const dailyChartData = useMemo(() => {
     const days: Record<number, number> = {};
+    for (let i = 1; i <= daysInMonth; i++) days[i] = 0;
     expenseTx.forEach(t => {
-      const d = new Date(t.date).getDate();
-      days[d] = (days[d] || 0) + toUsd(Number(t.amount), Number(t.exchangeRateToUsd));
+      const day = new Date(t.date).getDate();
+      days[day] += toUsd(Number(t.amount), Number(t.exchangeRateToUsd));
     });
-    return Array.from({ length: daysInMonth }, (_, i) => ({
-      day: `${i + 1}`,
-      amount: parseFloat((days[i + 1] || 0).toFixed(2)),
-    }));
+    return Object.entries(days).map(([day, amount]) => ({ day, amount }));
   }, [expenseTx, daysInMonth]);
 
-  /* donut data */
-  const donutData = catData.filter(d => d.spent > 0).map((d, i) => ({
-    name: d.cat.name, value: parseFloat(d.spent.toFixed(2)), color: d.cat.color || DONUT_COLORS[i % DONUT_COLORS.length],
-  }));
+  /* chart: cat donut */
+  const donutData = useMemo(() => {
+    return catData.filter(d => d.spent > 0).map((d, i) => ({
+      name: d.cat.name,
+      value: d.spent,
+      color: d.cat.color || DONUT_COLORS[i % DONUT_COLORS.length]
+    }));
+  }, [catData]);
 
-  /* filtered transactions for table */
   const displayTx = useMemo(() => {
     let list = [...expenseTx].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     if (catFilter !== "all") list = list.filter(t => t.categoryId === catFilter);
@@ -161,8 +173,8 @@ export default function ExpensesPage() {
       });
       setFormData({ description: "", amount: "", categoryId: "", date: now.toISOString().split("T")[0], currencyCode: "USD", exchangeRateToUsd: "1" });
       setShowForm(false);
-      toast({ title: "Expense added" });
-    } catch { toast({ title: "Failed to add expense", variant: "destructive" }); }
+      toast({ title: t("common.saveSuccess") });
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   if (isLoading) {
@@ -180,7 +192,7 @@ export default function ExpensesPage() {
               <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  🚨 {atRisk} budget alert{atRisk > 1 ? "s" : ""} active
+                  🚨 {atRisk} {t("budget.overBudget").toLowerCase()} alert{atRisk > 1 ? "s" : ""} active
                 </p>
                 <div className="flex gap-2 mt-1 flex-wrap">
                   {dangerCats.slice(0, 3).map(d => (
@@ -198,7 +210,7 @@ export default function ExpensesPage() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <a href="/budget" className="text-xs font-semibold text-red-600 flex items-center gap-0.5 hover:underline">
-                Review Budget <ChevronRight className="w-3 h-3" />
+                {t("budget.setupBudget")} <ChevronRight className="w-3 h-3" />
               </a>
               <button onClick={() => setAlertDismissed(true)} className="w-6 h-6 rounded-lg flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-red-100">
                 <X className="w-3.5 h-3.5" />
@@ -209,16 +221,16 @@ export default function ExpensesPage() {
         {!alertDismissed && atRisk === 0 && catData.length > 0 && (
           <div className="rounded-2xl p-3 flex items-center gap-2 border border-emerald-100 bg-emerald-50 dark:bg-emerald-950/20 text-xs text-emerald-700">
             <CheckCircle2 className="w-4 h-4 shrink-0" />
-            All categories are within budget for {MONTHS[selectedMonth - 1]}. Great work!
-            <button onClick={() => setAlertDismissed(true)} className="ml-auto text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>
+            {t("budget.onTrack")} — {MONTHS[selectedMonth - 1]}. Great work!
+            <button onClick={() => setAlertDismissed(true)} className="ms-auto text-gray-400 hover:text-gray-600"><X className="w-3 h-3" /></button>
           </div>
         )}
 
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Expenses</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track spending, monitor budgets, find patterns.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("expenses.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("expenses.subtitle")}</p>
           </div>
           <div className="flex items-center gap-2">
             <Select value={String(selectedMonth)} onValueChange={v => setSelectedMonth(Number(v))}>
@@ -230,17 +242,17 @@ export default function ExpensesPage() {
               <SelectContent>{[2024, 2025, 2026].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
             </Select>
             <Button onClick={() => setShowForm(true)} className="gap-2 rounded-xl h-9" style={{ backgroundColor: BRAND }} data-testid="button-add-expense">
-              <Plus className="w-4 h-4" /> Add Expense
+              <Plus className="w-4 h-4" /> {t("expenses.addExpense")}
             </Button>
           </div>
         </div>
 
         {/* ── KPI STRIP ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label="Monthly Income" value={formatAmount(totalIncome)} sub="From income transactions" icon={Wallet} color={MINT} bg="#ECFDF5" />
-          <KpiCard label="Total Spent" value={formatAmount(totalExpenses)} sub={totalIncome > 0 ? `${((totalExpenses/totalIncome)*100).toFixed(0)}% of income` : `${expenseTx.length} transactions`} icon={TrendingDown} color={DANGER} bg="#FEF2F2" />
-          <KpiCard label="Remaining" value={formatAmount(Math.abs(remaining))} sub={remaining < 0 ? "⚠ Over income" : daysLeft > 0 ? `${formatAmount(remaining / Math.max(1, daysLeft))}/day · ${daysLeft}d left` : "Month complete"} icon={Calculator} color={remaining >= 0 ? BRAND : DANGER} bg="#EEF4FF" />
-          <KpiCard label="Budget Health" value={atRisk > 0 ? `${atRisk} Alert${atRisk > 1 ? "s" : ""}` : "All Safe ✅"} sub={`${warnCats.length} warning · ${dangerCats.length} over`} icon={Shield} color={atRisk > 0 ? DANGER : MINT} bg={atRisk > 0 ? "#FEF2F2" : "#ECFDF5"} />
+          <KpiCard label={t("expenses.thisMonth")} value={formatAmount(totalIncome)} sub="From income transactions" icon={Wallet} color={MINT} bg="#ECFDF5" />
+          <KpiCard label={t("expenses.totalExpenses")} value={formatAmount(totalExpenses)} sub={totalIncome > 0 ? `${((totalExpenses/totalIncome)*100).toFixed(0)}% of income` : `${expenseTx.length} transactions`} icon={TrendingDown} color={DANGER} bg="#FEF2F2" />
+          <KpiCard label={t("expenses.remaining")} value={formatAmount(Math.abs(remaining))} sub={remaining < 0 ? "⚠ Over income" : daysLeft > 0 ? `${formatAmount(remaining / Math.max(1, daysLeft))}/day · ${daysLeft}d left` : "Month complete"} icon={Calculator} color={remaining >= 0 ? BRAND : DANGER} bg="#EEF4FF" />
+          <KpiCard label={t("aiReports.financialHealth")} value={atRisk > 0 ? `${atRisk} Alert${atRisk > 1 ? "s" : ""}` : "All Safe ✅"} sub={`${warnCats.length} warning · ${dangerCats.length} over`} icon={Shield} color={atRisk > 0 ? DANGER : MINT} bg={atRisk > 0 ? "#FEF2F2" : "#ECFDF5"} />
         </div>
 
         {/* ── BUDGET VS ACTUAL ── */}
@@ -249,10 +261,10 @@ export default function ExpensesPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 dark:text-white text-base">
-                  Budget vs Actual — {MONTHS[selectedMonth - 1]} {selectedYear}
+                  {t("expenses.budgetVsActual")} — {MONTHS[selectedMonth - 1]} {selectedYear}
                 </h3>
                 <a href="/budget" className="text-xs font-semibold flex items-center gap-0.5" style={{ color: BRAND }}>
-                  Edit budgets <ChevronRight className="w-3 h-3" />
+                  {t("budget.editBudget")} <ChevronRight className="w-3 h-3" />
                 </a>
               </div>
               <div className="space-y-3">
@@ -269,8 +281,8 @@ export default function ExpensesPage() {
                       </div>
                       <div className="flex-1">
                         <div className="flex justify-between text-[10px] text-gray-400 mb-1">
-                          <span>Spent {formatAmount(spent)}</span>
-                          {limit > 0 && <span>Limit {formatAmount(limit)}</span>}
+                          <span>{t("expenses.spent")} {formatAmount(spent)}</span>
+                          {limit > 0 && <span>{t("expenses.budget")} {formatAmount(limit)}</span>}
                         </div>
                         <div className="h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
                           {limit > 0 ? (
@@ -282,7 +294,7 @@ export default function ExpensesPage() {
                       </div>
                       <div className="text-right w-24 shrink-0">
                         <p className="text-xs font-bold tabular-nums" style={{ color: barColor }}>
-                          {limit > 0 ? `${pct.toFixed(0)}%` : "No limit"}
+                          {limit > 0 ? `${pct.toFixed(0)}%` : t("common.none")}
                         </p>
                         <p className="text-[10px] text-gray-400">
                           {limit > 0 && spent > limit ? `over by ${formatAmount(spent - limit)}` : limit > 0 ? `${formatAmount(limit - spent)} left` : ""}
@@ -298,7 +310,7 @@ export default function ExpensesPage() {
                 const totalSpent  = catData.reduce((s, d) => s + d.spent, 0);
                 return totalBudget > 0 ? (
                   <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-800 flex justify-between text-xs text-gray-500">
-                    <span>Total: <strong className="text-gray-700 dark:text-gray-300">{formatAmount(totalSpent)}</strong> of <strong>{formatAmount(totalBudget)}</strong></span>
+                    <span>{t("common.total")}: <strong className="text-gray-700 dark:text-gray-300">{formatAmount(totalSpent)}</strong> of <strong>{formatAmount(totalBudget)}</strong></span>
                     <span style={{ color: totalSpent > totalBudget ? DANGER : MINT }}>
                       {totalSpent > totalBudget ? `${formatAmount(totalSpent - totalBudget)} over` : `${formatAmount(totalBudget - totalSpent)} remaining`}
                     </span>
@@ -314,13 +326,13 @@ export default function ExpensesPage() {
           {/* daily spending bar chart */}
           <Card className="lg:col-span-2 border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardContent className="p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">Daily Spending — {MONTHS[selectedMonth - 1]}</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">{t("dashboard.cashflowTrend")} — {MONTHS[selectedMonth - 1]}</h3>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={dailyChartData} barSize={8}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="day" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => Number(v) % 5 === 0 ? v : ""} />
                   <YAxis tick={{ fontSize: 10 }} tickLine={false} axisLine={false} tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} />
-                  <Tooltip formatter={(v: any) => [formatAmount(v), "Spent"]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                  <Tooltip formatter={(v: any) => [formatAmount(v), t("expenses.spent")]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
                   <Bar dataKey="amount" fill={DANGER} radius={[3, 3, 0, 0]} opacity={0.8} />
                 </BarChart>
               </ResponsiveContainer>
@@ -330,7 +342,7 @@ export default function ExpensesPage() {
           {/* category donut */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardContent className="p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-3">Category Breakdown</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-3">{t("expenses.byCategory")}</h3>
               {donutData.length > 0 ? (
                 <>
                   <div className="flex items-center justify-center">
@@ -341,8 +353,8 @@ export default function ExpensesPage() {
                         </Pie>
                       </PieChart>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-[10px] text-gray-400">total</span>
-                        <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums">{formatAmount(totalExpenses)}</span>
+                        <span className="text-[10px] text-gray-400">{t("common.total").toLowerCase()}</span>
+                        <span className="text-sm font-bold text-gray-900 dark:text-white tabular-nums" dir="ltr">{formatAmount(totalExpenses)}</span>
                       </div>
                     </div>
                   </div>
@@ -353,13 +365,13 @@ export default function ExpensesPage() {
                           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: d.color }} />
                           <span className="text-gray-600 dark:text-gray-400 truncate">{d.name}</span>
                         </div>
-                        <span className="font-semibold tabular-nums text-gray-700 dark:text-gray-300">{formatAmount(d.value)}</span>
+                        <span className="font-semibold tabular-nums text-gray-700 dark:text-gray-300" dir="ltr">{formatAmount(d.value)}</span>
                       </div>
                     ))}
                   </div>
                 </>
               ) : (
-                <p className="text-xs text-gray-400 text-center py-8">No expenses this month</p>
+                <p className="text-xs text-gray-400 text-center py-8">{t("expenses.noEntries")}</p>
               )}
             </CardContent>
           </Card>
@@ -370,15 +382,15 @@ export default function ExpensesPage() {
           <CardContent className="p-5">
             <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between mb-4">
               <h3 className="font-semibold text-gray-900 dark:text-white text-base">
-                Expense Entries
-                <span className="ml-2 text-xs font-normal text-gray-400">({expenseTx.length} transactions)</span>
+                {t("expenses.expenseEntries")}
+                <span className="ms-2 text-xs font-normal text-gray-400">({expenseTx.length} {t("expenses.expenseEntries").toLowerCase()})</span>
               </h3>
               {/* category filter pills */}
               <div className="flex gap-1.5 flex-wrap">
                 <button onClick={() => setCatFilter("all")}
                   className={cn("px-2.5 py-1 rounded-full text-[11px] font-medium transition-all", catFilter !== "all" && "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400")}
                   style={catFilter === "all" ? { backgroundColor: BRAND, color: "#fff" } : {}}>
-                  All ({expenseTx.length})
+                  {t("common.all")} ({expenseTx.length})
                 </button>
                 {catData.filter(d => d.txCount > 0).slice(0, 5).map(d => (
                   <button key={d.cat.id} onClick={() => setCatFilter(catFilter === d.cat.id ? "all" : d.cat.id)}
@@ -392,9 +404,9 @@ export default function ExpensesPage() {
 
             {displayTx.length === 0 ? (
               <div className="text-center py-10">
-                <p className="text-sm text-gray-400">No expenses recorded this month.</p>
+                <p className="text-sm text-gray-400">{t("expenses.noEntries")}</p>
                 <Button onClick={() => setShowForm(true)} className="mt-3 gap-1.5 rounded-xl" style={{ backgroundColor: BRAND }}>
-                  <Plus className="w-4 h-4" /> Add First Expense
+                  <Plus className="w-4 h-4" /> {t("expenses.addExpense")}
                 </Button>
               </div>
             ) : (
@@ -402,8 +414,8 @@ export default function ExpensesPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-gray-800">
-                      {["Date","Description","Category","Amount",""].map(h => (
-                        <th key={h} className={`py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${h === "Amount" || h === "" ? "text-right" : "text-left"}`}>{h}</th>
+                      {[t("common.date"), t("common.description"), t("common.category"), t("common.amount"), ""].map((h, i) => (
+                        <th key={i} className={`py-2.5 px-3 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${i === 3 || i === 4 ? "text-right" : "text-left"}`}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -417,30 +429,29 @@ export default function ExpensesPage() {
                         return limit && d && d.spent > limit;
                       })();
                       return (
-                        <tr key={t.id} className="border-b border-gray-50 dark:border-gray-800 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors group" data-testid={`row-expense-${t.id}`}
-                          style={isOverBudgetTx ? { borderLeft: `2px solid ${DANGER}` } : {}}>
-                          <td className="py-3 px-3 text-xs text-gray-500">{format(new Date(t.date), "MMM d")}</td>
+                        <tr key={t.id} className="group hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors border-b border-gray-50 dark:border-gray-900 last:border-0">
+                          <td className="py-3 px-3 text-xs text-gray-500 whitespace-nowrap text-xs">{format(new Date(t.date), "MMM d")}</td>
                           <td className="py-3 px-3">
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-medium text-gray-900 dark:text-white text-sm">{t.description}</span>
-                              {isOverBudgetTx && <span title="Over budget" className="text-red-400">🚩</span>}
-                            </div>
+                            <p className="font-medium text-gray-900 dark:text-white text-xs">{t.description}</p>
+                            {isOverBudgetTx && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">Over Budget</span>}
                           </td>
                           <td className="py-3 px-3">
-                            {cat && (
-                              <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: (cat.color || "#64748B") + "20", color: cat.color || "#64748B" }}>
-                                {cat.name}
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 px-3 text-right font-bold tabular-nums" style={{ color: DANGER }}>
-                            -{getCurrencySymbol(t.currencyCode || "USD")}{Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                            {t.currencyCode && t.currencyCode !== "USD" && (
-                              <div className="text-[10px] text-gray-400 font-normal">{formatAmount(toUsd(Number(t.amount), Number(t.exchangeRateToUsd)))}</div>
-                            )}
+                            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500">
+                              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cat?.color || BRAND }} />
+                              {cat?.name || "Other"}
+                            </span>
                           </td>
                           <td className="py-3 px-3 text-right">
-                            <button onClick={() => deleteTransaction.mutateAsync(t.id).then(() => toast({ title: "Deleted" }))} className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all" data-testid={`button-delete-${t.id}`}>
+                            <p className="text-xs font-bold tabular-nums text-gray-900 dark:text-white" dir="ltr">{formatAmount(toUsd(Number(t.amount), Number(t.exchangeRateToUsd)))}</p>
+                            {t.currencyCode !== "USD" && <p className="text-[9px] text-gray-400 tabular-nums">{t.amount} {t.currencyCode}</p>}
+                          </td>
+                          <td className="py-3 px-3 text-right">
+                            <button onClick={async () => {
+                              if (confirm("Delete entry?")) {
+                                await deleteTransaction.mutateAsync(t.id);
+                                toast({ title: "Deleted" });
+                              }
+                            }} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 opacity-0 group-hover:opacity-100 transition-all">
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </td>
@@ -459,7 +470,7 @@ export default function ExpensesPage() {
           <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
             <div className="flex items-center gap-2 mb-4">
               <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base">{t("aiReports.insights")}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {dangerCats.length > 0 ? (
@@ -499,26 +510,26 @@ export default function ExpensesPage() {
       {/* ── ADD EXPENSE DIALOG ── */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>Add Expense</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("expenses.addExpense")}</DialogTitle></DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Description</label>
-              <Input placeholder="e.g. Grocery shopping" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} data-testid="input-description" />
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.description")}</label>
+              <Input placeholder={t("expenses.descriptionPlaceholder")} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} data-testid="input-description" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Amount</label>
-                <Input type="number" step="0.01" placeholder="0.00" value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} data-testid="input-amount" />
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.amount")}</label>
+                <Input type="number" step="0.01" placeholder={t("expenses.amountPlaceholder")} value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} data-testid="input-amount" />
               </div>
               <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Date</label>
+                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.date")}</label>
                 <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} data-testid="input-date" />
               </div>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Category</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.category")}</label>
               <Select value={formData.categoryId || undefined} onValueChange={v => setFormData({ ...formData, categoryId: v })}>
-                <SelectTrigger data-testid="select-category"><SelectValue placeholder="Select category..." /></SelectTrigger>
+                <SelectTrigger data-testid="select-category"><SelectValue placeholder={t("common.search")} /></SelectTrigger>
                 <SelectContent>
                   {expenseCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
                 </SelectContent>
@@ -533,9 +544,9 @@ export default function ExpensesPage() {
               showUsdPreview={true}
             />
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button type="button" variant="outline" className="flex-1" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
               <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }} disabled={createTransaction.isPending} data-testid="button-submit-expense">
-                {createTransaction.isPending ? "Saving…" : "Add Expense"}
+                {createTransaction.isPending ? t("common.saving") : t("expenses.addExpense")}
               </Button>
             </div>
           </form>

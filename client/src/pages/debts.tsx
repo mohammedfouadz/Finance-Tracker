@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useToast } from "@/hooks/use-toast";
+import { useI18n } from "@/lib/i18n";
 import { format, addMonths, differenceInMonths } from "date-fns";
 import {
   Plus, Trash2, Pencil, CreditCard, CheckCircle, AlertTriangle, Percent,
@@ -29,15 +30,15 @@ const PURPLE = "#8B5CF6";
 const DANGER = "#EF4444";
 
 /* ── debt category config ── */
-function debtCategory(reason: string) {
+function debtCategory(reason: string, t: (k: string) => string) {
   const r = (reason || "").toLowerCase();
-  if (r.includes("car") || r.includes("auto") || r.includes("vehicle")) return { icon: Car,           color: BRAND,   bg: "#EEF4FF", label: "Auto" };
-  if (r.includes("home") || r.includes("mortgage") || r.includes("house")) return { icon: Home,          color: AMBER,   bg: "#FFFBEB", label: "Mortgage" };
-  if (r.includes("student") || r.includes("education") || r.includes("school")) return { icon: GraduationCap, color: MINT,    bg: "#F0FDF9", label: "Education" };
-  if (r.includes("credit") || r.includes("card"))  return { icon: CreditCard,   color: PURPLE,  bg: "#F5F3FF", label: "Credit Card" };
-  if (r.includes("medical") || r.includes("health")) return { icon: Heart,         color: "#EC4899", bg: "#FDF2F8", label: "Medical" };
-  if (r.includes("business"))                        return { icon: Briefcase,     color: "#6366F1", bg: "#EEF2FF", label: "Business" };
-  return { icon: DollarSign, color: "#64748B", bg: "#F1F5F9", label: "Personal" };
+  if (r.includes("car") || r.includes("auto") || r.includes("vehicle")) return { icon: Car,           color: BRAND,   bg: "#EEF4FF", label: t("assets.vehicle") };
+  if (r.includes("home") || r.includes("mortgage") || r.includes("house")) return { icon: Home,          color: AMBER,   bg: "#FFFBEB", label: t("debts.mortgage") };
+  if (r.includes("student") || r.includes("education") || r.includes("school")) return { icon: GraduationCap, color: MINT,    bg: "#F0FDF9", label: t("debts.studentLoan") };
+  if (r.includes("credit") || r.includes("card"))  return { icon: CreditCard,   color: PURPLE,  bg: "#F5F3FF", label: t("debts.creditCardDebt") };
+  if (r.includes("medical") || r.includes("health")) return { icon: Heart,         color: "#EC4899", bg: "#FDF2F8", label: t("assets.health") };
+  if (r.includes("business"))                        return { icon: Briefcase,     color: "#6366F1", bg: "#EEF2FF", label: t("assets.business") };
+  return { icon: DollarSign, color: "#64748B", bg: "#F1F5F9", label: t("debts.personalLoan") };
 }
 
 /* ── payoff projection ── */
@@ -81,6 +82,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, trend, trendUp }: {
 /* ── Journey bar ── */
 function JourneyBar({ debts }: { debts: any[] }) {
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const totalOriginal = debts.reduce((s, d) => s + toUsd(Number(d.originalAmount), Number(d.exchangeRateToUsd)), 0);
   const totalRemaining = debts.reduce((s, d) => s + toUsd(Number(d.remainingAmount), Number(d.exchangeRateToUsd)), 0);
   const paid = totalOriginal - totalRemaining;
@@ -95,11 +97,11 @@ function JourneyBar({ debts }: { debts: any[] }) {
           <div>
             <h3 className="font-bold text-gray-900 dark:text-white text-base">Your Debt-Free Journey</h3>
             <p className="text-xs text-gray-400 mt-0.5">
-              You've paid off {pct.toFixed(1)}% — {pct >= 50 ? "more than halfway there! 🚀" : "keep going, every payment counts!"}
+              {t("common.percentage", { percentage: pct.toFixed(1) })} — {pct >= 50 ? "more than halfway there! 🚀" : "keep going, every payment counts!"}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-gray-400">Remaining</p>
+            <p className="text-xs text-gray-400">{t("common.remaining")}</p>
             <p className="font-bold text-lg tabular-nums" style={{ color: DANGER }}>{formatAmount(totalRemaining)}</p>
           </div>
         </div>
@@ -166,8 +168,9 @@ function JourneyBar({ debts }: { debts: any[] }) {
 function DebtPaymentHistory({ debt }: { debt: any }) {
   const { data: payments = [] } = useDebtPayments(debt.id);
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const list = (payments as any[]).slice(0, 5);
-  if (!list.length) return <p className="text-xs text-gray-400 py-2 text-center">No payments recorded yet.</p>;
+  if (!list.length) return <p className="text-xs text-gray-400 py-2 text-center">{t("debts.noPayments") || "No payments recorded yet."}</p>;
   return (
     <div className="space-y-1.5 mt-2">
       {list.map((p: any) => (
@@ -189,10 +192,11 @@ function DebtCard({
   debt: any; onEdit: () => void; onDelete: () => void; onRecordPayment: () => void;
 }) {
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
 
-  const cat  = debtCategory(debt.reason || "");
+  const cat  = debtCategory(debt.reason || "", t);
   const Icon = cat.icon;
   const orig = Number(debt.originalAmount);
   const rem  = Number(debt.remainingAmount);
@@ -245,7 +249,7 @@ function DebtCard({
             {/* status pill */}
             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${isPaid ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : isOverdue ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"}`}
               data-testid={`badge-status-${debt.id}`}>
-              {isPaid ? "Paid ✅" : isOverdue ? "Overdue ⚠" : "Active"}
+              {isPaid ? `${t("common.completed")} ✅` : isOverdue ? `${t("common.overdue")} ⚠` : t("common.active")}
             </span>
             {/* three-dot menu */}
             <div className="relative">
@@ -256,10 +260,10 @@ function DebtCard({
               {menuOpen && (
                 <div className="absolute right-0 top-8 z-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-lg py-1 w-36" onMouseLeave={() => setMenuOpen(false)}>
                   <button className="w-full text-left px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2" onClick={() => { setMenuOpen(false); onEdit(); }} data-testid={`button-edit-${debt.id}`}>
-                    <Pencil className="w-3.5 h-3.5" /> Edit
+                    <Pencil className="w-3.5 h-3.5" /> {t("common.edit")}
                   </button>
                   <button className="w-full text-left px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 flex items-center gap-2" onClick={() => { setMenuOpen(false); onDelete(); }} data-testid={`button-delete-${debt.id}`}>
-                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                    <Trash2 className="w-3.5 h-3.5" /> {t("common.delete")}
                   </button>
                 </div>
               )}
@@ -270,19 +274,19 @@ function DebtCard({
         {/* balance row */}
         <div className="grid grid-cols-3 gap-2 bg-gray-50/70 dark:bg-gray-800/30 rounded-xl p-3">
           <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Original</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t("debts.principal")}</p>
             <p className="text-xs font-semibold text-gray-500 tabular-nums mt-0.5" data-testid={`text-original-${debt.id}`}>
               {getCurrencySymbol(debt.currency)}{orig.toLocaleString(undefined, { minimumFractionDigits: 0 })}
             </p>
           </div>
           <div className="text-center">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Remaining</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t("debts.remainingAmount")}</p>
             <p className="text-sm font-bold tabular-nums mt-0.5" style={{ color: isPaid ? MINT : DANGER }} data-testid={`text-remaining-${debt.id}`}>
               {getCurrencySymbol(debt.currency)}{rem.toLocaleString(undefined, { minimumFractionDigits: 0 })}
             </p>
           </div>
           <div className="text-right">
-            <p className="text-[10px] text-gray-400 uppercase tracking-wide">Paid</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wide">{t("debts.paidAmount")}</p>
             <p className="text-xs font-semibold tabular-nums mt-0.5" style={{ color: MINT }}>
               {getCurrencySymbol(debt.currency)}{paid.toLocaleString(undefined, { minimumFractionDigits: 0 })}
             </p>
@@ -292,9 +296,9 @@ function DebtCard({
         {/* progress bar */}
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-gray-400">Progress</span>
+            <span className="text-xs text-gray-400">{t("goals.progress")}</span>
             <span className="text-xs font-bold" style={{ color: pct >= 75 ? MINT : pct >= 25 ? AMBER : DANGER }}>
-              {pct.toFixed(1)}% paid off
+              {t("common.percentage", { percentage: pct.toFixed(1) })} {t("debts.paidAmount").toLowerCase()}
             </span>
           </div>
           <div className="h-3 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-700">
@@ -309,18 +313,18 @@ function DebtCard({
         {/* details grid */}
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
           <div>
-            <span className="text-gray-400">Interest Rate</span>
+            <span className="text-gray-400">{t("debts.interestRate")}</span>
             <p className="font-semibold" style={{ color: rate > 10 ? AMBER : "inherit" }}>
-              {rate > 0 ? `${rate.toFixed(2)}%` : "0% (Interest-free)"} {rate > 10 && "⚠"}
+              {rate > 0 ? `${rate.toFixed(2)}%` : `0% (${t("debts.interestFree") || "Interest-free"})`} {rate > 10 && "⚠"}
             </p>
           </div>
           <div>
-            <span className="text-gray-400">Monthly Payment</span>
-            <p className="font-semibold">{install > 0 ? `${getCurrencySymbol(debt.currency)}${install.toLocaleString()}` : "Not set"}</p>
+            <span className="text-gray-400">{t("debts.monthlyPayment")}</span>
+            <p className="font-semibold">{install > 0 ? `${getCurrencySymbol(debt.currency)}${install.toLocaleString()}` : t("common.none")}</p>
           </div>
           {debt.dueDate && (
             <div>
-              <span className="text-gray-400">Next Due</span>
+              <span className="text-gray-400">{t("debts.dueDate")}</span>
               <p className={`font-semibold ${isOverdue ? "text-red-500" : ""}`} data-testid={`text-due-date-${debt.id}`}>
                 {format(new Date(debt.dueDate), "MMM d, yyyy")} {isOverdue && "⚠"}
               </p>
@@ -328,18 +332,18 @@ function DebtCard({
           )}
           {freeDate && (
             <div>
-              <span className="text-gray-400">Debt-Free Est.</span>
+              <span className="text-gray-400">{t("debts.debtFreeEst") || "Debt-Free Est."}</span>
               <p className="font-semibold" style={{ color: MINT }}>{format(freeDate, "MMM yyyy")}</p>
             </div>
           )}
           {months && (
             <div>
-              <span className="text-gray-400">Months Left</span>
+              <span className="text-gray-400">{t("debts.monthsLeft") || "Months Left"}</span>
               <p className="font-semibold">{months} mo</p>
             </div>
           )}
           <div>
-            <span className="text-gray-400">Status</span>
+            <span className="text-gray-400">{t("common.status")}</span>
             <p className="font-semibold capitalize">{debt.paymentPlan || "—"}</p>
           </div>
         </div>
@@ -368,19 +372,19 @@ function DebtCard({
         {/* footer actions */}
         <div className="flex gap-2 pt-1 border-t border-gray-50 dark:border-gray-800">
           <Button size="sm" className="flex-1 gap-1.5 text-xs h-8 rounded-xl" style={{ backgroundColor: BRAND }} onClick={onRecordPayment} data-testid={`button-record-payment-${debt.id}`}>
-            <CreditCard className="w-3.5 h-3.5" /> Record Payment
+            <CreditCard className="w-3.5 h-3.5" /> {t("debts.makePayment")}
           </Button>
           <button
             onClick={() => setShowHistory(h => !h)}
             className="h-8 px-3 rounded-xl border border-gray-200 dark:border-gray-700 text-xs text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors flex items-center gap-1">
-            History <ChevronRight className={`w-3 h-3 transition-transform ${showHistory ? "rotate-90" : ""}`} />
+            {t("debts.paymentHistory")} <ChevronRight className={`w-3 h-3 transition-transform ${showHistory ? "rotate-90" : ""}`} />
           </button>
         </div>
 
         {/* expandable payment history */}
         {showHistory && (
           <div className="border-t border-gray-50 dark:border-gray-800 pt-3">
-            <p className="text-xs font-semibold text-gray-500 mb-2">Recent Payments</p>
+            <p className="text-xs font-semibold text-gray-500 mb-2">{t("debts.recentPayments") || "Recent Payments"}</p>
             <DebtPaymentHistory debt={debt} />
           </div>
         )}
@@ -392,6 +396,7 @@ function DebtCard({
 /* ── extra payment calculator ── */
 function ExtraPaymentCalculator({ debts }: { debts: any[] }) {
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const [extra, setExtra] = useState(100);
 
   const totalInstall = debts.reduce((s, d) => s + (Number(d.installmentAmount) || 0), 0);
@@ -405,13 +410,13 @@ function ExtraPaymentCalculator({ debts }: { debts: any[] }) {
     <div>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">Extra Payment Calculator</h4>
-          <p className="text-xs text-gray-400">See how extra payments help</p>
+          <h4 className="font-semibold text-gray-900 dark:text-white text-sm">{t("debts.extraPaymentCalc") || "Extra Payment Calculator"}</h4>
+          <p className="text-xs text-gray-400">{t("debts.extraPaymentDesc") || "See how extra payments help"}</p>
         </div>
         <BarChart2 className="w-4 h-4 text-gray-400" />
       </div>
       <div className="mb-3">
-        <label className="text-xs text-gray-500 mb-1 block">Extra monthly amount</label>
+        <label className="text-xs text-gray-500 mb-1 block">{t("debts.extraAmount") || "Extra monthly amount"}</label>
         <div className="flex items-center gap-2">
           <input
             type="range" min={0} max={1000} step={25} value={extra}
@@ -426,11 +431,11 @@ function ExtraPaymentCalculator({ debts }: { debts: any[] }) {
         <div className="bg-gray-50 dark:bg-gray-800/40 rounded-xl p-3 text-xs space-y-1">
           {monthsSaved > 0 ? (
             <>
-              <p className="font-semibold" style={{ color: MINT }}>🎉 Debt-free {monthsSaved} months sooner!</p>
-              <p className="text-gray-500">Est. interest saved: <strong style={{ color: MINT }}>{formatAmount(interestSaved)}</strong></p>
+              <p className="font-semibold" style={{ color: MINT }}>{t("debts.debtFreeSooner", { months: String(monthsSaved) }) || `🎉 Debt-free ${monthsSaved} months sooner!`}</p>
+              <p className="text-gray-500">{t("debts.interestSaved") || "Est. interest saved"}: <strong style={{ color: MINT }}>{formatAmount(interestSaved)}</strong></p>
             </>
           ) : (
-            <p className="text-gray-400">Add more to see faster payoff estimates</p>
+            <p className="text-gray-400">{t("debts.addMoreEstimates") || "Add more to see faster payoff estimates"}</p>
           )}
         </div>
       )}
@@ -452,6 +457,7 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
   onCreate: (d: any) => void; onUpdate: (d: any) => void; isPending: boolean;
 }) {
   const [form, setForm] = useState(emptyDebtForm);
+  const { t } = useI18n();
 
   useMemo(() => {
     if (editingDebt) {
@@ -506,59 +512,59 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editingDebt ? "Edit Debt" : "Add New Debt"}</DialogTitle>
+          <DialogTitle>{editingDebt ? t("debts.editDebt") : t("debts.addDebt")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Creditor Name</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.creditor")}</label>
               <Input placeholder="e.g. Toyota Financial, Bank ABC" value={form.creditorName} onChange={f("creditorName")} data-testid="input-creditor-name" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Original Amount</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.principal")}</label>
               <Input type="number" step="0.01" placeholder="0.00" value={form.originalAmount} onChange={f("originalAmount")} data-testid="input-original-amount" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Remaining Amount</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.remainingAmount")}</label>
               <Input type="number" step="0.01" placeholder="0.00" value={form.remainingAmount} onChange={f("remainingAmount")} data-testid="input-remaining-amount" />
             </div>
             <div className="col-span-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Reason / Purpose</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.category")}</label>
               <Input placeholder="e.g. Car loan, Credit card, Student loan" value={form.reason} onChange={f("reason")} data-testid="input-reason" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Date Taken</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.startDate")}</label>
               <Input type="date" value={form.dateTaken} onChange={f("dateTaken")} data-testid="input-date-taken" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Due Date (optional)</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.dueDate")}</label>
               <Input type="date" value={form.dueDate} onChange={f("dueDate")} data-testid="input-due-date" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Interest Rate % (APR)</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.interestRate")} % (APR)</label>
               <Input type="number" step="0.01" placeholder="0.00" value={form.interestRate} onChange={f("interestRate")} data-testid="input-interest-rate" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Monthly Installment</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.monthlyPayment")}</label>
               <Input type="number" step="0.01" placeholder="0.00" value={form.installmentAmount} onChange={f("installmentAmount")} data-testid="input-installment-amount" />
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Status</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.status")}</label>
               <Select value={form.status} onValueChange={v => setForm(p => ({ ...p, status: v }))}>
                 <SelectTrigger data-testid="select-status"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="paid">Paid Off</SelectItem>
+                  <SelectItem value="active">{t("common.active")}</SelectItem>
+                  <SelectItem value="paid">{t("common.completed")}</SelectItem>
                   <SelectItem value="restructured">Restructured</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Payment Plan</label>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.debtType")}</label>
               <Select value={form.paymentPlan} onValueChange={v => setForm(p => ({ ...p, paymentPlan: v }))}>
                 <SelectTrigger data-testid="select-payment-plan"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Monthly">Monthly</SelectItem>
+                  <SelectItem value="Monthly">{t("common.month")}</SelectItem>
                   <SelectItem value="Weekly">Weekly</SelectItem>
                   <SelectItem value="Custom">Custom</SelectItem>
                 </SelectContent>
@@ -573,13 +579,13 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
             showUsdPreview={false}
           />
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Notes</label>
-            <Textarea placeholder="Optional notes…" value={form.notes} onChange={f("notes")} rows={2} data-testid="input-notes" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.notes")}</label>
+            <Textarea placeholder={t("common.optional")} value={form.notes} onChange={f("notes")} rows={2} data-testid="input-notes" />
           </div>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }} disabled={!valid || isPending} data-testid="button-submit-debt">
-              {isPending ? "Saving…" : editingDebt ? "Update" : "Add Debt"}
+              {isPending ? t("common.saving") : editingDebt ? t("common.save") : t("debts.addDebt")}
             </Button>
           </div>
         </form>
@@ -594,34 +600,35 @@ function PaymentDialog({ open, onOpenChange, debt, onSubmit, isPending }: {
   debt: any | null; onSubmit: (debtId: number, data: any) => void; isPending: boolean;
 }) {
   const [form, setForm] = useState({ amount: "", paymentDate: new Date().toISOString().split("T")[0], notes: "" });
+  const { t } = useI18n();
   useMemo(() => { setForm({ amount: debt?.installmentAmount ? String(debt.installmentAmount) : "", paymentDate: new Date().toISOString().split("T")[0], notes: "" }); }, [debt, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Record Payment — {debt?.creditorName}</DialogTitle>
+          <DialogTitle>{t("debts.makePayment")} — {debt?.creditorName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Amount</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.amount")}</label>
             <Input type="number" step="0.01" placeholder="0.00" value={form.amount} onChange={e => setForm(p => ({ ...p, amount: e.target.value }))} data-testid="input-payment-amount" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Payment Date</label>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.date")}</label>
             <Input type="date" value={form.paymentDate} onChange={e => setForm(p => ({ ...p, paymentDate: e.target.value }))} data-testid="input-payment-date" />
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Notes (optional)</label>
-            <Input placeholder="e.g. Bank transfer" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} data-testid="input-payment-notes" />
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.notes")} ({t("common.optional")})</label>
+            <Input placeholder="..." value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} data-testid="input-payment-notes" />
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>Cancel</Button>
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>{t("common.cancel")}</Button>
             <Button className="flex-1" style={{ backgroundColor: BRAND }}
               disabled={!form.amount || isPending}
               onClick={() => debt && onSubmit(debt.id, form)}
               data-testid="button-submit-payment">
-              {isPending ? "Saving…" : "Record Payment"}
+              {isPending ? t("common.saving") : t("debts.makePayment")}
             </Button>
           </div>
         </div>
@@ -640,6 +647,7 @@ export default function DebtsPage() {
   const createDebtPayment = useCreateDebtPayment();
   const { toast }  = useToast();
   const { formatAmount } = useCurrency();
+  const { t, lang, isRtl } = useI18n();
 
   const allDebts = debts as any[];
 
@@ -669,19 +677,19 @@ export default function DebtsPage() {
   const openPay    = (d: any) => { setPayTarget(d); setPayDialog(true); };
 
   const handleCreate = async (data: any) => {
-    try { await createDebt.mutateAsync(data); toast({ title: "Debt added" }); setDebtDialog(false); }
-    catch { toast({ title: "Failed to add", variant: "destructive" }); }
+    try { await createDebt.mutateAsync(data); toast({ title: t("common.saveSuccess") }); setDebtDialog(false); }
+    catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const handleUpdate = async (data: any) => {
-    try { await updateDebt.mutateAsync(data); toast({ title: "Debt updated" }); setDebtDialog(false); }
-    catch { toast({ title: "Failed to update", variant: "destructive" }); }
+    try { await updateDebt.mutateAsync(data); toast({ title: t("common.saveSuccess") }); setDebtDialog(false); }
+    catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Delete this debt? This cannot be undone.")) return;
-    try { await deleteDebt.mutateAsync(id); toast({ title: "Debt deleted" }); }
-    catch { toast({ title: "Failed to delete", variant: "destructive" }); }
+    if (!confirm(t("common.confirmDelete"))) return;
+    try { await deleteDebt.mutateAsync(id); toast({ title: t("common.deleteSuccess") }); }
+    catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   const handlePayment = async (debtId: number, formData: any) => {
@@ -695,9 +703,9 @@ export default function DebtsPage() {
         paymentDate: new Date(formData.paymentDate),
         notes: formData.notes || undefined,
       });
-      toast({ title: "Payment recorded" });
+      toast({ title: t("common.saveSuccess") });
       setPayDialog(false);
-    } catch { toast({ title: "Failed to record payment", variant: "destructive" }); }
+    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
   };
 
   if (isLoading) {
@@ -717,12 +725,12 @@ export default function DebtsPage() {
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Debt Management</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track payments, crush debt faster, and save on interest.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("debts.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("debts.subtitle")}</p>
           </div>
           <div className="flex gap-2 items-center">
             <Button onClick={openCreate} className="gap-2 rounded-xl shadow-sm" style={{ backgroundColor: BRAND }} data-testid="button-add-debt">
-              <Plus className="w-4 h-4" /> Add Debt
+              <Plus className="w-4 h-4" /> {t("debts.addDebt")}
             </Button>
           </div>
         </div>
@@ -730,27 +738,27 @@ export default function DebtsPage() {
         {/* ── KPI STRIP ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            label="Total Debt"
+            label={t("debts.totalDebt")}
             value={formatAmount(totalDebt)}
-            sub={`Across ${activeDebts.length} active debt${activeDebts.length !== 1 ? "s" : ""}`}
+            sub={t("dashboard.activeDebts", { count: String(activeDebts.length) })}
             icon={DollarSign}
             color={DANGER}
             bg="#FEF2F2"
-            trend={totalPaid > 0 ? `${formatAmount(totalPaid)} paid off` : undefined}
+            trend={totalPaid > 0 ? `${formatAmount(totalPaid)} ${t("debts.paidAmount").toLowerCase()}` : undefined}
             trendUp={false}
           />
           <KpiCard
-            label="Active Debts"
+            label={t("debts.activeDebts")}
             value={String(activeDebts.length)}
-            sub={paidDebts.length > 0 ? `${paidDebts.length} paid off 🎉` : "Keep going!"}
+            sub={paidDebts.length > 0 ? `${paidDebts.length} ${t("debts.paidAmount").toLowerCase()} 🎉` : "Keep going!"}
             icon={AlertTriangle}
             color={AMBER}
             bg="#FFFBEB"
           />
           <KpiCard
-            label="Debt-Free Date"
+            label={t("debts.debtFreeEst") || "Debt-Free Date"}
             value={globalFreeDate ? format(globalFreeDate, "MMM yyyy") : "—"}
-            sub={globalMonths ? `${globalMonths} months remaining` : "Set installment amounts"}
+            sub={globalMonths ? `${globalMonths} ${t("debts.monthsLeft") || "months remaining"}` : "Set installment amounts"}
             icon={Flag}
             color="#10B981"
             bg="#ECFDF5"
@@ -758,7 +766,7 @@ export default function DebtsPage() {
             trendUp={true}
           />
           <KpiCard
-            label="Avg Interest Rate"
+            label={t("debts.avgApr") || "Avg Interest Rate"}
             value={avgRate > 0 ? `${avgRate.toFixed(1)}%` : "0%"}
             sub={avgRate > 10 ? "⚠ High-interest debt — prioritize payoff" : avgRate > 0 ? "Moderate — manageable" : "Interest-free 🎉"}
             icon={Percent}
@@ -778,11 +786,11 @@ export default function DebtsPage() {
                 <CheckCircle className="w-8 h-8" style={{ color: MINT }} />
               </div>
               <div>
-                <p className="font-bold text-gray-700 dark:text-gray-300 text-xl">You're debt-free! 🎉</p>
-                <p className="text-sm text-gray-400 mt-1">Keep it that way. You can also track any debt to stay on top of it.</p>
+                <p className="font-bold text-gray-700 dark:text-gray-300 text-xl">{t("debts.debtFreeMessage") || "You're debt-free! 🎉"}</p>
+                <p className="text-sm text-gray-400 mt-1">{t("debts.noActiveDebts") || "Keep it that way. You can also track any debt to stay on top of it."}</p>
               </div>
               <Button onClick={openCreate} className="gap-2 rounded-xl mt-2" style={{ backgroundColor: BRAND }}>
-                <Plus className="w-4 h-4" /> Track a Debt
+                <Plus className="w-4 h-4" /> {t("debts.addDebt")}
               </Button>
             </CardContent>
           </Card>
@@ -794,9 +802,9 @@ export default function DebtsPage() {
             <div className="lg:col-span-2 space-y-5">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-gray-900 dark:text-white text-base">
-                  Your Debts
-                  <span className="ml-2 text-xs font-normal text-gray-400">
-                    ({activeDebts.length} active · {paidDebts.length} paid off)
+                  {t("debts.activeDebts")}
+                  <span className="ms-2 text-xs font-normal text-gray-400">
+                    ({activeDebts.length} {t("common.active").toLowerCase()} · {paidDebts.length} {t("common.completed").toLowerCase()})
                   </span>
                 </h2>
               </div>
@@ -817,7 +825,7 @@ export default function DebtsPage() {
                 className="w-full rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2 py-8 text-gray-400 hover:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-all"
                 data-testid="button-add-ghost">
                 <Plus className="w-4 h-4" />
-                <span className="text-sm font-medium">Add Another Debt</span>
+                <span className="text-sm font-medium">{t("debts.addDebt")}</span>
               </button>
             </div>
 
@@ -829,7 +837,7 @@ export default function DebtsPage() {
                 <CardContent className="p-4 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
                   <div className="flex items-center gap-2 mb-2">
                     <Flame className="w-4 h-4 text-orange-500" />
-                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">Payoff Strategy</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">{t("debts.payoffStrategy") || "Payoff Strategy"}</span>
                   </div>
                   {(() => {
                     const highInt = [...activeDebts].sort((a, b) => Number(b.interestRate) - Number(a.interestRate))[0];
@@ -882,14 +890,14 @@ export default function DebtsPage() {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-sm text-gray-900 dark:text-white">Upcoming Payments</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white">{t("debts.recentPayments") || "Upcoming Payments"}</span>
                   </div>
                   <div className="space-y-2">
                     {activeDebts.length === 0 ? (
-                      <p className="text-xs text-gray-400 text-center py-3">No active debts</p>
+                      <p className="text-xs text-gray-400 text-center py-3">{t("common.noData")}</p>
                     ) : (
                       activeDebts.slice(0, 5).map((d, i) => {
-                        const cat = debtCategory(d.reason || "");
+                        const cat = debtCategory(d.reason || "", t);
                         const install = Number(d.installmentAmount);
                         return (
                           <div key={d.id} className="flex items-center justify-between">
@@ -912,7 +920,7 @@ export default function DebtsPage() {
                   </div>
                   {activeDebts.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-800 flex justify-between text-xs">
-                      <span className="text-gray-400">Total this period</span>
+                      <span className="text-gray-400">{t("common.total")} {t("common.thisMonth").toLowerCase()}</span>
                       <span className="font-bold" style={{ color: DANGER }}>
                         {formatAmount(activeDebts.reduce((s, d) => s + (Number(d.installmentAmount) || 0), 0))}
                       </span>
@@ -944,7 +952,7 @@ export default function DebtsPage() {
                     style={{ color: PURPLE }}
                     onClick={() => (window.location.href = "/ai-reports")}
                     data-testid="button-ai-coach">
-                    Get Full Analysis <ChevronRight className="w-3 h-3" />
+                    {t("common.viewAll")} AI Reports <ChevronRight className="w-3 h-3" />
                   </Button>
                 </CardContent>
               </Card>

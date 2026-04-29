@@ -17,6 +17,7 @@ import { insertGoalSchema } from "@shared/schema";
 import { useCurrency, toUsd } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useAuth } from "@/hooks/use-auth";
+import { useI18n } from "@/lib/i18n";
 import { format, differenceInMonths, differenceInDays, isPast } from "date-fns";
 import {
   Plus, Target, Calendar, MoreHorizontal, ChevronDown, ChevronUp,
@@ -268,6 +269,7 @@ function GoalFormDialog({ trigger, initial, onSave }: {
 /* ── single goal card ── */
 function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
   const { formatAmount } = useCurrency();
+  const { t, lang, isRtl } = useI18n();
   const deleteGoal       = useDeleteGoal();
   const updateGoal       = useUpdateGoal();
   const { user }         = useAuth();
@@ -314,8 +316,8 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
                 style={{ backgroundColor: meta.bg, color: meta.color }}>
                 {meta.label}
               </span>
-              {isCompleted  && <Badge className="text-xs py-0 h-4 w-fit bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-0">Completed ✓</Badge>}
-              {daysOverdue > 0 && <Badge variant="destructive" className="text-xs py-0 h-4 w-fit border-0">Overdue {daysOverdue}d</Badge>}
+              {isCompleted  && <Badge className="text-xs py-0 h-4 w-fit bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 border-0">{t("common.completed")} ✓</Badge>}
+              {daysOverdue > 0 && <Badge variant="destructive" className="text-xs py-0 h-4 w-fit border-0">{t("common.overdue")} {daysOverdue}d</Badge>}
             </div>
           </div>
 
@@ -333,7 +335,7 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
                   trigger={
                     <button className="w-full flex items-center gap-2 px-3 py-2 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       onClick={() => setMenuOpen(false)}>
-                      <Edit3 className="w-3.5 h-3.5" /> Edit Goal
+                      <Edit3 className="w-3.5 h-3.5" /> {t("common.edit")}
                     </button>
                   }
                   initial={{
@@ -345,13 +347,20 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
                     exchangeRateToUsd: String(goal.exchangeRateToUsd),
                     deadline: goal.deadline ? goal.deadline.split("T")[0] : undefined,
                   }}
-                  onSave={async v => { await updateGoal.mutateAsync({ id: goal.id, ...v }); setMenuOpen(false); }}
+                  onSave={async v => { 
+                    await updateGoal.mutateAsync({ 
+                      id: goal.id, 
+                      ...v,
+                      deadline: v.deadline ? new Date(v.deadline) : null
+                    } as any); 
+                    setMenuOpen(false); 
+                  }}
                 />
                 <button
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20"
-                  onClick={() => { if (confirm("Delete this goal?")) deleteGoal.mutate(goal.id); setMenuOpen(false); }}
+                  onClick={() => { if (confirm(t("common.confirmDelete"))) deleteGoal.mutate(goal.id); setMenuOpen(false); }}
                   data-testid={`button-delete-goal-${goal.id}`}>
-                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                  <Trash2 className="w-3.5 h-3.5" /> {t("common.delete")}
                 </button>
               </div>
             )}
@@ -367,8 +376,8 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
             <div className="flex items-center gap-1.5 mt-0.5 text-xs text-gray-400">
               <Calendar className="w-3 h-3 shrink-0" />
               {goal.deadline
-                ? <span>{format(new Date(goal.deadline), "MMM d, yyyy")}{monthsLeft !== null && monthsLeft > 0 && <span className="ml-1 text-gray-300">· {monthsLeft}mo</span>}</span>
-                : <span className="italic">No deadline</span>
+                ? <span>{format(new Date(goal.deadline), "MMM d, yyyy")}{monthsLeft !== null && monthsLeft > 0 && <span className="ms-1 text-gray-300">· {monthsLeft}mo</span>}</span>
+                : <span className="italic">{t("goals.noDeadline") || "No deadline"}</span>
               }
             </div>
           </div>
@@ -378,12 +387,12 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
         {/* ── amount row ── */}
         <div className="flex items-center gap-3 py-2.5 border-y border-gray-50 dark:border-gray-800">
           <div className="flex-1">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Saved</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{t("goals.savedAmount")}</p>
             <p className="text-base font-bold text-gray-900 dark:text-white tabular-nums">{formatAmount(curUsd)}</p>
           </div>
           <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
           <div className="flex-1">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">Target</p>
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-0.5">{t("goals.targetAmount")}</p>
             <p className="text-base font-bold tabular-nums" style={{ color: MINT }}>{formatAmount(targetUsd)}</p>
           </div>
         </div>
@@ -395,11 +404,11 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
               style={{ width: `${Math.min(pct, 100)}%`, background: `linear-gradient(90deg, ${BRAND}, ${MINT})` }} />
           </div>
           <div className="flex justify-between text-xs text-gray-400">
-            <span>{formatAmount(remaining)} left</span>
+            <span>{formatAmount(remaining)} {t("goals.left")}</span>
             {isCompleted
-              ? <span className="font-medium" style={{ color: MINT }}>Goal reached 🎉</span>
+              ? <span className="font-medium" style={{ color: MINT }}>{t("goals.goalReached") || "Goal reached 🎉"}</span>
               : monthsLeft !== null && monthsLeft > 0
-                ? <span>{monthsLeft} months remaining</span>
+                ? <span>{monthsLeft} {t("debts.monthsLeft") || "months remaining"}</span>
                 : null
             }
           </div>
@@ -414,7 +423,7 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
               ? { backgroundColor: BRAND, borderColor: BRAND, color: "#fff" }
               : { borderColor: BRAND, color: BRAND }}
             data-testid={`button-contribute-${goal.id}`}>
-            <Plus className="w-3.5 h-3.5" /> Add Contribution
+            <Plus className="w-3.5 h-3.5" /> {t("goals.addContribution")}
           </button>
           <button
             onClick={() => { setExpanded(e => !e); setContributing(false); }}
@@ -430,7 +439,7 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
         {/* ── expanded history ── */}
         {expanded && (
           <div className="pt-3 border-t border-gray-100 dark:border-gray-800">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Contribution History</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t("goals.contributions")}</p>
             <ContribPanel goalId={goal.id} />
           </div>
         )}
@@ -443,6 +452,7 @@ function GoalCard({ goal, onEdit }: { goal: any; onEdit: () => void }) {
 /* ── summary KPI strip ── */
 function SummaryStrip({ goals }: { goals: any[] }) {
   const { formatAmount } = useCurrency();
+  const { t } = useI18n();
   const active       = goals.filter(g => g.status !== "completed");
   const totalTarget  = active.reduce((s, g) => s + toUsd(Number(g.targetAmount),  Number(g.exchangeRateToUsd)), 0);
   const totalSaved   = active.reduce((s, g) => s + toUsd(Number(g.currentAmount), Number(g.exchangeRateToUsd)), 0);
@@ -452,10 +462,10 @@ function SummaryStrip({ goals }: { goals: any[] }) {
   const completedCnt = goals.filter(g => g.status === "completed" || Number(g.currentAmount) >= Number(g.targetAmount)).length;
 
   const cards = [
-    { label: "Total Goals",   val: goals.length,    fmt: (v: any) => String(v),          color: BRAND,  bg: "#EEF4FF", Icon: Target },
-    { label: "Total Target",  val: totalTarget,     fmt: formatAmount,                   color: MINT,   bg: "#ECFDF5", Icon: TrendingUp },
-    { label: "Total Saved",   val: totalSaved,      fmt: formatAmount,                   color: MINT,   bg: "#ECFDF5", Icon: CheckCircle },
-    { label: "Avg Progress",  val: avgPct,          fmt: (v: any) => `${v.toFixed(1)}%`, color: AMBER,  bg: "#FFFBEB", Icon: Star },
+    { label: t("goals.activeGoals"),   val: goals.length,    fmt: (v: any) => String(v),          color: BRAND,  bg: "#EEF4FF", Icon: Target },
+    { label: t("goals.targetAmount"),  val: totalTarget,     fmt: formatAmount,                   color: MINT,   bg: "#ECFDF5", Icon: TrendingUp },
+    { label: t("goals.savedAmount"),   val: totalSaved,      fmt: formatAmount,                   color: MINT,   bg: "#ECFDF5", Icon: CheckCircle },
+    { label: t("goals.progress"),  val: avgPct,          fmt: (v: any) => `${v.toFixed(1)}%`, color: AMBER,  bg: "#FFFBEB", Icon: Star },
   ];
 
   return (
@@ -486,6 +496,7 @@ function SummaryStrip({ goals }: { goals: any[] }) {
 /* ── empty / add card ── */
 const AddCard = forwardRef<HTMLButtonElement, { onAdd?: () => void }>(
   function AddCard({ onAdd, ...props }, ref) {
+    const { t } = useI18n();
     return (
       <button ref={ref} onClick={onAdd} {...props}
         className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl flex flex-col items-center justify-center gap-3 text-gray-400 hover:border-blue-300 hover:text-blue-500 dark:hover:border-blue-700 hover:-translate-y-0.5 transition-all w-full min-h-[300px] group"
@@ -494,8 +505,8 @@ const AddCard = forwardRef<HTMLButtonElement, { onAdd?: () => void }>(
           <Plus className="w-7 h-7" />
         </div>
         <div className="text-center">
-          <p className="font-semibold text-sm">Start a new goal</p>
-          <p className="text-xs mt-0.5 text-gray-300 dark:text-gray-600">Click to set a new financial target</p>
+          <p className="font-semibold text-sm">{t("goals.startGoal") || "Start a new goal"}</p>
+          <p className="text-xs mt-0.5 text-gray-300 dark:text-gray-600">{t("goals.setTarget") || "Click to set a new financial target"}</p>
         </div>
       </button>
     );
@@ -507,6 +518,7 @@ export default function GoalsPage() {
   const { data: goals = [], isLoading } = useGoals();
   const createGoal = useCreateGoal();
   const { user }   = useAuth();
+  const { t, lang, isRtl } = useI18n();
 
   const [filter, setFilter] = useState<"all"|"active"|"completed"|"overdue">("all");
   const [sort,   setSort]   = useState<"deadline"|"progress"|"amount">("deadline");
@@ -542,7 +554,7 @@ export default function GoalsPage() {
   const handleCreate = async (v: any) => { await createGoal.mutateAsync({ ...v, userId: user!.id }); };
 
   const FILTERS: [typeof filter, string][] = [
-    ["all","All"], ["active","Active"], ["completed","Completed"], ["overdue","Overdue"],
+    ["all", t("common.all")], ["active", t("common.active")], ["completed", t("common.completed")], ["overdue", t("common.overdue")],
   ];
 
   if (isLoading) {
@@ -562,14 +574,14 @@ export default function GoalsPage() {
         {/* ── header ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Financial Goals</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Track your progress towards your dreams.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("goals.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("goals.subtitle")}</p>
           </div>
           <GoalFormDialog
             trigger={
               <Button className="gap-2 rounded-xl shadow-md shadow-blue-100 dark:shadow-blue-900/20 self-start sm:self-auto"
                 style={{ backgroundColor: BRAND }} data-testid="button-add-goal">
-                <Plus className="w-4 h-4" /> Add Goal
+                <Plus className="w-4 h-4" /> {t("goals.addGoal")}
               </Button>
             }
             onSave={handleCreate}
@@ -601,11 +613,11 @@ export default function GoalsPage() {
           {/* search + sort */}
           <div className="flex gap-2 w-full sm:w-auto">
             <div className="relative flex-1 sm:w-52">
-              <svg className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+              <svg className={`w-3.5 h-3.5 absolute ${lang === "ar" ? "right-2.5" : "left-2.5"} top-1/2 -translate-y-1/2 text-gray-400`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
                 <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
               </svg>
-              <input placeholder="Search goals…" value={search} onChange={e => setSearch(e.target.value)}
-                className="w-full h-9 pl-8 pr-3 rounded-xl border border-gray-200 dark:border-gray-700 text-xs bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800"
+              <input placeholder={`${t("common.search")}...`} value={search} onChange={e => setSearch(e.target.value)}
+                className={`w-full h-9 ${lang === "ar" ? "pr-8 pl-3" : "pl-8 pr-3"} rounded-xl border border-gray-200 dark:border-gray-700 text-xs bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-800`}
                 data-testid="input-search-goals" />
             </div>
             <Select value={sort} onValueChange={(v: any) => setSort(v)}>
@@ -613,9 +625,9 @@ export default function GoalsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="deadline">Sort: Deadline</SelectItem>
-                <SelectItem value="progress">Sort: Progress</SelectItem>
-                <SelectItem value="amount">Sort: Amount</SelectItem>
+                <SelectItem value="deadline">{t("goals.targetDate")}</SelectItem>
+                <SelectItem value="progress">{t("goals.progress")}</SelectItem>
+                <SelectItem value="amount">{t("goals.targetAmount")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -628,13 +640,13 @@ export default function GoalsPage() {
               <Target className="w-9 h-9 text-blue-400" />
             </div>
             <div>
-              <p className="font-semibold text-gray-700 dark:text-gray-300">No goals yet</p>
-              <p className="text-sm text-gray-400 mt-1">Create your first financial goal to start tracking your progress.</p>
+              <p className="font-semibold text-gray-700 dark:text-gray-300">{t("goals.noGoals")}</p>
+              <p className="text-sm text-gray-400 mt-1">{t("goals.setTarget")}</p>
             </div>
             <GoalFormDialog
               trigger={
                 <Button className="gap-2 mt-2" style={{ backgroundColor: BRAND }} data-testid="button-first-goal">
-                  <Plus className="w-4 h-4" /> Create First Goal
+                  <Plus className="w-4 h-4" /> {t("goals.addGoal")}
                 </Button>
               }
               onSave={handleCreate}

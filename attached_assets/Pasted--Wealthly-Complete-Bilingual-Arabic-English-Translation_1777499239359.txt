@@ -1,0 +1,285 @@
+# 🌍 Wealthly — Complete Bilingual (Arabic/English) Translation Task
+
+You are tasked with completing the full Arabic localization of the Wealthly finance app. The translation infrastructure has been pre-built — your job is to **wire up every page to use it** and ensure full RTL support across the entire app.
+
+---
+
+## ✅ What's Already Done (Don't Redo)
+
+I've prepared the following files. **Replace the existing files** in your project with these new versions:
+
+| File | Action | Path in Project |
+|------|--------|-----------------|
+| `i18n.tsx` | **REPLACE** entirely | `client/src/lib/i18n.tsx` |
+| `rtl-arabic.css` | **APPEND** to main CSS | append into `client/src/index.css` |
+| `layout-sidebar.tsx` | **REPLACE** entirely | `client/src/components/layout-sidebar.tsx` |
+| `auth.tsx` | **REPLACE** entirely | `client/src/pages/auth.tsx` |
+| `not-found.tsx` | **REPLACE** entirely | `client/src/pages/not-found.tsx` |
+
+The new `i18n.tsx` exports:
+- `useI18n()` → `{ t, lang, setLang, isRtl, formatDate, formatNumber }`
+- `formatDate(date, lang, style)` → standalone helper
+- `toArabicDigits(input)` → ٠١٢٣ digits
+
+It contains **600+ translation keys** organized by page (e.g., `dashboard.totalWealth`, `zakat.nisab`, `auth.welcomeBack`).
+
+---
+
+## 🎯 Your Job — Convert Remaining Pages to Use `t()`
+
+### Pages to convert (in priority order):
+
+1. `client/src/pages/dashboard.tsx`
+2. `client/src/pages/landing.tsx`
+3. `client/src/pages/income.tsx`
+4. `client/src/pages/expenses.tsx`
+5. `client/src/pages/bank-accounts.tsx`
+6. `client/src/pages/investments.tsx`
+7. `client/src/pages/assets.tsx`
+8. `client/src/pages/debts.tsx`
+9. `client/src/pages/goals.tsx`
+10. `client/src/pages/budget.tsx`
+11. `client/src/pages/reports.tsx`
+12. `client/src/pages/reports-ai.tsx`
+13. `client/src/pages/zakat.tsx`
+14. `client/src/pages/net-worth.tsx`
+15. `client/src/pages/savings.tsx`
+16. `client/src/pages/transactions.tsx`
+17. `client/src/pages/settings.tsx`
+18. `client/src/pages/ai-coach.tsx`
+19. `client/src/pages/admin/*.tsx`
+
+### Components to convert:
+
+- `client/src/components/transaction-dialog.tsx`
+- `client/src/components/dashboard-charts.tsx`
+- `client/src/components/ai-chat.tsx`
+- `client/src/components/currency-fields.tsx`
+
+---
+
+## 📐 Conversion Rules (apply consistently)
+
+### Rule 1 — Import the hook
+At the top of every page/component you convert, add:
+```tsx
+import { useI18n } from "@/lib/i18n";
+```
+
+Inside the component:
+```tsx
+const { t, lang, isRtl, formatDate, formatNumber } = useI18n();
+```
+
+### Rule 2 — Replace hardcoded English with `t()`
+Find hardcoded strings inside JSX (`>Some Text<`, `placeholder="..."`, `title="..."`, `<CardTitle>...</CardTitle>`, etc.) and replace with the matching translation key from `i18n.tsx`.
+
+**Lookup pattern**: keys are namespaced by page. For Income page → use `t("income.xxx")`. For Dashboard → `t("dashboard.xxx")`. Check `i18n.tsx` for the exact key. If a needed key is missing, **add it to BOTH `en` and `ar` blocks** in `i18n.tsx` and reuse it.
+
+**Example transform**:
+```tsx
+// BEFORE
+<h2>Total Income</h2>
+<p>Track your income sources.</p>
+<Button>Add Income</Button>
+
+// AFTER
+<h2>{t("income.totalIncome")}</h2>
+<p>{t("income.subtitle")}</p>
+<Button>{t("income.addIncome")}</Button>
+```
+
+### Rule 3 — Remove `isAr ? "..." : "..."` patterns
+The `dashboard.tsx` and `reports-ai.tsx` files use the old pattern `isAr ? "عربي" : "English"`. Replace ALL of these with `t("...")` calls.
+
+```tsx
+// BEFORE
+<span>{isAr ? "إجمالي الثروة" : "Total Wealth"}</span>
+
+// AFTER
+<span>{t("dashboard.totalWealth")}</span>
+```
+
+After converting, you can also delete the local `isAr = lang === "ar"` variable if no longer used.
+
+### Rule 4 — Use logical CSS properties (RTL-safe)
+Replace direction-specific Tailwind classes with their **logical** equivalents:
+
+| Old (LTR-only)            | New (RTL-aware) |
+|---------------------------|-----------------|
+| `ml-X`                    | `ms-X`          |
+| `mr-X`                    | `me-X`          |
+| `pl-X`                    | `ps-X`          |
+| `pr-X`                    | `pe-X`          |
+| `left-X`                  | `start-X`       |
+| `right-X`                 | `end-X`         |
+| `text-left`               | `text-start`    |
+| `text-right`              | `text-end`      |
+| `border-l`                | `border-s`      |
+| `border-r`                | `border-e`      |
+| `rounded-l-xl`            | `rounded-s-xl`  |
+| `rounded-r-xl`            | `rounded-e-xl`  |
+
+**Don't change** `text-center`, `mx-auto`, `gap-X`, `flex`, `grid` — these are direction-neutral.
+
+### Rule 5 — Format dates with `formatDate`
+Anywhere you see `format(date, "MMMM d, yyyy")` from `date-fns`, switch to:
+
+```tsx
+{formatDate(t.date, "long")}    // "29 أبريل 2026" or "April 29, 2026"
+{formatDate(t.date, "short")}   // "29 أبر 2026"  or  "Apr 29, 2026"
+```
+
+For chart axis labels, you can keep `date-fns` `format()` since charts often need short month abbreviations — but consider switching critical UI dates.
+
+### Rule 6 — Keep currency numbers LTR
+Numbers, currency amounts, and IBAN/account numbers should always render LTR even inside RTL text. Wrap them with `dir="ltr"` or use the `<span dir="ltr">` pattern. The provided CSS file has helper rules — just add `data-currency` attribute or `currency-amount` className to money displays:
+
+```tsx
+<span className="currency-amount font-bold">{formatAmount(value)}</span>
+```
+
+### Rule 7 — Form input directions
+For email, phone, password, URL, and number inputs, ensure they stay LTR even in Arabic mode. The CSS handles most cases automatically. If you need explicit control, add `dir="ltr"` to the input.
+
+### Rule 8 — Icons that need flipping in RTL
+ChevronRight/Left and ArrowRight/Left should flip. The CSS handles this automatically for `lucide-react` icons. If you have an icon that should NOT flip (e.g., a logo), add the className `no-flip`:
+```tsx
+<ChevronRight className="no-flip w-4 h-4" />
+```
+
+### Rule 9 — Sidebar / Sheet sides
+The Sheet (mobile drawer) should open from the correct side based on language. Use:
+```tsx
+<SheetContent side={lang === "ar" ? "right" : "left"}>
+```
+
+### Rule 10 — Arabic numerals (optional, contextual)
+For typical financial UI, **keep Latin digits** (`1234.56`) — this is the convention even in Arabic financial software because it's clearer. Only use Arabic-Indic digits (`١٢٣٤.٥٦`) for ceremonial/non-numeric contexts.
+
+If you DO want Arabic digits in a specific place:
+```tsx
+{formatNumber(value, true)}  // ١٬٢٣٤
+```
+
+---
+
+## 🚨 Important Constraints
+
+1. **DO NOT translate**:
+   - Backend/database field names (e.g., `categoryId`, `userId`, `firstName` as a property)
+   - API endpoints
+   - URLs / route paths (e.g., `/dashboard`, `/zakat`)
+   - `data-testid` values
+   - Console logs / errors meant for developers
+   - File names / file contents not user-facing
+   - Brand name "Wealthly" (keep it as-is)
+
+2. **DO translate**:
+   - All visible text in JSX
+   - `placeholder=`, `title=`, `aria-label=`, `alt=` attributes
+   - Toast messages (`toast({ title: "..." })`)
+   - Error messages shown to users
+   - Confirm/alert dialog text
+   - Empty-state messages ("No data", "Nothing to show", etc.)
+   - Button labels
+   - Form labels
+   - Chart labels and tooltips
+
+3. **Country names**: I included an Arabic-mapped country list in the new `auth.tsx`. Reuse this approach if other pages have country dropdowns — backend stays receiving English canonical names.
+
+4. **Categories from database**: User-created category names (Food, Transport, etc.) come from the database and shouldn't be force-translated. However, **system-generated default categories** can be detected by name and shown via translation keys. Add this logic only if you can identify them safely.
+
+5. **`document.title`**: Set the page title dynamically based on language:
+   ```tsx
+   useEffect(() => { document.title = `${t("nav.dashboard")} — Wealthly`; }, [t]);
+   ```
+
+---
+
+## 🧪 Testing Checklist
+
+After conversion, verify in BOTH languages:
+- [ ] Switch language toggle works on every page (no leftover English in Arabic mode)
+- [ ] No layout breaks in RTL (text overflow, mispositioned icons, broken alignment)
+- [ ] Sidebar appears on the right in Arabic mode and left in English mode
+- [ ] Forms still submit correctly with backend (canonical English values stored)
+- [ ] Charts render readable labels in both languages
+- [ ] Toast notifications appear in correct language
+- [ ] Date formats look natural in both languages
+- [ ] Currency amounts render LTR (numbers don't reverse)
+- [ ] Sign-in / Sign-up flow works in both languages
+- [ ] Dark mode + Arabic still looks good
+- [ ] Mobile responsive layout still works in RTL
+
+---
+
+## 🛠 Suggested Workflow
+
+1. **Replace** the 5 prepared files (`i18n.tsx`, `rtl-arabic.css` (append), `layout-sidebar.tsx`, `auth.tsx`, `not-found.tsx`).
+2. **Add Google Fonts** for Arabic in `client/index.html` `<head>`:
+   ```html
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+   ```
+3. **Append the RTL CSS** to `client/src/index.css` (paste contents at the bottom).
+4. Convert pages **one at a time**, in the priority order above. After each page:
+   - Run dev server and switch language via the toggle
+   - Verify visually that the page looks correct in both languages
+   - Move to the next
+5. If a translation key is missing, ADD it to both `en` and `ar` in `i18n.tsx` — never hardcode strings inline.
+6. After all pages: do a **search across all `.tsx` files** for any remaining English strings inside JSX:
+   ```bash
+   grep -rn "['\"][A-Z][a-zA-Z ]*['\"]" client/src/pages/ client/src/components/
+   ```
+   Manually inspect any matches and translate.
+
+---
+
+## 📝 Code Style
+
+- Always use `t("namespace.key")` — never inline `lang === "ar" ? ... : ...`.
+- Always use logical CSS (`ms-X`, `me-X`, `start-X`, `end-X`).
+- Always destructure the hook once at the top of the component:
+  ```tsx
+  const { t, lang, isRtl, formatDate, formatNumber } = useI18n();
+  ```
+- Never write a translation key in only one language. If you add `"foo.bar": "Hello"` to `en`, you MUST also add `"foo.bar": "مرحباً"` to `ar`.
+
+---
+
+## 💬 Tone Guide for New Arabic Translations
+
+If you need to add new Arabic strings, follow these conventions:
+
+- **Tone**: Modern Standard Arabic (MSA), neutral and professional
+- **Voice**: Address user directly ("أدر أموالك" — manage YOUR money) — use second-person
+- **Finance terms**: Use established Arabic finance terminology, not literal translations:
+  - "Net Worth" → "صافي الثروة" (not "القيمة الصافية")
+  - "Liabilities" → "الالتزامات" (not "المطلوبات" unless very formal context)
+  - "Expense" → "مصروف" (singular) / "مصروفات" (plural)
+  - "Asset" → "أصل" / "أصول"
+  - "Debt" → "دين" / "ديون"
+  - "Cashflow" → "التدفق النقدي"
+  - "Bank Account" → "حساب بنكي"
+  - "Savings" → "ادخار" / "مدخرات"
+- **Islamic terms** (use precise religious vocabulary):
+  - "Zakat" → "الزكاة"
+  - "Nisab" → "النصاب"
+  - "Hawl" → "الحول"
+  - "Zakatable" → "ما تجب فيه الزكاة" / "زكوي"
+- **Punctuation**: Use Arabic comma `،` and Arabic question mark `؟` where appropriate. Use ellipsis `...` (3 dots) for "Loading...".
+
+---
+
+## ✅ Done?
+
+When complete, the entire app should:
+1. Toggle seamlessly between English and Arabic via the language button.
+2. Switch direction (LTR ↔ RTL) without layout breaks.
+3. Display Arabic UI in Cairo/Tajawal font.
+4. Persist language choice via the `/api/auth/user` PUT endpoint (already wired in sidebar).
+5. Have NO hardcoded English text leaking into Arabic mode.
+
+Good luck! 🚀

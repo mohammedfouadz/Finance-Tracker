@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Layout } from "@/components/layout-sidebar";
+import { useI18n } from "@/lib/i18n";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,7 @@ const CustomTooltip = ({ active, payload, label, formatter }: any) => {
 };
 
 export default function ReportsPage() {
+  const { t, lang } = useI18n();
   const { formatAmount } = useCurrency();
   const { data: transactions = [] } = useTransactions();
   const { data: categories = [] } = useCategories();
@@ -219,14 +221,14 @@ export default function ReportsPage() {
   };
 
   const kpiCards = [
-    { label: "Total Income", value: totalIncome, prev: prevIncome, color: "text-emerald-600 dark:text-emerald-400", bg: "from-emerald-50 dark:from-emerald-950/30", icon: "↑" },
-    { label: "Total Expenses", value: totalExpenses, prev: prevExpenses, color: "text-red-600 dark:text-red-400", bg: "from-red-50 dark:from-red-950/30", icon: "↓" },
-    { label: "Net Savings", value: netSavings, prev: prevNet, color: netSavings >= 0 ? "text-blue-600 dark:text-blue-400" : "text-orange-600", bg: "from-blue-50 dark:from-blue-950/30", icon: "=" },
-    { label: "Savings Rate", value: savingsRate, prev: prevRate, color: "text-violet-600 dark:text-violet-400", bg: "from-violet-50 dark:from-violet-950/30", isPercent: true },
+    { label: t("reports.totalIncome"), value: totalIncome, prev: prevIncome, color: "text-emerald-600 dark:text-emerald-400", bg: "from-emerald-50 dark:from-emerald-950/30", icon: "↑" },
+    { label: t("reports.totalExpenses"), value: totalExpenses, prev: prevExpenses, color: "text-red-600 dark:text-red-400", bg: "from-red-50 dark:from-red-950/30", icon: "↓" },
+    { label: t("reports.netSavings"), value: netSavings, prev: prevNet, color: netSavings >= 0 ? "text-blue-600 dark:text-blue-400" : "text-orange-600", bg: "from-blue-50 dark:from-blue-950/30", icon: "=" },
+    { label: t("reports.savingsRate"), value: savingsRate, prev: prevRate, color: "text-violet-600 dark:text-violet-400", bg: "from-violet-50 dark:from-violet-950/30", isPercent: true },
   ];
 
   const PERIOD_BTNS: [Period, string][] = [
-    ["month", "This Month"], ["3m", "Last 3M"], ["6m", "Last 6M"], ["year", "This Year"], ["custom", "Custom"],
+    ["month", t("reports.thisMonth")], ["3m", t("reports.last3Months")], ["6m", t("reports.last6Months")], ["year", t("reports.lastYear")], ["custom", t("reports.custom")],
   ];
 
   const EmptyState = ({ msg }: { msg: string }) => (
@@ -243,13 +245,13 @@ export default function ReportsPage() {
         {/* ── HEADER ── */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Financial Reports</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("reports.title")}</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               {format(range.start, "MMM d, yyyy")} – {format(range.end, "MMM d, yyyy")}
             </p>
           </div>
           <Button onClick={exportCSV} variant="outline" size="sm" className="gap-2 self-start sm:self-auto" data-testid="button-export-csv">
-            <Download className="w-4 h-4" /> Export CSV
+            <Download className="w-4 h-4" /> {t("reports.exportCsv")}
           </Button>
         </div>
 
@@ -272,10 +274,10 @@ export default function ReportsPage() {
             </button>
           ))}
           {period === "custom" && (
-            <div className="flex gap-2 items-center ml-1">
+            <div className="flex gap-2 items-center ms-1">
               <input type="date" value={customStart} onChange={e => setCustomStart(e.target.value)}
                 className="text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300" data-testid="input-custom-start" />
-              <span className="text-gray-400 text-xs">to</span>
+              <span className="text-gray-400 text-xs">{t("common.to")}</span>
               <input type="date" value={customEnd} onChange={e => setCustomEnd(e.target.value)}
                 className="text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1.5 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300" data-testid="input-custom-end" />
             </div>
@@ -293,7 +295,7 @@ export default function ReportsPage() {
                 </p>
                 <div className="mt-1.5">
                   <TrendBadge cur={k.value} prev={k.prev} />
-                  <span className="text-xs text-gray-400 ml-1">vs prior period</span>
+                  <span className="text-xs text-gray-400 ms-1">{t("dashboard.vsLastMonth")}</span>
                 </div>
               </CardContent>
             </Card>
@@ -304,15 +306,15 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-expense-distribution">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Expense Distribution</CardTitle>
+              <CardTitle className="text-base font-semibold">{t("reports.expenseDistribution")}</CardTitle>
               {clickedCategory && (
-                <button onClick={() => setClickedCategory(null)} className="text-xs text-blue-600 hover:underline ml-auto">
-                  ✕ Clear filter
+                <button onClick={() => setClickedCategory(null)} className="text-xs text-blue-600 hover:underline ms-auto">
+                  ✕ {t("common.clearFilter")}
                 </button>
               )}
             </CardHeader>
             <CardContent>
-              {expenseByCat.length === 0 ? <EmptyState msg="No expenses in this period" /> : (
+              {expenseByCat.length === 0 ? <EmptyState msg={t("reports.noExpenses")} /> : (
                 <div className="flex flex-col sm:flex-row gap-4 items-center">
                   <div className="w-[200px] h-[200px] shrink-0">
                     <ResponsiveContainer width="100%" height="100%">
@@ -348,10 +350,10 @@ export default function ReportsPage() {
 
           <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-income-vs-expenses">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Income vs Expenses by Month</CardTitle>
+              <CardTitle className="text-base font-semibold">{t("reports.incomeVsExpenses")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {monthlyData.every(m => m.income === 0 && m.expenses === 0) ? <EmptyState msg="No data for this period" /> : (
+              {monthlyData.every(m => m.income === 0 && m.expenses === 0) ? <EmptyState msg={t("reports.noData")} /> : (
                 <ResponsiveContainer width="100%" height={220}>
                   <BarChart data={monthlyData} barGap={4} barCategoryGap="30%">
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
@@ -359,8 +361,8 @@ export default function ReportsPage() {
                     <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} tickFormatter={v => `$${(v / 1000).toFixed(0)}k`} />
                     <Tooltip content={<CustomTooltip formatter={formatAmount} />} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="income" name="Income" fill="#10B981" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="expenses" name="Expenses" fill="#EF4444" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="income" name={t("nav.income")} fill="#10B981" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="expenses" name={t("nav.expenses")} fill="#EF4444" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -371,11 +373,11 @@ export default function ReportsPage() {
         {/* ── ROW 2: Cash Flow Area Chart ── */}
         <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-cashflow">
           <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">Cash Flow Over Time</CardTitle>
-            <p className="text-xs text-gray-400">Monthly income, expenses, and cumulative savings</p>
+            <CardTitle className="text-base font-semibold">{t("reports.cashflowTrend")}</CardTitle>
+            <p className="text-xs text-gray-400">{t("reports.cashflowSubtitle")}</p>
           </CardHeader>
           <CardContent>
-            {monthlyData.every(m => m.income === 0 && m.expenses === 0) ? <EmptyState msg="Add transactions to see your cash flow trend" /> : (
+            {monthlyData.every(m => m.income === 0 && m.expenses === 0) ? <EmptyState msg={t("reports.noCashflowData")} /> : (
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={monthlyData}>
                   <defs>
@@ -398,9 +400,9 @@ export default function ReportsPage() {
                   <Tooltip content={<CustomTooltip formatter={formatAmount} />} />
                   <Legend wrapperStyle={{ fontSize: 11 }} />
                   <ReferenceLine y={0} stroke="#9ca3af" strokeDasharray="4 2" />
-                  <Area type="monotone" dataKey="income" name="Income" stroke="#10B981" fill="url(#incGrad)" strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#EF4444" fill="url(#expGrad)" strokeWidth={2} dot={false} />
-                  <Area type="monotone" dataKey="cumulative" name="Cumul. Savings" stroke="#1B4FE4" fill="url(#savGrad)" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="income" name={t("nav.income")} stroke="#10B981" fill="url(#incGrad)" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="expenses" name={t("nav.expenses")} stroke="#EF4444" fill="url(#expGrad)" strokeWidth={2} dot={false} />
+                  <Area type="monotone" dataKey="cumulative" name={t("reports.cumulativeSavings")} stroke="#1B4FE4" fill="url(#savGrad)" strokeWidth={2} dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -411,10 +413,10 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-top-spending">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Top Spending Categories</CardTitle>
+              <CardTitle className="text-base font-semibold">{t("reports.topSpending")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {expenseByCat.length === 0 ? <EmptyState msg="No expenses to show" /> : (
+              {expenseByCat.length === 0 ? <EmptyState msg={t("reports.noExpenses")} /> : (
                 <div className="space-y-3">
                   {expenseByCat.slice(0, 7).map((d: any, i: number) => {
                     const pct = totalExpenses > 0 ? (d.value / totalExpenses) * 100 : 0;
@@ -440,10 +442,10 @@ export default function ReportsPage() {
 
           <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-income-breakdown">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Income by Source</CardTitle>
+              <CardTitle className="text-base font-semibold">{t("reports.incomeBySource")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {incomeByCat.length === 0 ? <EmptyState msg="No income recorded in this period" /> : (
+              {incomeByCat.length === 0 ? <EmptyState msg={t("reports.noIncome")} /> : (
                 <div className="flex flex-col sm:flex-row gap-4 items-center">
                   <div className="w-[180px] h-[180px] shrink-0">
                     <ResponsiveContainer width="100%" height="100%">
@@ -480,11 +482,11 @@ export default function ReportsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-budget-actual">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Budget vs Actual <span className="text-xs font-normal text-gray-400">(this month)</span></CardTitle>
+              <CardTitle className="text-base font-semibold">{t("reports.budgetVsActual")} <span className="text-xs font-normal text-gray-400">({t("common.thisMonth")})</span></CardTitle>
             </CardHeader>
             <CardContent>
               {budgetVsActual.length === 0 ? (
-                <EmptyState msg="No budgets set. Create budgets to track spending limits." />
+                <EmptyState msg={t("expenses.noBudgets")} />
               ) : (
                 <div className="space-y-4">
                   {budgetVsActual.map((b: any, i: number) => (
@@ -504,9 +506,9 @@ export default function ReportsPage() {
                         />
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-xs text-gray-400">{b.pct.toFixed(0)}% used</span>
-                        {b.status === "red" && <Badge variant="destructive" className="text-xs py-0 h-4">Over budget</Badge>}
-                        {b.status === "yellow" && <Badge className="text-xs py-0 h-4 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Near limit</Badge>}
+                        <span className="text-xs text-gray-400">{t("budget.exceededBy", { amount: b.pct.toFixed(0) })}%</span>
+                        {b.status === "red" && <Badge variant="destructive" className="text-xs py-0 h-4">{t("budget.overBudget")}</Badge>}
+                        {b.status === "yellow" && <Badge className="text-xs py-0 h-4 bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">{t("budget.onTrack")}</Badge>}
                       </div>
                     </div>
                   ))}
@@ -517,10 +519,10 @@ export default function ReportsPage() {
 
           <Card className="border-gray-100 dark:border-gray-800 rounded-2xl" data-testid="card-goals-progress">
             <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold">Savings Goals Progress</CardTitle>
+              <CardTitle className="text-base font-semibold">{t("dashboard.goalsProgress")}</CardTitle>
             </CardHeader>
             <CardContent>
-              {(goals as any[]).length === 0 ? <EmptyState msg="No goals created yet. Set a savings goal to track progress." /> : (
+              {(goals as any[]).length === 0 ? <EmptyState msg={t("dashboard.noActiveGoals")} /> : (
                 <div className="space-y-4">
                   {(goals as any[]).filter((g: any) => g.status === "active").map((g: any, i: number) => {
                     const cur = toUsd(Number(g.currentAmount), Number(g.exchangeRateToUsd || 1));
@@ -541,10 +543,10 @@ export default function ReportsPage() {
                           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: PALETTE[i % PALETTE.length] }} />
                         </div>
                         <div className="flex justify-between text-xs text-gray-400">
-                          <span>{formatAmount(cur)} of {formatAmount(target)}</span>
+                          <span>{formatAmount(cur)} {t("common.to")} {formatAmount(target)}</span>
                           <div className="text-right">
-                            <span>{formatAmount(remaining)} left</span>
-                            {deadline && <span className="ml-2">• Due {deadline}</span>}
+                            <span>{formatAmount(remaining)} {t("goals.left")}</span>
+                            {deadline && <span className="ms-2">• {t("goals.deadline")} {deadline}</span>}
                           </div>
                         </div>
                       </div>
@@ -561,8 +563,8 @@ export default function ReportsPage() {
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-semibold">Transactions</CardTitle>
-                <p className="text-xs text-gray-400 mt-0.5">{tableRows.length} transactions in period{clickedCategory ? ` · filtered by ${clickedCategory}` : ""}</p>
+                <CardTitle className="text-base font-semibold">{t("nav.transactions")}</CardTitle>
+                <p className="text-xs text-gray-400 mt-0.5">{tableRows.length} {t("nav.transactions")} {t("reports.dateRange")}{clickedCategory ? ` · filtered by ${clickedCategory}` : ""}</p>
               </div>
               <div className="flex gap-2 items-center">
                 {clickedCategory && (
@@ -572,12 +574,12 @@ export default function ReportsPage() {
                   </button>
                 )}
                 <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <Search className="w-3.5 h-3.5 absolute start-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <Input
-                    placeholder="Search..."
+                    placeholder={t("common.search")}
                     value={search}
                     onChange={e => { setSearch(e.target.value); setPage(1); }}
-                    className="pl-8 h-8 text-xs w-44"
+                    className="ps-8 h-8 text-xs w-44"
                     data-testid="input-transaction-search"
                   />
                 </div>
@@ -586,14 +588,14 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent className="p-0">
             {tableRows.length === 0 ? (
-              <div className="py-10"><EmptyState msg="No transactions match your filters" /></div>
+              <div className="py-10"><EmptyState msg={t("reports.noTransactions")} /></div>
             ) : (
               <>
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
-                        {([["date", "Date"], ["category", "Category"], ["description", "Description"], ["amount", "Amount"]] as [string, string][]).map(([key, label]) => (
+                        {([["date", t("common.date")], ["category", t("common.category")], ["description", t("common.description")], ["amount", t("common.amount")]] as [string, string][]).map(([key, label]) => (
                           <th key={key} className="px-4 py-2.5 text-left font-semibold text-gray-500 dark:text-gray-400 whitespace-nowrap">
                             {["date", "category", "amount"].includes(key) ? (
                               <button onClick={() => toggleSort(key as any)} className="flex items-center gap-1 hover:text-gray-700 dark:hover:text-gray-200 transition-colors" data-testid={`sort-${key}`}>
@@ -631,7 +633,7 @@ export default function ReportsPage() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-gray-800">
-                    <span className="text-xs text-gray-400">Page {page} of {totalPages}</span>
+                    <span className="text-xs text-gray-400">{t("common.page")} {page} {t("common.of")} {totalPages}</span>
                     <div className="flex gap-1">
                       <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} data-testid="button-prev-page">
                         <ChevronLeft className="w-3.5 h-3.5" />
@@ -646,7 +648,6 @@ export default function ReportsPage() {
             )}
           </CardContent>
         </Card>
-
       </div>
     </Layout>
   );

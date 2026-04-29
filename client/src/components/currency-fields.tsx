@@ -1,6 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { CURRENCIES, getDefaultRate, toUsd } from "@/lib/currency";
+import { useI18n } from "@/lib/i18n";
 
 interface CurrencyFieldsProps {
   currencyCode: string;
@@ -21,6 +22,7 @@ export function CurrencyFields({
   showUsdPreview = true,
   className = "",
 }: CurrencyFieldsProps) {
+  const { t } = useI18n();
   const handleCurrencyChange = (code: string) => {
     onCurrencyChange(code);
     const defaultRate = getDefaultRate(code);
@@ -34,10 +36,10 @@ export function CurrencyFields({
   return (
     <>
       <div className={className}>
-        <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">Currency</label>
+        <label className="text-sm font-medium text-[#666] dark:text-gray-400 mb-1 block">{t("common.currency")}</label>
         <Select value={currencyCode} onValueChange={handleCurrencyChange}>
           <SelectTrigger data-testid="select-currency">
-            <SelectValue placeholder="Select currency..." />
+            <SelectValue placeholder={t("common.search")} />
           </SelectTrigger>
           <SelectContent>
             {CURRENCIES.map(c => (

@@ -3,6 +3,7 @@ import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent } from "@/components/ui/card";
 import { useBankAccounts, useInvestments, useAssets, useDebts } from "@/hooks/use-finance";
 import { useCurrency, toUsd } from "@/lib/currency";
+import { useI18n } from "@/lib/i18n";
 import {
   TrendingUp, TrendingDown, Landmark, LineChart, Building2, HandCoins,
   Sparkles, ArrowUpRight, ArrowDownRight, Minus,
@@ -23,6 +24,7 @@ type ComponentItem = { label: string; value: number; color: string; icon: any; s
 function KpiCard({ label, value, sub, icon: Icon, color, bg, change }: {
   label: string; value: string; sub?: string; icon: any; color: string; bg: string; change?: number;
 }) {
+  const { t } = useI18n();
   const positive = change !== undefined && change >= 0;
   return (
     <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl hover:-translate-y-0.5 hover:shadow-md transition-all">
@@ -38,7 +40,7 @@ function KpiCard({ label, value, sub, icon: Icon, color, bg, change }: {
         {change !== undefined && (
           <div className={`inline-flex items-center gap-1 mt-2 text-[10px] font-bold px-2 py-0.5 rounded-full ${positive ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400" : "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400"}`}>
             {positive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-            {Math.abs(change).toFixed(1)}% vs last month
+            {Math.abs(change).toFixed(1)}% {t("netWorth.vsLastMonth")}
           </div>
         )}
       </CardContent>
@@ -76,6 +78,7 @@ const MILESTONES = [
 ];
 
 export default function NetWorthPage() {
+  const { t, lang } = useI18n();
   const { formatAmount } = useCurrency();
   const { data: accounts    = [] } = useBankAccounts();
   const { data: investments = [] } = useInvestments();
@@ -97,10 +100,10 @@ export default function NetWorthPage() {
 
   /* components list */
   const components: ComponentItem[] = [
-    { label: "Bank Accounts", value: bankTotal, color: BRAND,  icon: Landmark, sub: `${accs.length} account${accs.length !== 1 ? "s" : ""}` },
-    { label: "Investments",   value: invTotal,  color: MINT,   icon: LineChart, sub: `${invs.filter(i => i.status === "active").length} active position${invs.length !== 1 ? "s" : ""}` },
-    { label: "Assets",        value: assetTotal, color: AMBER, icon: Building2, sub: `${assts.length} asset${assts.length !== 1 ? "s" : ""}` },
-    { label: "Debts (−)",     value: -debtTotal, color: DANGER,icon: HandCoins, sub: `${dbts.filter(d => d.status === "active").length} active debt${dbts.length !== 1 ? "s" : ""}` },
+    { label: t("accounts.title"), value: bankTotal, color: BRAND,  icon: Landmark, sub: `${accs.length} ${t("accounts.title").toLowerCase()}` },
+    { label: t("investments.title"),   value: invTotal,  color: MINT,   icon: LineChart, sub: `${invs.filter(i => i.status === "active").length} ${t("common.active").toLowerCase()} ${t("investments.title").toLowerCase()}` },
+    { label: t("assets.title"),        value: assetTotal, color: AMBER, icon: Building2, sub: `${assts.length} ${t("assets.title").toLowerCase()}` },
+    { label: `${t("debts.title")} (−)`,     value: -debtTotal, color: DANGER,icon: HandCoins, sub: `${dbts.filter(d => d.status === "active").length} ${t("common.active").toLowerCase()} ${t("debts.title").toLowerCase()}` },
   ];
 
   /* milestones */
@@ -109,20 +112,22 @@ export default function NetWorthPage() {
 
   /* simulated monthly data — uses real current value as latest point */
   const chartData = useMemo(() => {
-    const months = ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
+    const months = lang === "ar" 
+      ? ["نوفمبر", "ديسمبر", "يناير", "فبراير", "مارس", "أبريل"]
+      : ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
     const variation = netWorth * 0.05;
     return months.map((m, i) => {
       const factor = i === 5 ? 1 : 0.7 + (i / 5) * 0.3 + (Math.random() - 0.5) * 0.1;
       return { month: m, netWorth: Math.max(0, Math.round(i === 5 ? netWorth : netWorth * factor - variation)) };
     });
-  }, [netWorth]);
+  }, [netWorth, lang]);
 
   /* donut for asset breakdown */
   const donutData = [
-    { name: "Bank", value: bankTotal, color: BRAND },
-    { name: "Investments", value: invTotal, color: MINT },
-    { name: "Assets", value: assetTotal, color: AMBER },
-    { name: "Debts", value: debtTotal, color: DANGER },
+    { name: t("accounts.bankName"), value: bankTotal, color: BRAND },
+    { name: t("investments.title"), value: invTotal, color: MINT },
+    { name: t("assets.title"), value: assetTotal, color: AMBER },
+    { name: t("debts.title"), value: debtTotal, color: DANGER },
   ].filter(d => d.value > 0);
 
   const isPositive = netWorth >= 0;
@@ -134,8 +139,8 @@ export default function NetWorthPage() {
         {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">Net Worth</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Your complete financial picture — assets minus liabilities.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white" data-testid="text-page-title">{t("netWorth.title")}</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{t("netWorth.subtitle")}</p>
           </div>
         </div>
 
@@ -145,10 +150,10 @@ export default function NetWorthPage() {
             <div className="flex flex-col lg:flex-row gap-6 items-start">
               {/* left */}
               <div className="flex-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">Total Net Worth</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-1">{t("netWorth.currentNetWorth")}</p>
                 <div className="flex items-center gap-3 mb-1">
                   <h2 className="text-4xl font-bold tabular-nums" style={{ color: isPositive ? BRAND : DANGER }} data-testid="text-net-worth">
-                    {netWorth < 0 ? "−" : ""}{formatAmount(Math.abs(netWorth))}
+                    <span dir="ltr">{netWorth < 0 ? "−" : ""}{formatAmount(Math.abs(netWorth))}</span>
                   </h2>
                   {isPositive
                     ? <ArrowUpRight className="w-7 h-7 text-emerald-500 shrink-0" />
@@ -156,21 +161,21 @@ export default function NetWorthPage() {
                 </div>
                 <p className="text-sm text-gray-500 mb-6">
                   {totalAssets > 0
-                    ? `Total assets of ${formatAmount(totalAssets)} minus ${formatAmount(debtTotal)} in liabilities`
-                    : "Start adding your bank accounts, investments, and assets to track your net worth."}
+                    ? t("netWorth.formulaDesc", { assets: formatAmount(totalAssets), debts: formatAmount(debtTotal) })
+                    : t("netWorth.noData")}
                 </p>
 
                 {/* formula */}
                 <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: BRAND }}>{formatAmount(bankTotal)} banks</span>
+                  <span className="bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: BRAND }} dir="ltr">{formatAmount(bankTotal)} {t("accounts.title").toLowerCase()}</span>
                   <span className="text-gray-400">+</span>
-                  <span className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: MINT }}>{formatAmount(invTotal)} investments</span>
+                  <span className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: MINT }} dir="ltr">{formatAmount(invTotal)} {t("investments.title").toLowerCase()}</span>
                   <span className="text-gray-400">+</span>
-                  <span className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: AMBER }}>{formatAmount(assetTotal)} assets</span>
+                  <span className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: AMBER }} dir="ltr">{formatAmount(assetTotal)} {t("assets.title").toLowerCase()}</span>
                   <span className="text-gray-400">−</span>
-                  <span className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: DANGER }}>{formatAmount(debtTotal)} debts</span>
+                  <span className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: DANGER }} dir="ltr">{formatAmount(debtTotal)} {t("debts.title").toLowerCase()}</span>
                   <span className="text-gray-400">=</span>
-                  <span className="rounded-xl px-3 py-1.5 font-bold tabular-nums text-white" style={{ backgroundColor: isPositive ? BRAND : DANGER }}>
+                  <span className="rounded-xl px-3 py-1.5 font-bold tabular-nums text-white" style={{ backgroundColor: isPositive ? BRAND : DANGER }} dir="ltr">
                     {netWorth < 0 ? "−" : ""}{formatAmount(Math.abs(netWorth))}
                   </span>
                 </div>
@@ -186,8 +191,8 @@ export default function NetWorthPage() {
                       </Pie>
                     </PieChart>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-[10px] text-gray-400">assets</span>
-                      <span className="text-xs font-bold text-gray-800 dark:text-gray-100 tabular-nums">{formatAmount(totalAssets)}</span>
+                      <span className="text-[10px] text-gray-400">{t("assets.title").toLowerCase()}</span>
+                      <span className="text-xs font-bold text-gray-800 dark:text-gray-100 tabular-nums" dir="ltr">{formatAmount(totalAssets)}</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px]">
@@ -206,10 +211,10 @@ export default function NetWorthPage() {
 
         {/* KPI strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label="Bank Accounts" value={formatAmount(bankTotal)} sub={`${accs.length} accounts`} icon={Landmark} color={BRAND} bg="#EEF4FF" />
-          <KpiCard label="Investments" value={formatAmount(invTotal)} sub={`${invs.length} positions`} icon={LineChart} color={MINT} bg="#ECFDF5" />
-          <KpiCard label="Physical Assets" value={formatAmount(assetTotal)} sub={`${assts.length} assets`} icon={Building2} color={AMBER} bg="#FFFBEB" />
-          <KpiCard label="Total Liabilities" value={formatAmount(debtTotal)} sub={`${dbts.filter(d => d.status === "active").length} active debts`} icon={HandCoins} color={DANGER} bg="#FEF2F2" />
+          <KpiCard label={t("accounts.title")} value={formatAmount(bankTotal)} sub={`${accs.length} ${t("accounts.title").toLowerCase()}`} icon={Landmark} color={BRAND} bg="#EEF4FF" />
+          <KpiCard label={t("investments.title")} value={formatAmount(invTotal)} sub={`${invs.length} ${t("investments.entries").toLowerCase()}`} icon={LineChart} color={MINT} bg="#ECFDF5" />
+          <KpiCard label={t("assets.title")} value={formatAmount(assetTotal)} sub={`${assts.length} ${t("assets.title").toLowerCase()}`} icon={Building2} color={AMBER} bg="#FFFBEB" />
+          <KpiCard label={t("netWorth.totalLiabilities")} value={formatAmount(debtTotal)} sub={`${dbts.filter(d => d.status === "active").length} ${t("common.active").toLowerCase()} ${t("debts.title").toLowerCase()}`} icon={HandCoins} color={DANGER} bg="#FEF2F2" />
         </div>
 
         {/* chart + components layout */}
@@ -219,12 +224,12 @@ export default function NetWorthPage() {
             <CardContent className="p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white text-base">Net Worth Trend</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">6-month trajectory</p>
+                  <h3 className="font-semibold text-gray-900 dark:text-white text-base">{t("netWorth.history")}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5">{t("netWorth.trajectory")}</p>
                 </div>
                 {isPositive
-                  ? <span className="text-xs font-bold px-2 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-full flex items-center gap-1"><TrendingUp className="w-3 h-3" /> Growing</span>
-                  : <span className="text-xs font-bold px-2 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-full flex items-center gap-1"><TrendingDown className="w-3 h-3" /> Declining</span>}
+                  ? <span className="text-xs font-bold px-2 py-1 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-full flex items-center gap-1"><TrendingUp className="w-3 h-3" /> {t("netWorth.growing")}</span>
+                  : <span className="text-xs font-bold px-2 py-1 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 rounded-full flex items-center gap-1"><TrendingDown className="w-3 h-3" /> {t("netWorth.declining")}</span>}
               </div>
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={chartData}>
@@ -238,12 +243,12 @@ export default function NetWorthPage() {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false}
                     tickFormatter={v => `$${v >= 1000 ? (v/1000).toFixed(0)+"k" : v}`} />
-                  <Tooltip formatter={(v: any) => [formatAmount(v), "Net Worth"]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
+                  <Tooltip formatter={(v: any) => [formatAmount(v), t("netWorth.title")]} contentStyle={{ fontSize: 11, borderRadius: 8 }} />
                   <Area type="monotone" dataKey="netWorth" stroke={isPositive ? BRAND : DANGER} strokeWidth={2.5} fill="url(#nwGrad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
               {netWorth === 0 && (
-                <p className="text-xs text-center text-gray-400 mt-2">Add financial data to see your net worth trend</p>
+                <p className="text-xs text-center text-gray-400 mt-2">{t("netWorth.noData")}</p>
               )}
             </CardContent>
           </Card>
@@ -251,7 +256,7 @@ export default function NetWorthPage() {
           {/* component breakdown — 1/3 */}
           <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
             <CardContent className="p-5">
-              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">Component Breakdown</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">{t("netWorth.assetsBreakdown")}</h3>
               <div className="space-y-2.5">
                 {components.map(item => (
                   <div key={item.label} className="flex items-center gap-3">
@@ -261,7 +266,7 @@ export default function NetWorthPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-0.5">
                         <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate">{item.label}</span>
-                        <span className="text-xs font-bold tabular-nums" style={{ color: item.value < 0 ? DANGER : "inherit" }}>
+                        <span className="text-xs font-bold tabular-nums" style={{ color: item.value < 0 ? DANGER : "inherit" }} dir="ltr">
                           {item.value < 0 ? "−" : ""}{formatAmount(Math.abs(item.value))}
                         </span>
                       </div>
@@ -278,8 +283,8 @@ export default function NetWorthPage() {
               {/* net worth summary */}
               <div className="mt-4 pt-4 border-t border-gray-50 dark:border-gray-800">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-900 dark:text-white">Net Worth</span>
-                  <span className="text-base font-bold tabular-nums" style={{ color: isPositive ? BRAND : DANGER }}>
+                  <span className="text-sm font-bold text-gray-900 dark:text-white">{t("netWorth.title")}</span>
+                  <span className="text-base font-bold tabular-nums" style={{ color: isPositive ? BRAND : DANGER }} dir="ltr">
                     {netWorth < 0 ? "−" : ""}{formatAmount(Math.abs(netWorth))}
                   </span>
                 </div>
@@ -291,7 +296,7 @@ export default function NetWorthPage() {
         {/* milestones */}
         <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
           <CardContent className="p-5">
-            <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">Wealth Milestones</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-base mb-4">{t("netWorth.wealthMilestones")}</h3>
             <div className="flex items-center gap-3">
               {MILESTONES.map((m, i) => {
                 const reached = netWorth >= m.value;
@@ -314,9 +319,9 @@ export default function NetWorthPage() {
             </div>
             {nextMilestone && (
               <div className="mt-4 pt-3 border-t border-gray-50 dark:border-gray-800 text-xs text-gray-500 text-center">
-                Next milestone: <strong className="text-gray-700 dark:text-gray-300">{nextMilestone.label}</strong> —{" "}
+                {t("netWorth.nextMilestone")}: <strong className="text-gray-700 dark:text-gray-300">{nextMilestone.label}</strong> —{" "}
                 <span style={{ color: BRAND }}>
-                  {formatAmount(nextMilestone.value - Math.max(0, netWorth))} to go
+                  <span dir="ltr">{formatAmount(nextMilestone.value - Math.max(0, netWorth))}</span> {t("netWorth.toGo")}
                 </span>
               </div>
             )}
@@ -328,35 +333,35 @@ export default function NetWorthPage() {
           <CardContent className="p-5 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
             <div className="flex items-center gap-2 mb-3">
               <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
-              <h3 className="font-semibold text-gray-900 dark:text-white text-base">Smart Insights</h3>
+              <h3 className="font-semibold text-gray-900 dark:text-white text-base">{t("aiCoach.insights")}</h3>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
                 <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  {isPositive ? "✅ Positive net worth" : "⚠️ Negative net worth"}
+                  {isPositive ? `✅ ${t("netWorth.positiveNetWorth")}` : `⚠️ ${t("netWorth.negativeNetWorth")}`}
                 </p>
                 <p className="text-gray-500">
                   {isPositive
-                    ? `Your assets of ${formatAmount(totalAssets)} outpace your debts of ${formatAmount(debtTotal)} — you're building wealth.`
-                    : `Your debts of ${formatAmount(debtTotal)} exceed your assets. Focus on reducing high-interest debt first.`}
+                    ? t("netWorth.positiveInsight", { assets: formatAmount(totalAssets), debts: formatAmount(debtTotal) })
+                    : t("netWorth.negativeInsight", { debts: formatAmount(debtTotal) })}
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
-                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📊 Asset allocation</p>
+                <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">📊 {t("netWorth.assetAllocation")}</p>
                 <p className="text-gray-500">
                   {totalAssets > 0
-                    ? `Banks: ${((bankTotal / totalAssets) * 100).toFixed(0)}% · Investments: ${((invTotal / totalAssets) * 100).toFixed(0)}% · Assets: ${((assetTotal / totalAssets) * 100).toFixed(0)}%`
-                    : "Add your assets to see your allocation breakdown."}
+                    ? `${t("accounts.title")}: ${((bankTotal / totalAssets) * 100).toFixed(0)}% · ${t("investments.title")}: ${((invTotal / totalAssets) * 100).toFixed(0)}% · ${t("assets.title")}: ${((assetTotal / totalAssets) * 100).toFixed(0)}%`
+                    : t("netWorth.noData")}
                 </p>
               </div>
               <div className="bg-white/70 dark:bg-gray-800/50 rounded-xl p-3 text-xs">
                 <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                  {nextMilestone ? `🎯 Next milestone: ${nextMilestone.label}` : "🏆 Millionaire milestone achieved!"}
+                  {nextMilestone ? `🎯 ${t("netWorth.nextMilestone")}: ${nextMilestone.label}` : `🏆 ${t("netWorth.milestoneAchieved")}`}
                 </p>
                 <p className="text-gray-500">
                   {nextMilestone
-                    ? `You need ${formatAmount(nextMilestone.value - Math.max(0, netWorth))} more to reach ${nextMilestone.label}. Keep growing!`
-                    : "Incredible — you've crossed the $1M net worth milestone. Time to focus on wealth preservation."}
+                    ? t("netWorth.milestoneInsight", { amount: formatAmount(nextMilestone.value - Math.max(0, netWorth)), target: nextMilestone.label })
+                    : t("netWorth.millionaireInsight")}
                 </p>
               </div>
             </div>

@@ -162,7 +162,7 @@ function ReportSkeleton() {
 }
 
 export default function AiReportsPage() {
-  const { lang } = useI18n();
+  const { t, lang } = useI18n();
   const isAr = lang === "ar";
 
   const [report, setReport] = useState<AiReport | null>(null);
@@ -210,13 +210,11 @@ export default function AiReportsPage() {
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <h1 className="text-2xl font-bold dark:text-white">
-                {isAr ? "تقارير الذكاء الاصطناعي" : "AI Smart Reports"}
+                {t("aiReports.title")}
               </h1>
             </div>
             <p className="text-gray-500 dark:text-gray-400 text-sm">
-              {isAr
-                ? "تحليل مالي شامل مدعوم بالذكاء الاصطناعي بناءً على بياناتك الفعلية"
-                : "Comprehensive AI-powered financial analysis based on your actual data"}
+              {t("aiReports.subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -229,7 +227,7 @@ export default function AiReportsPage() {
                 data-testid="button-refresh-report"
               >
                 <RefreshCw className="w-4 h-4 me-2" />
-                {isAr ? "تحديث" : "Refresh"}
+                {t("common.refresh")}
               </Button>
             )}
             <Button
@@ -239,7 +237,7 @@ export default function AiReportsPage() {
               data-testid="button-generate-report"
             >
               <Sparkles className="w-4 h-4 me-2" />
-              {loading ? (isAr ? "جارٍ التحليل..." : "Analyzing...") : (isAr ? "إنشاء التقرير" : "Generate Report")}
+              {loading ? t("aiReports.generating") : t("aiReports.generateReport")}
             </Button>
           </div>
         </div>
@@ -252,7 +250,7 @@ export default function AiReportsPage() {
               {isAr ? "تقرير محفوظ من" : "Cached report from"}{" "}
               {report.cachedAt ? new Date(report.cachedAt).toLocaleString(isAr ? "ar-SA" : "en-US") : ""}
               {" "}—{" "}
-              {isAr ? "انقر تحديث لإعادة التوليد" : 'Click Refresh to regenerate'}
+              {isAr ? "انقر تحديث لإعادة التوليد" : "Click Refresh to regenerate"}
             </span>
           </div>
         )}
@@ -301,7 +299,7 @@ export default function AiReportsPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {[
                 {
-                  label: isAr ? "إجمالي الدخل" : "Total Income",
+                  label: t("nav.income"),
                   value: fmt(m?.totalIncome ?? 0),
                   change: m?.incomeChange ?? 0,
                   icon: Wallet,
@@ -309,7 +307,7 @@ export default function AiReportsPage() {
                   bg: "bg-green-50 dark:bg-green-950/50",
                 },
                 {
-                  label: isAr ? "إجمالي المصروفات" : "Total Expenses",
+                  label: t("nav.expenses"),
                   value: fmt(m?.totalExpenses ?? 0),
                   change: m?.expenseChange ?? 0,
                   icon: Receipt,
@@ -318,7 +316,7 @@ export default function AiReportsPage() {
                   invertColor: true,
                 },
                 {
-                  label: isAr ? "صافي الادخار" : "Net Savings",
+                  label: t("reports.netSavings"),
                   value: fmt((m?.totalIncome ?? 0) - (m?.totalExpenses ?? 0)),
                   change: null,
                   icon: PiggyBank,
@@ -326,7 +324,7 @@ export default function AiReportsPage() {
                   bg: "bg-blue-50 dark:bg-blue-950/50",
                 },
                 {
-                  label: isAr ? "معدل الادخار" : "Savings Rate",
+                  label: t("reports.savingsRate"),
                   value: `${(m?.savingsRate ?? 0).toFixed(1)}%`,
                   change: null,
                   icon: Target,
@@ -344,7 +342,7 @@ export default function AiReportsPage() {
                     {stat.change !== null && (
                       <div className={`flex items-center gap-1 mt-1 text-xs ${stat.invertColor ? (stat.change > 0 ? "text-red-500" : "text-green-600") : (stat.change > 0 ? "text-green-600" : "text-red-500")}`}>
                         {stat.change > 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-                        {pct(stat.change)} {isAr ? "عن الشهر السابق" : "vs last month"}
+                        {pct(stat.change)} {t("dashboard.vsLastMonth")}
                       </div>
                     )}
                   </CardContent>
@@ -357,7 +355,7 @@ export default function AiReportsPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <BarChart2 className="w-5 h-5 text-blue-600" />
-                  {isAr ? "تحليل الشهر الحالي" : "Monthly Financial Analysis"}
+                  {t("aiReports.summary")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -380,7 +378,7 @@ export default function AiReportsPage() {
             <div>
               <h2 className="text-lg font-bold mb-3 dark:text-white flex items-center gap-2">
                 <Lightbulb className="w-5 h-5 text-yellow-500" />
-                {isAr ? "رؤى الإنفاق الذكية" : "Smart Spending Insights"}
+                {t("aiReports.insights")}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {report.spendingInsights.map((insight, i) => {
@@ -413,7 +411,7 @@ export default function AiReportsPage() {
             <div>
               <h2 className="text-lg font-bold mb-3 dark:text-white flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-blue-500" />
-                {isAr ? "نصائح مالية مخصصة" : "Personalized AI Financial Advice"}
+                {t("aiReports.recommendations")}
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {report.aiAdvice.map((advice, i) => (

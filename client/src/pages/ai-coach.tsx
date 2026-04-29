@@ -9,6 +9,7 @@ import { Bot, User, Send, Mic, Volume2 } from "lucide-react";
 import { useVoiceRecorder, useVoiceStream } from "@/replit_integrations/audio";
 import { cn } from "@/lib/utils";
 import { useTransactions, useGoals } from "@/hooks/use-finance";
+import { useI18n } from "@/lib/i18n";
 
 // Use Voice/Chat logic here. 
 // Note: We need a conversation ID. For simplicity, we'll auto-create one or use a fixed "Coach" chat.
@@ -20,8 +21,9 @@ interface Message {
 
 export default function AICoachPage() {
   const { user } = useAuth();
+  const { t } = useI18n();
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'assistant', content: `Hello ${user?.firstName}! I'm your AI financial coach. Ask me about your spending, savings, or investment advice.` }
+    { role: 'assistant', content: t("aiCoach.greeting", { name: user?.firstName || "" }) }
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -108,7 +110,7 @@ export default function AICoachPage() {
       }
     } catch (e) {
       console.error(e);
-      addMessage('assistant', "Sorry, I'm having trouble connecting right now.");
+      addMessage('assistant', t("aiCoach.errorConnecting"));
     } finally {
       setIsTyping(false);
     }
@@ -118,7 +120,7 @@ export default function AICoachPage() {
     if (recorder.state === "recording") {
       const blob = await recorder.stopRecording();
       setIsTyping(true);
-      addMessage('assistant', "Processing audio..."); 
+      addMessage('assistant', t("aiCoach.processing")); 
       // Note: In real app, remove this placeholder when stream starts
       
       await stream.streamVoiceResponse(`/api/conversations/1/messages`, blob);
@@ -132,9 +134,9 @@ export default function AICoachPage() {
       <div className="h-[calc(100vh-140px)] flex flex-col">
         <div className="mb-6">
           <h2 className="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-accent to-purple-400 w-fit">
-            AI Financial Coach
+            {t("aiCoach.title")}
           </h2>
-          <p className="text-muted-foreground">Voice-enabled assistant powered by GPT-4o.</p>
+          <p className="text-muted-foreground">{t("aiCoach.subtitle")}</p>
         </div>
 
         <Card className="flex-1 flex flex-col overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
@@ -187,7 +189,7 @@ export default function AICoachPage() {
                 </Button>
                 <Input 
                   className="h-12 rounded-full px-6 bg-secondary/50 border-transparent focus:bg-background transition-all"
-                  placeholder="Ask for advice..."
+                  placeholder={t("aiCoach.placeholder")}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
