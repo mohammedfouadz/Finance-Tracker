@@ -46,10 +46,11 @@ function useZakatDaysLeft() {
 
 function ZakatBadge({ isActive }: { isActive: boolean }) {
   const days = useZakatDaysLeft();
+  const { isRtl } = useI18n();
   if (days === null || days > 14) return null;
   const color = days <= 7 ? "#DC2626" : days <= 14 ? "#EA580C" : "#D97706";
   return (
-    <span className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center"
+    <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center", isRtl ? "mr-auto" : "ml-auto")}
       style={{ backgroundColor: isActive ? "rgba(255,255,255,0.3)" : color, color: isActive ? "#fff" : "#fff" }}
       data-testid="badge-zakat-countdown">
       {days === 0 ? "!" : `${days}d`}
@@ -67,52 +68,60 @@ function WealthlyLogo({ size = 32 }: { size?: number }) {
   );
 }
 
+// Navigation groups - labels & item labels are now translation KEYS, not strings
+// They get resolved via t() at render time so the language can switch live.
 const NAV_GROUPS = [
   {
-    label: "Overview",
+    labelKey: "nav.group.overview",
     items: [
-      { label: "Home", href: "/dashboard", icon: LayoutDashboard },
-      { label: "Net Worth", href: "/net-worth", icon: TrendingUp },
+      { labelKey: "nav.home", href: "/dashboard", icon: LayoutDashboard },
+      { labelKey: "nav.netWorth", href: "/net-worth", icon: TrendingUp },
     ],
   },
   {
-    label: "Money Flow",
+    labelKey: "nav.group.moneyFlow",
     items: [
-      { label: "Income", href: "/income", icon: Wallet },
-      { label: "Expenses", href: "/expenses", icon: Receipt },
-      { label: "Accounts", href: "/bank-accounts", icon: Landmark },
+      { labelKey: "nav.income", href: "/income", icon: Wallet },
+      { labelKey: "nav.expenses", href: "/expenses", icon: Receipt },
+      { labelKey: "nav.accounts", href: "/bank-accounts", icon: Landmark },
     ],
   },
   {
-    label: "Wealth",
+    labelKey: "nav.group.wealth",
     items: [
-      { label: "Investments", href: "/investments", icon: LineChart },
-      { label: "Assets", href: "/assets", icon: Building2 },
-      { label: "Debts", href: "/debts", icon: HandCoins },
+      { labelKey: "nav.investments", href: "/investments", icon: LineChart },
+      { labelKey: "nav.assets", href: "/assets", icon: Building2 },
+      { labelKey: "nav.debts", href: "/debts", icon: HandCoins },
     ],
   },
   {
-    label: "Planning",
+    labelKey: "nav.group.planning",
     items: [
-      { label: "Goals", href: "/goals", icon: Target },
-      { label: "Budget", href: "/budget", icon: PieChart },
+      { labelKey: "nav.goals", href: "/goals", icon: Target },
+      { labelKey: "nav.budget", href: "/budget", icon: PieChart },
     ],
   },
   {
-    label: "Insights",
+    labelKey: "nav.group.insights",
     items: [
-      { label: "Reports", href: "/reports", icon: BarChart3 },
+      { labelKey: "nav.reports", href: "/reports", icon: BarChart3 },
     ],
   },
   {
-    label: "Obligations",
+    labelKey: "nav.group.obligations",
     items: [
-      { label: "Zakat", href: "/zakat", icon: Star },
+      { labelKey: "nav.zakat", href: "/zakat", icon: Star },
     ],
   },
 ];
 
-function NavItem({ item, isActive, onClick, badge }: { item: { label: string; href: string; icon: any }; isActive: boolean; onClick?: () => void; badge?: React.ReactNode }) {
+function NavItem({ item, isActive, onClick, badge }: {
+  item: { labelKey: string; href: string; icon: any };
+  isActive: boolean;
+  onClick?: () => void;
+  badge?: React.ReactNode;
+}) {
+  const { t } = useI18n();
   return (
     <Link href={item.href}>
       <div
@@ -126,7 +135,7 @@ function NavItem({ item, isActive, onClick, badge }: { item: { label: string; hr
         onClick={onClick}
       >
         <item.icon className={cn("w-4 h-4 flex-shrink-0", isActive ? "text-white" : "text-[#94A3B8] dark:text-[#64748B] group-hover:text-[#1B4FE4] dark:group-hover:text-[#4F8EF7]")} />
-        <span className="font-medium text-[14px] flex-1">{item.label}</span>
+        <span className="font-medium text-[14px] flex-1">{t(item.labelKey)}</span>
         {badge}
       </div>
     </Link>
@@ -152,7 +161,7 @@ function ProfileDropdown({ user, isAdmin, isDark, lang, onThemeToggle, onLangTog
           style={{ background: "linear-gradient(135deg, #1B4FE4, #00C896)" }}>
           {initials}
         </div>
-        <div className="flex-1 text-left overflow-hidden">
+        <div className="flex-1 text-start overflow-hidden">
           <p className="text-sm font-semibold truncate text-[#0F1729] dark:text-white">
             {user?.firstName} {user?.lastName}
           </p>
@@ -168,7 +177,7 @@ function ProfileDropdown({ user, isAdmin, isDark, lang, onThemeToggle, onLangTog
             <div className="p-3 space-y-0.5">
               <Link href="/settings">
                 <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#0F172A] dark:hover:text-white cursor-pointer" onClick={() => setOpen(false)}>
-                  <Settings className="w-4 h-4" /> Settings
+                  <Settings className="w-4 h-4" /> {t("nav.settings")}
                 </div>
               </Link>
               <button
@@ -176,21 +185,21 @@ function ProfileDropdown({ user, isAdmin, isDark, lang, onThemeToggle, onLangTog
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#0F172A] dark:hover:text-white"
                 data-testid="button-theme-toggle">
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                {isDark ? t("lightMode") : t("darkMode")}
+                {isDark ? t("nav.lightMode") : t("nav.darkMode")}
               </button>
               <button
                 onClick={() => { onLangToggle(); setOpen(false); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] hover:text-[#0F172A] dark:hover:text-white"
                 data-testid="button-lang-toggle">
                 <Languages className="w-4 h-4" />
-                {lang === "en" ? t("arabic") : t("english")}
+                {lang === "en" ? t("nav.languageAr") : t("nav.languageEn")}
               </button>
               {isAdmin && (
                 <>
                   <div className="h-px bg-[#E2E8F0] dark:bg-[#334155] my-1" />
                   <Link href="/admin">
                     <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-[#64748B] dark:text-[#94A3B8] hover:bg-[#F1F5F9] dark:hover:bg-[#334155] cursor-pointer" onClick={() => setOpen(false)}>
-                      <Shield className="w-4 h-4" /> Admin Panel
+                      <Shield className="w-4 h-4" /> {t("nav.adminPanel")}
                     </div>
                   </Link>
                 </>
@@ -200,7 +209,7 @@ function ProfileDropdown({ user, isAdmin, isDark, lang, onThemeToggle, onLangTog
                 onClick={() => { setOpen(false); onLogout(); }}
                 className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
                 data-testid="button-logout">
-                <LogOut className="w-4 h-4" /> Sign out
+                <LogOut className="w-4 h-4" /> {t("nav.signOut")}
               </button>
             </div>
           </div>
@@ -214,7 +223,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { logout, user } = useAuth();
   const { isDark, setTheme } = useTheme();
-  const { lang, setLang, t } = useI18n();
+  const { lang, setLang, t, isRtl } = useI18n();
   const isAdmin = (user as any)?.isAdmin;
 
   const handleThemeToggle = () => {
@@ -229,7 +238,10 @@ export function Sidebar() {
   };
 
   return (
-    <aside className="hidden lg:flex h-screen w-64 flex-col fixed left-0 top-0 border-r border-[#EEF4FF] dark:border-[#1E3A5F] bg-white dark:bg-[#0A1628] z-50 rtl:left-auto rtl:right-0 rtl:border-r-0 rtl:border-l">
+    <aside className={cn(
+      "hidden lg:flex h-screen w-64 flex-col fixed top-0 border-[#EEF4FF] dark:border-[#1E3A5F] bg-white dark:bg-[#0A1628] z-50",
+      isRtl ? "right-0 border-l" : "left-0 border-r"
+    )}>
       {/* logo */}
       <div className="px-5 py-5 flex items-center gap-2.5 shrink-0">
         <WealthlyLogo size={30} />
@@ -239,8 +251,8 @@ export function Sidebar() {
       {/* scrollable nav */}
       <nav className="flex-1 overflow-y-auto px-3 pb-3 space-y-4">
         {NAV_GROUPS.map(group => (
-          <div key={group.label}>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-3 mb-1">{group.label}</p>
+          <div key={group.labelKey}>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-3 mb-1">{t(group.labelKey)}</p>
             {group.items.map(item => {
               const active = location === item.href || (item.href === "/dashboard" && location === "/");
               return (
@@ -297,8 +309,8 @@ export function MobileHeader() {
           </div>
           <nav className="flex-1 p-3 overflow-y-auto max-h-[70vh] space-y-3">
             {NAV_GROUPS.map(group => (
-              <div key={group.label}>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-2 mb-1">{group.label}</p>
+              <div key={group.labelKey}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-2 mb-1">{t(group.labelKey)}</p>
                 {group.items.map(item => {
                   const active = location === item.href || (item.href === "/dashboard" && location === "/");
                   return (
@@ -311,8 +323,8 @@ export function MobileHeader() {
             ))}
             {isAdmin && (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-2 mb-1">Admin</p>
-                <NavItem item={{ label: "Admin Panel", href: "/admin", icon: Shield }}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#CBD5E1] dark:text-[#334155] px-2 mb-1">{t("nav.group.admin")}</p>
+                <NavItem item={{ labelKey: "nav.adminPanel", href: "/admin", icon: Shield }}
                   isActive={location.startsWith("/admin")} onClick={() => setOpen(false)} />
               </div>
             )}
@@ -320,14 +332,14 @@ export function MobileHeader() {
           <div className="p-3 border-t border-[#EEF4FF] dark:border-[#1E3A5F] space-y-1">
             <button onClick={() => setTheme(isDark ? "light" : "dark")} className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-sm text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744]">
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-              {isDark ? t("lightMode") : t("darkMode")}
+              {isDark ? t("nav.lightMode") : t("nav.darkMode")}
             </button>
             <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-sm text-[#64748B] dark:text-[#94A3B8] hover:bg-[#EEF4FF] dark:hover:bg-[#1A2744]">
               <Languages className="w-4 h-4" />
-              {lang === "en" ? t("arabic") : t("english")}
+              {lang === "en" ? t("nav.languageAr") : t("nav.languageEn")}
             </button>
             <button onClick={() => logout()} className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30">
-              <LogOut className="w-4 h-4" /> Sign out
+              <LogOut className="w-4 h-4" /> {t("nav.signOut")}
             </button>
           </div>
         </SheetContent>
@@ -337,11 +349,11 @@ export function MobileHeader() {
 }
 
 export function Layout({ children }: { children: React.ReactNode }) {
-  const { lang } = useI18n();
+  const { lang, isRtl } = useI18n();
   return (
-    <div className="min-h-screen bg-background text-foreground" dir={lang === "ar" ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-background text-foreground" dir={isRtl ? "rtl" : "ltr"}>
       <Sidebar />
-      <div className={cn("flex flex-col min-h-screen", lang === "ar" ? "lg:pr-64" : "lg:pl-64")}>
+      <div className={cn("flex flex-col min-h-screen", isRtl ? "lg:pr-64" : "lg:pl-64")}>
         <MobileHeader />
         <main className="flex-1 p-4 md:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
@@ -352,3 +364,4 @@ export function Layout({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

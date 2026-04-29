@@ -205,3 +205,244 @@
 .card-shadow-blue:hover {
   box-shadow: 0 8px 30px rgba(27, 79, 228, 0.15);
 }
+
+
+/* ════════════════════════════════════════════════════════════════
+   Wealthly — RTL & Arabic Typography Stylesheet
+   Add this AFTER your main Tailwind imports in client/src/index.css
+   ════════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────────────
+   1. Arabic Web Fonts (via Google Fonts)
+   Add this <link> in client/index.html <head>:
+
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+   Cairo  → main UI font (clean, modern)
+   Tajawal → fallback / alternative
+   ────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────
+   2. Apply Arabic font when html.lang-ar
+   ────────────────────────────────────────────────────── */
+html.lang-ar,
+html.lang-ar body {
+  font-family: 'Almarai', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  /* Slightly larger base size for Arabic readability */
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* Arabic numerals look better with these tweaks */
+html.lang-ar input[type="number"],
+html.lang-ar input[type="tel"],
+html.lang-ar [data-numeric] {
+  font-family: 'Almarai', system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ──────────────────────────────────────────────────────
+   3. RTL Layout Adjustments
+   Most adjustments are handled by Tailwind's rtl: variants
+   and logical properties (ms-, me-, ps-, pe-).
+   These rules cover edge cases.
+   ────────────────────────────────────────────────────── */
+
+/* Flip lucide-react icons that have direction (chevrons, arrows) */
+html[dir="rtl"] .lucide-chevron-right:not(.no-flip),
+html[dir="rtl"] .lucide-chevron-left:not(.no-flip),
+html[dir="rtl"] .lucide-arrow-right:not(.no-flip),
+html[dir="rtl"] .lucide-arrow-left:not(.no-flip),
+html[dir="rtl"] [data-flip-rtl] {
+  transform: scaleX(-1);
+}
+
+/* Don't flip icons inside number-related contexts (currency arrows up/down) */
+html[dir="rtl"] .lucide-arrow-up,
+html[dir="rtl"] .lucide-arrow-down,
+html[dir="rtl"] .lucide-trending-up,
+html[dir="rtl"] .lucide-trending-down {
+  transform: none;
+}
+
+/* ──────────────────────────────────────────────────────
+   4. Sidebar — switch sides in RTL
+   The Layout component already handles this via lang === "ar"
+   but these rules ensure visual consistency.
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] aside.fixed.left-0 {
+  left: auto;
+  right: 0;
+  border-right: 0;
+  border-left: 1px solid var(--border);
+}
+
+/* Adjust main content padding for RTL sidebar */
+@media (min-width: 1024px) {
+  html[dir="rtl"] .lg\:pl-64 {
+    padding-left: 0;
+    padding-right: 16rem;
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   5. Recharts — RTL adjustments
+   Recharts doesn't natively support RTL.
+   These rules make tooltips and legends behave correctly.
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] .recharts-tooltip-wrapper {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .recharts-legend-wrapper {
+  direction: rtl;
+}
+
+html[dir="rtl"] .recharts-legend-item {
+  margin-right: 0 !important;
+  margin-left: 10px !important;
+}
+
+html[dir="rtl"] .recharts-default-tooltip {
+  text-align: right !important;
+}
+
+/* Numbers inside charts stay LTR (financial convention) */
+.recharts-cartesian-axis-tick-value,
+.recharts-text {
+  direction: ltr;
+  unicode-bidi: embed;
+}
+
+/* ──────────────────────────────────────────────────────
+   6. Form inputs in RTL
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select {
+  text-align: right;
+}
+
+/* Numeric/email/url inputs stay LTR for proper formatting */
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] input[data-ltr],
+html[dir="rtl"] input[type="password"] {
+  text-align: right;
+  direction: ltr;
+}
+
+/* Placeholder alignment fix */
+html[dir="rtl"] input::placeholder,
+html[dir="rtl"] textarea::placeholder {
+  text-align: right;
+}
+
+html[dir="rtl"] input[type="email"]::placeholder,
+html[dir="rtl"] input[type="tel"]::placeholder,
+html[dir="rtl"] input[type="url"]::placeholder {
+  text-align: right;
+  direction: rtl;
+}
+
+/* ──────────────────────────────────────────────────────
+   7. Currency / Money displays
+   Always keep numbers LTR even inside RTL paragraphs
+   ────────────────────────────────────────────────────── */
+.currency-amount,
+[data-currency],
+[data-amount] {
+  direction: ltr;
+  unicode-bidi: embed;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ──────────────────────────────────────────────────────
+   8. Tables in RTL
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] table th,
+html[dir="rtl"] table td {
+  text-align: right;
+}
+
+html[dir="rtl"] table th.text-right,
+html[dir="rtl"] table td.text-right {
+  text-align: left;
+}
+
+html[dir="rtl"] table th.text-center,
+html[dir="rtl"] table td.text-center {
+  text-align: center;
+}
+
+/* ──────────────────────────────────────────────────────
+   9. Dropdowns / popovers / dialogs
+   Radix UI handles most positioning; these are edge cases
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] [role="menu"],
+html[dir="rtl"] [role="listbox"],
+html[dir="rtl"] [data-radix-popper-content-wrapper] {
+  text-align: right;
+}
+
+/* ──────────────────────────────────────────────────────
+   10. Toast notifications
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] [data-sonner-toast],
+html[dir="rtl"] .toast {
+  text-align: right;
+  direction: rtl;
+}
+
+/* ──────────────────────────────────────────────────────
+   11. Profile dropdown bottom-positioning fix
+   The dropdown uses absolute left:0 right:0 - works as-is
+   ────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────
+   12. Spacing utilities — convert ml-/mr- to rtl-aware
+   These only fire if you use legacy ml-/mr- (prefer ms-/me-)
+   ────────────────────────────────────────────────────── */
+
+/* For ANY remaining left/right margins that should flip: */
+html[dir="rtl"] .rtl-flip-margin-left {
+  margin-left: 0 !important;
+  margin-right: var(--rtl-margin, 0.5rem);
+}
+
+/* ──────────────────────────────────────────────────────
+   13. Login/Auth page background gradients (already use translate)
+   No changes needed — translate values handle RTL automatically.
+   ────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────
+   14. Mobile sheet (sidebar drawer) opens from correct side
+   Already handled in MobileHeader via `side={lang === "ar" ? "right" : "left"}`
+   ────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────
+   15. Headings and bold text — ensure Arabic weight renders
+   ────────────────────────────────────────────────────── */
+html.lang-ar h1,
+html.lang-ar h2,
+html.lang-ar h3,
+html.lang-ar h4,
+html.lang-ar .font-bold,
+html.lang-ar .font-semibold {
+  /* Cairo's bold weights need a slight letter-spacing nudge */
+  letter-spacing: 0;
+}
+
+/* ──────────────────────────────────────────────────────
+   16. Date pickers / native date inputs
+   ────────────────────────────────────────────────────── */
+html[dir="rtl"] input[type="date"]::-webkit-calendar-picker-indicator {
+  margin-left: 0;
+  margin-right: auto;
+}
+
