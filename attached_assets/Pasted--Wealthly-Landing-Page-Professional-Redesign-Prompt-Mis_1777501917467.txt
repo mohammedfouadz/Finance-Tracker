@@ -1,0 +1,693 @@
+# 🚀 Wealthly Landing Page — Professional Redesign Prompt
+
+## 🎯 Mission
+Redesign and rebuild the existing landing page at `client/src/pages/landing.tsx` to position **Wealthly** as a **premium, security-first personal finance platform** trusted by users in the Arab world and globally. The new landing must communicate **trust, privacy, encryption, and data sovereignty** as the core value propositions, alongside the financial features.
+
+---
+
+## 📋 Context
+
+- **Project**: Wealthly — bilingual (English/Arabic) personal finance tracker
+- **Stack**: React + TypeScript + Vite + Tailwind CSS + Wouter + Lucide Icons
+- **Current file**: `client/src/pages/landing.tsx` (~446 lines, fully bilingual via `content[lang]` pattern)
+- **Brand colors**:
+  - Primary blue: `#1B4FE4`
+  - Secondary green: `#00C896`
+  - Hover blue: `#1640C0`
+- **Arabic font**: Almarai (already loaded via Google Fonts)
+- **Target audience**: Arabic-speaking users in Saudi Arabia, UAE, Gulf region, and global users
+
+---
+
+## ✅ Requirements Checklist
+
+### MUST HAVE — Trust & Security Section (NEW — Top Priority)
+
+Add a **dedicated "Privacy & Security" section** prominently placed (ideally right after Hero or as second section). Include:
+
+1. **Bank-grade encryption messaging** — emphasize that all data is encrypted at rest (AES-256) and in transit (TLS 1.3)
+2. **Zero-knowledge architecture** — your data is yours alone; we cannot read it
+3. **No data selling** — explicit promise: we never sell, share, or monetize user data
+4. **Local data sovereignty** — option to mention server locations (EU/Saudi Arabia compliant)
+5. **GDPR & data protection compliance** — mention regulatory adherence
+6. **Secure authentication** — bcrypt password hashing, secure session management
+7. **No third-party tracking** — no Google Analytics, no Facebook Pixel, no marketing trackers
+8. **Open transparency** — users can export or delete their data anytime
+
+Use **lock icons, shield icons, key icons** from `lucide-react` (Shield, Lock, Key, ShieldCheck, Eye, EyeOff, Fingerprint, ServerCog).
+
+### MUST HAVE — Section Structure (in order)
+
+1. **Navigation** (existing) — Logo + Language toggle + Theme toggle + Login + Signup CTA
+2. **Hero Section** (rewritten) — Strong headline emphasizing **security** AND **wealth management**
+3. **Trust Bar** (NEW) — Below hero, a thin strip with security badges:
+   - 🔒 256-bit Encryption
+   - 🛡️ GDPR Compliant
+   - 🔐 Zero-Knowledge
+   - 🚫 No Data Selling
+   - ✓ Open Source Spirit
+4. **Privacy & Security Section** (NEW — featured prominently)
+5. **Features Section** (improve existing) — 10 modules with icons
+6. **How It Works Section** (NEW) — 3-step visual flow:
+   - 1. Sign up securely (encrypted from day 1)
+   - 2. Add your finances privately
+   - 3. Get insights you control
+7. **Bilingual & Arabic-First Section** (NEW) — Showcase RTL support, Arabic finance terminology, Zakat features
+8. **Testimonials** (improve existing) — Keep but make them more authentic
+9. **FAQ Section** (NEW) — Address common privacy concerns:
+   - Where is my data stored?
+   - Can Wealthly see my balances?
+   - What happens if I delete my account?
+   - Is my password really safe?
+   - How is Zakat calculated privately?
+10. **Final CTA Section** (improve existing) — Big "Start Free" with reassurance line below
+11. **Footer** (improve existing) — Add Privacy Policy link, Terms link, Contact, Social
+
+### MUST HAVE — Bilingual Content (English + Arabic)
+
+Update the `content` object in `landing.tsx` with the **full bilingual copy provided below**. Both languages must be **professional, polished, and culturally appropriate** for Arabic-speaking finance users.
+
+### MUST HAVE — Visual & UX Polish
+
+- Add subtle **gradient backgrounds** (blue to indigo) for hero
+- Use **glass-morphism** for cards (backdrop-blur, semi-transparent borders)
+- Add **scroll animations** (fade-in-up on viewport intersection)
+- Ensure **dark mode** works perfectly across all new sections
+- All new sections must support **full RTL** when Arabic is active
+- Use **Lucide icons** consistently
+- Add a **floating "language toggle"** that's always visible
+- **Mobile-responsive** — all sections must work on phones (< 480px)
+
+### MUST NOT
+- Don't break the existing routing (`/landing`, `/auth`, `/`)
+- Don't add external libraries beyond what's already in the project
+- Don't add localStorage usage beyond what's already there
+- Don't use placeholder Lorem ipsum — use the real copy provided
+- Don't claim certifications the app doesn't actually have (e.g., don't say "ISO 27001 certified" unless we are)
+
+---
+
+## 📝 Bilingual Content (Use Exactly)
+
+### Navigation
+```typescript
+en: { nav: { login: "Login", signup: "Get Started Free" } }
+ar: { nav: { login: "تسجيل الدخول", signup: "ابدأ مجاناً" } }
+```
+
+### Hero Section
+```typescript
+en: {
+  hero: {
+    badge: "Bank-Grade Security · Privacy First",
+    headline: "Your Financial Life,",
+    headlineAccent: "Encrypted & Yours Alone",
+    sub: "Wealthly is the privacy-first personal finance platform. Track income, expenses, investments, debts, goals, and Zakat — all protected by 256-bit encryption with zero-knowledge architecture. We can't see your data. Neither can anyone else.",
+    cta1: "Start Free — No Credit Card",
+    cta2: "How We Protect You",
+    trustLine: "Trusted by users in 30+ countries · Your data never leaves encrypted storage",
+  }
+}
+
+ar: {
+  hero: {
+    badge: "أمان مصرفي · الخصوصية أولاً",
+    headline: "حياتك المالية،",
+    headlineAccent: "مشفّرة وملك لك وحدك",
+    sub: "Wealthly منصة إدارة الأموال الشخصية الأولى التي تضع خصوصيتك في المقام الأول. تتبّع دخلك ومصروفاتك واستثماراتك وديونك وأهدافك وزكاتك — كل ذلك محميّ بتشفير ٢٥٦-بت وبنية صفرية المعرفة. لا نستطيع رؤية بياناتك، ولا يستطيع أحد غيرك.",
+    cta1: "ابدأ مجاناً — بدون بطاقة ائتمانية",
+    cta2: "كيف نحميك",
+    trustLine: "موثوق به في أكثر من ٣٠ دولة · بياناتك لا تغادر التخزين المشفّر أبداً",
+  }
+}
+```
+
+### Trust Bar (NEW)
+```typescript
+en: {
+  trustBar: [
+    { icon: "Lock", text: "256-bit Encryption" },
+    { icon: "ShieldCheck", text: "GDPR Compliant" },
+    { icon: "Key", text: "Zero-Knowledge" },
+    { icon: "Ban", text: "No Data Selling" },
+    { icon: "Eye", text: "Full Transparency" },
+  ]
+}
+
+ar: {
+  trustBar: [
+    { icon: "Lock", text: "تشفير ٢٥٦-بت" },
+    { icon: "ShieldCheck", text: "متوافق مع GDPR" },
+    { icon: "Key", text: "صفرية المعرفة" },
+    { icon: "Ban", text: "لا نبيع البيانات" },
+    { icon: "Eye", text: "شفافية كاملة" },
+  ]
+}
+```
+
+### Privacy & Security Section (NEW — Most Important)
+```typescript
+en: {
+  security: {
+    badge: "Privacy by Design",
+    title: "Your Data. Your Rules. Always.",
+    sub: "We built Wealthly with one rule: your financial data belongs to you and only you. Here's how we make sure it stays that way.",
+    pillars: [
+      {
+        icon: "Lock",
+        title: "Military-Grade Encryption",
+        desc: "Every byte of your data is encrypted with AES-256 at rest and TLS 1.3 in transit. The same encryption used by banks and governments.",
+      },
+      {
+        icon: "Key",
+        title: "Zero-Knowledge Architecture",
+        desc: "Your password unlocks your data. Not even our engineers can read your finances. If you lose your password, we cannot recover it for you — that's the point.",
+      },
+      {
+        icon: "Ban",
+        title: "We Never Sell Your Data",
+        desc: "No advertisers. No data brokers. No marketing pixels. Wealthly makes money from subscriptions, never from your financial habits.",
+      },
+      {
+        icon: "ServerCog",
+        title: "Secure Infrastructure",
+        desc: "Hosted on enterprise-grade servers with daily encrypted backups, DDoS protection, and 24/7 monitoring. Your data is safe even if your laptop isn't.",
+      },
+      {
+        icon: "Fingerprint",
+        title: "Strong Authentication",
+        desc: "Passwords hashed with bcrypt (industry standard). Sessions expire automatically. Future support for 2FA and biometric login.",
+      },
+      {
+        icon: "Download",
+        title: "Export & Delete Anytime",
+        desc: "Want to leave? Export all your data in CSV or JSON. Delete your account in one click — every trace of your data is permanently erased.",
+      },
+    ],
+    promise: {
+      title: "Our Privacy Promise",
+      points: [
+        "We will never read your financial data.",
+        "We will never sell or share your information.",
+        "We will never use your data to train AI models.",
+        "We will always let you export or delete everything.",
+        "We will always tell you about security incidents within 24 hours.",
+      ],
+    },
+  }
+}
+
+ar: {
+  security: {
+    badge: "الخصوصية من التصميم",
+    title: "بياناتك. قراراتك. دائماً.",
+    sub: "بنينا Wealthly على قاعدة واحدة: بياناتك المالية ملك لك وحدك. إليك كيف نضمن استمرار ذلك.",
+    pillars: [
+      {
+        icon: "Lock",
+        title: "تشفير عسكري المستوى",
+        desc: "كل بايت من بياناتك مشفّر بخوارزمية AES-256 أثناء التخزين، وبروتوكول TLS 1.3 أثناء النقل — نفس التشفير المستخدم في البنوك والحكومات.",
+      },
+      {
+        icon: "Key",
+        title: "بنية صفرية المعرفة",
+        desc: "كلمة مرورك هي مفتاح بياناتك. حتى مهندسونا لا يستطيعون قراءة أموالك. إن نسيت كلمة مرورك، لا نستطيع استعادتها لك — وهذا هو الهدف.",
+      },
+      {
+        icon: "Ban",
+        title: "لا نبيع بياناتك أبداً",
+        desc: "لا معلنين. لا وسطاء بيانات. لا أكواد تتبّع تسويقية. Wealthly يحقق دخلاً من الاشتراكات، وليس من عاداتك المالية.",
+      },
+      {
+        icon: "ServerCog",
+        title: "بنية تحتية آمنة",
+        desc: "مستضاف على خوادم بمستوى المؤسسات الكبرى مع نسخ احتياطية مشفّرة يومية، وحماية من هجمات DDoS، ومراقبة على مدار الساعة. بياناتك في أمان حتى لو فُقد جهازك.",
+      },
+      {
+        icon: "Fingerprint",
+        title: "مصادقة قوية",
+        desc: "كلمات المرور محميّة بخوارزمية bcrypt (المعيار الصناعي). الجلسات تنتهي صلاحيتها تلقائياً. دعم قريب للمصادقة الثنائية والبصمة.",
+      },
+      {
+        icon: "Download",
+        title: "تصدير وحذف في أي وقت",
+        desc: "تريد المغادرة؟ صدّر كل بياناتك بصيغة CSV أو JSON. احذف حسابك بضغطة واحدة — كل أثر لبياناتك يُمحى نهائياً.",
+      },
+    ],
+    promise: {
+      title: "وعدنا لك بالخصوصية",
+      points: [
+        "لن نقرأ بياناتك المالية أبداً.",
+        "لن نبيع أو نشارك معلوماتك أبداً.",
+        "لن نستخدم بياناتك لتدريب نماذج ذكاء اصطناعي.",
+        "سنسمح لك دائماً بتصدير أو حذف كل شيء.",
+        "سنبلّغك عن أي حادث أمني خلال ٢٤ ساعة.",
+      ],
+    },
+  }
+}
+```
+
+### Features Section (Improve Existing)
+Keep the 10 features but **rewrite descriptions** to emphasize privacy where relevant:
+
+```typescript
+en: {
+  features: {
+    title: "Everything You Need",
+    sub: "10 powerful modules — every byte encrypted, every insight private",
+    items: [
+      { icon: "LayoutDashboard", title: "Smart Dashboard", desc: "A complete view of your finances. Calculated locally, displayed instantly." },
+      { icon: "Wallet", title: "Income Tracking", desc: "Record salaries, freelance, rentals, and passive income — all encrypted." },
+      { icon: "Receipt", title: "Expense Management", desc: "Categorize spending and stay on budget without a single ad." },
+      { icon: "TrendingUp", title: "Investment Portfolio", desc: "Track stocks, crypto, gold, and silver with live private pricing." },
+      { icon: "Building2", title: "Asset Management", desc: "Monitor properties, vehicles, and valuables — only you see the values." },
+      { icon: "Landmark", title: "Multi-Bank Tracking", desc: "Connect multiple accounts manually. We never touch your bank login." },
+      { icon: "HandCoins", title: "Debt Tracking", desc: "Manage loans, mortgages, and IOUs with payment reminders." },
+      { icon: "Target", title: "Financial Goals", desc: "Set savings goals and watch your progress in real time." },
+      { icon: "PieChart", title: "Smart Budgeting", desc: "Auto-allocate income across categories with monthly insights." },
+      { icon: "Star", title: "Zakat Calculator", desc: "Accurate Zakat calculation with live gold/silver Nisab — Shariah-compliant." },
+    ],
+  }
+}
+
+ar: {
+  features: {
+    title: "كل ما تحتاجه",
+    sub: "١٠ وحدات قوية — كل بايت مشفّر، وكل تحليل خاص بك",
+    items: [
+      { icon: "LayoutDashboard", title: "لوحة تحكم ذكية", desc: "نظرة شاملة على وضعك المالي. تُحسب محلياً وتُعرض فوراً." },
+      { icon: "Wallet", title: "تتبّع الدخل", desc: "سجّل الرواتب والعمل الحر والإيجارات والدخل السلبي — كله مشفّر." },
+      { icon: "Receipt", title: "إدارة المصروفات", desc: "صنّف الإنفاق والتزم بميزانيتك دون أي إعلان." },
+      { icon: "TrendingUp", title: "محفظة الاستثمارات", desc: "تابع الأسهم والعملات الرقمية والذهب والفضة بأسعار حية وخاصة." },
+      { icon: "Building2", title: "إدارة الأصول", desc: "راقب العقارات والمركبات والمقتنيات — أنت وحدك من يرى القيم." },
+      { icon: "Landmark", title: "حسابات بنكية متعددة", desc: "اربط حسابات متعددة يدوياً. لا نلمس بيانات دخولك البنكية أبداً." },
+      { icon: "HandCoins", title: "تتبّع الديون", desc: "أدِر القروض والرهون والمستحقات مع تذكيرات بمواعيد السداد." },
+      { icon: "Target", title: "الأهداف المالية", desc: "حدّد أهداف الادخار وتابع تقدمك لحظة بلحظة." },
+      { icon: "PieChart", title: "ميزانية ذكية", desc: "وزّع دخلك تلقائياً على الفئات مع تحليلات شهرية." },
+      { icon: "Star", title: "حاسبة الزكاة", desc: "حساب دقيق للزكاة بنصاب الذهب والفضة الحيّ — متوافق مع الشريعة." },
+    ],
+  }
+}
+```
+
+### How It Works Section (NEW)
+```typescript
+en: {
+  howItWorks: {
+    title: "Three Steps to Financial Clarity",
+    sub: "Setup takes 2 minutes. Privacy lasts forever.",
+    steps: [
+      { number: "01", title: "Sign Up Securely", desc: "Create your account with end-to-end encryption from the very first second. We don't even ask for your real name if you don't want." },
+      { number: "02", title: "Add Your Finances", desc: "Manually log income, expenses, accounts, and assets. No bank connections needed. No third-party access." },
+      { number: "03", title: "Get Private Insights", desc: "AI-powered analysis runs on your data — never shared, never stored externally. Your financial life stays yours." },
+    ],
+  }
+}
+
+ar: {
+  howItWorks: {
+    title: "ثلاث خطوات لوضوح مالي كامل",
+    sub: "الإعداد يستغرق دقيقتين. الخصوصية تبقى للأبد.",
+    steps: [
+      { number: "٠١", title: "سجّل بأمان", desc: "أنشئ حسابك بتشفير شامل من اللحظة الأولى. لا نطلب حتى اسمك الحقيقي إن لم ترغب." },
+      { number: "٠٢", title: "أضف أموالك", desc: "سجّل دخلك ومصروفاتك وحساباتك وأصولك يدوياً. لا حاجة لربط بنكي. لا وصول لأطراف ثالثة." },
+      { number: "٠٣", title: "احصل على تحليلات خاصة", desc: "تحليلات الذكاء الاصطناعي تعمل على بياناتك — لا تُشارك، ولا تُخزّن خارجياً. حياتك المالية تبقى لك." },
+    ],
+  }
+}
+```
+
+### Bilingual & Arabic-First Section (NEW)
+```typescript
+en: {
+  arabicFirst: {
+    title: "Built for Arabic, Not Translated",
+    sub: "Most finance apps treat Arabic as an afterthought. We built Wealthly for Arabic from day one.",
+    features: [
+      "Full RTL (right-to-left) layout that doesn't break",
+      "Arabic finance terminology vetted by professionals",
+      "Hijri calendar support for Zakat tracking",
+      "Native Almarai font for beautiful Arabic typography",
+      "Multi-currency: SAR, AED, USD, EUR, and 30+ more",
+      "Cultural sensitivity — built to respect Islamic finance principles",
+    ],
+  }
+}
+
+ar: {
+  arabicFirst: {
+    title: "صُمّم للعربية، لم يُترجم إليها",
+    sub: "معظم تطبيقات المالية تعامل العربية على أنها فكرة لاحقة. نحن بنينا Wealthly للعربية من اليوم الأول.",
+    features: [
+      "تخطيط RTL كامل ومتقن لا ينكسر",
+      "مصطلحات مالية عربية معتمدة من متخصصين",
+      "دعم التقويم الهجري لتتبّع الزكاة",
+      "خط المراعي الأصيل لطباعة عربية جميلة",
+      "عملات متعددة: ريال سعودي، درهم إماراتي، دولار، يورو، و٣٠+ عملة",
+      "حساسية ثقافية — مبني لاحترام مبادئ التمويل الإسلامي",
+    ],
+  }
+}
+```
+
+### FAQ Section (NEW)
+```typescript
+en: {
+  faq: {
+    title: "Privacy Questions, Honest Answers",
+    items: [
+      {
+        q: "Where is my data physically stored?",
+        a: "Your encrypted data is stored on enterprise-grade servers with daily backups. We do not store data in any country with weak privacy laws.",
+      },
+      {
+        q: "Can Wealthly employees see my account balances?",
+        a: "No. Your data is encrypted with a key derived from your password. Even our database admins see only encrypted blobs, not real numbers.",
+      },
+      {
+        q: "What happens to my data if I delete my account?",
+        a: "Within 30 days, all your data is permanently and irreversibly deleted from our active systems and backups. We do not retain any copy.",
+      },
+      {
+        q: "Is my password really safe?",
+        a: "Yes. Passwords are never stored in plain text. We use bcrypt with high cost factors. Even if our database leaked, your password would take centuries to crack.",
+      },
+      {
+        q: "Do you use my data to train AI models?",
+        a: "Absolutely not. We will never use your financial data for any AI training, ever. AI analysis happens on your data only when you explicitly request it.",
+      },
+      {
+        q: "How is Zakat calculated privately?",
+        a: "Zakat calculations run entirely on your encrypted data. We don't know your wealth, your Nisab, or your Zakat amount — only you do.",
+      },
+      {
+        q: "Is Wealthly free?",
+        a: "Yes, the core features are free forever. We offer optional premium features for advanced users, paid via subscription — never via your data.",
+      },
+    ],
+  }
+}
+
+ar: {
+  faq: {
+    title: "أسئلة الخصوصية، إجابات صريحة",
+    items: [
+      {
+        q: "أين تُخزَّن بياناتي فعلياً؟",
+        a: "بياناتك المشفّرة مُخزّنة على خوادم بمستوى المؤسسات الكبرى مع نسخ احتياطية يومية. لا نخزّن البيانات في أي دولة ذات قوانين خصوصية ضعيفة.",
+      },
+      {
+        q: "هل يستطيع موظفو Wealthly رؤية أرصدتي؟",
+        a: "لا. بياناتك مشفّرة بمفتاح مُشتقّ من كلمة مرورك. حتى مديرو قواعد البيانات لدينا يرون فقط بيانات مشفّرة، وليس أرقاماً حقيقية.",
+      },
+      {
+        q: "ماذا يحدث لبياناتي عند حذف الحساب؟",
+        a: "خلال ٣٠ يوماً، تُحذف جميع بياناتك نهائياً ولا يمكن استرجاعها من أنظمتنا النشطة والنسخ الاحتياطية. لا نحتفظ بأي نسخة.",
+      },
+      {
+        q: "هل كلمة مروري آمنة فعلاً؟",
+        a: "نعم. كلمات المرور لا تُخزَّن أبداً كنص صريح. نستخدم خوارزمية bcrypt بمعاملات عالية. حتى لو تسرّبت قاعدة بياناتنا، ستحتاج كلمة مرورك قروناً لاختراقها.",
+      },
+      {
+        q: "هل تستخدمون بياناتي لتدريب نماذج الذكاء الاصطناعي؟",
+        a: "إطلاقاً. لن نستخدم بياناتك المالية لتدريب أي نموذج ذكاء اصطناعي، أبداً. التحليل الذكي يعمل على بياناتك فقط عندما تطلب ذلك صراحةً.",
+      },
+      {
+        q: "كيف تُحسب الزكاة بشكل خاص؟",
+        a: "حسابات الزكاة تتم بالكامل على بياناتك المشفّرة. نحن لا نعرف ثروتك ولا نصابك ولا مبلغ زكاتك — أنت وحدك تعرف.",
+      },
+      {
+        q: "هل Wealthly مجاني؟",
+        a: "نعم، الميزات الأساسية مجانية للأبد. نوفّر ميزات احترافية اختيارية للمستخدمين المتقدمين باشتراك مدفوع — وليس عبر بياناتك أبداً.",
+      },
+    ],
+  }
+}
+```
+
+### Stats Section (Improved)
+```typescript
+en: {
+  stats: {
+    title: "Trusted by Privacy-Conscious Users Worldwide",
+    items: [
+      { value: "256-bit", label: "AES Encryption" },
+      { value: "0", label: "Trackers · 0 Ads" },
+      { value: "100%", label: "Your Data, Yours Alone" },
+      { value: "30+", label: "Countries Served" },
+    ],
+  }
+}
+
+ar: {
+  stats: {
+    title: "موثوق به من مستخدمين يهتمون بالخصوصية حول العالم",
+    items: [
+      { value: "٢٥٦-بت", label: "تشفير AES" },
+      { value: "٠", label: "متعقّبات · ٠ إعلانات" },
+      { value: "١٠٠٪", label: "بياناتك، لك وحدك" },
+      { value: "٣٠+", label: "دولة مخدومة" },
+    ],
+  }
+}
+```
+
+### Final CTA
+```typescript
+en: {
+  cta: {
+    title: "Take Back Control of Your Money — Privately.",
+    sub: "Join thousands who refuse to trade their financial privacy for free apps. Your data is yours. Always.",
+    button: "Start Free Forever",
+    reassurance: "No credit card · No tracking · Cancel anytime · Export everything",
+  }
+}
+
+ar: {
+  cta: {
+    title: "استعد السيطرة على أموالك — بخصوصية تامة.",
+    sub: "انضم إلى الآلاف الذين يرفضون المساومة على خصوصيتهم المالية مقابل تطبيقات مجانية. بياناتك ملكك. دائماً.",
+    button: "ابدأ مجاناً للأبد",
+    reassurance: "لا بطاقة ائتمان · لا متعقّبات · ألغِ في أي وقت · صدّر كل شيء",
+  }
+}
+```
+
+### Footer
+```typescript
+en: {
+  footer: {
+    copy: "© 2026 Wealthly. All rights reserved.",
+    tagline: "Built with privacy. Designed for trust.",
+    columns: [
+      {
+        title: "Product",
+        links: [
+          { label: "Features", href: "#features" },
+          { label: "Security", href: "#security" },
+          { label: "Pricing", href: "#" },
+          { label: "Roadmap", href: "#" },
+        ]
+      },
+      {
+        title: "Company",
+        links: [
+          { label: "About", href: "#" },
+          { label: "Blog", href: "#" },
+          { label: "Contact", href: "#" },
+        ]
+      },
+      {
+        title: "Legal",
+        links: [
+          { label: "Privacy Policy", href: "#" },
+          { label: "Terms of Service", href: "#" },
+          { label: "Data Processing", href: "#" },
+          { label: "Security", href: "#security" },
+        ]
+      },
+    ],
+  }
+}
+
+ar: {
+  footer: {
+    copy: "© ٢٠٢٦ Wealthly. جميع الحقوق محفوظة.",
+    tagline: "مبنيّ بالخصوصية. مصمّم للثقة.",
+    columns: [
+      {
+        title: "المنتج",
+        links: [
+          { label: "المميزات", href: "#features" },
+          { label: "الأمان", href: "#security" },
+          { label: "الأسعار", href: "#" },
+          { label: "خارطة الطريق", href: "#" },
+        ]
+      },
+      {
+        title: "الشركة",
+        links: [
+          { label: "من نحن", href: "#" },
+          { label: "المدونة", href: "#" },
+          { label: "تواصل معنا", href: "#" },
+        ]
+      },
+      {
+        title: "القانوني",
+        links: [
+          { label: "سياسة الخصوصية", href: "#" },
+          { label: "شروط الاستخدام", href: "#" },
+          { label: "معالجة البيانات", href: "#" },
+          { label: "الأمان", href: "#security" },
+        ]
+      },
+    ],
+  }
+}
+```
+
+---
+
+## 🎨 Design Specifications
+
+### Color Palette
+- Primary: `#1B4FE4` (deep brand blue)
+- Primary hover: `#1640C0`
+- Secondary accent: `#00C896` (success green)
+- Security badge: gradient from `#1B4FE4` to `#00C896`
+- Background light: `#FFFFFF`
+- Background light alt: `#F8FAFF` (subtle blue tint)
+- Background dark: `#0A1628`
+- Background dark alt: `#0F1729`
+- Border light: `#EEF4FF`
+- Border dark: `#1E3A5F`
+- Text primary light: `#0F1729`
+- Text primary dark: `#FFFFFF`
+- Text muted: `#64748B`
+
+### Typography Scale
+- Hero headline: `text-4xl sm:text-5xl lg:text-7xl font-extrabold`
+- Section titles: `text-3xl sm:text-4xl lg:text-5xl font-bold`
+- Subtitles: `text-lg sm:text-xl text-gray-600 dark:text-gray-400`
+- Body: `text-base text-gray-700 dark:text-gray-300`
+- Small: `text-sm text-gray-500 dark:text-gray-400`
+
+### Component Style Guide
+
+**Security Pillar Card:**
+```jsx
+<div className="group relative p-6 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 hover:border-blue-200 dark:hover:border-blue-800 hover:shadow-xl hover:shadow-blue-100 dark:hover:shadow-blue-950/30 transition-all duration-300">
+  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mb-4">
+    <IconComponent className="w-6 h-6 text-white" />
+  </div>
+  <h3 className="text-lg font-bold mb-2">{title}</h3>
+  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{desc}</p>
+</div>
+```
+
+**Trust Bar Item:**
+```jsx
+<div className="flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50/50 dark:bg-blue-950/30 border border-blue-100/50 dark:border-blue-900/30">
+  <IconComponent className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+  <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">{text}</span>
+</div>
+```
+
+**FAQ Accordion Item:**
+Use a simple controlled accordion (no extra library — just useState). Each item:
+```jsx
+<div className="border border-gray-200 dark:border-gray-800 rounded-2xl overflow-hidden">
+  <button onClick={toggle} className="w-full px-6 py-4 flex items-center justify-between">
+    <span className="font-semibold text-start">{q}</span>
+    <ChevronDown className={cn("w-5 h-5 transition-transform", open && "rotate-180")} />
+  </button>
+  {open && <div className="px-6 pb-4 text-gray-600 dark:text-gray-400">{a}</div>}
+</div>
+```
+
+**Promise List (in Security section):**
+```jsx
+<ul className="space-y-3">
+  {points.map(p => (
+    <li className="flex items-start gap-3">
+      <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+      <span>{p}</span>
+    </li>
+  ))}
+</ul>
+```
+
+---
+
+## 🔧 Technical Requirements
+
+1. **Keep the existing `content[lang]` pattern** — don't switch to `t()` from `i18n.tsx`. The landing page is intentionally separate from the app's i18n system.
+
+2. **Add scroll animations** using IntersectionObserver (already in the file). Add observers for new sections: `security-section`, `how-section`, `arabic-section`, `faq-section`.
+
+3. **Anchor links** — Update navigation to support smooth scroll to sections:
+   - `#features`, `#security`, `#how-it-works`, `#faq`
+
+4. **Add icon mapping** at the top of the file since icon names come from strings:
+```typescript
+import { /* all needed icons */ } from "lucide-react";
+const iconMap: Record<string, any> = {
+  Lock, ShieldCheck, Key, Ban, Eye, ServerCog, Fingerprint, Download,
+  LayoutDashboard, Wallet, Receipt, TrendingUp, Building2, Landmark,
+  HandCoins, Target, PieChart, Star, CheckCircle2, ChevronDown,
+};
+```
+
+5. **RTL-safe** — Test Arabic mode rigorously. Use logical CSS where possible (`ms-`, `me-`, `text-start`, `text-end`).
+
+6. **Responsive breakpoints**:
+   - Mobile: `<640px` (single column for everything)
+   - Tablet: `640px–1024px` (2 columns for features/security)
+   - Desktop: `>1024px` (3-4 columns)
+
+7. **Dark mode** — Every new section must have proper dark mode classes.
+
+8. **Performance**:
+   - Lazy-load below-fold sections via existing IntersectionObserver pattern
+   - No images larger than necessary
+   - No heavy libraries
+
+---
+
+## 🧪 Testing Checklist
+
+After implementation, verify:
+
+- [ ] All 11 sections render correctly in both languages
+- [ ] Trust bar shows 5 badges in a row on desktop, wraps on mobile
+- [ ] Security section displays 6 pillar cards in a 3x2 grid (desktop) or stacked (mobile)
+- [ ] Promise list shows all 5 points with checkmarks
+- [ ] How It Works shows 3 numbered steps
+- [ ] Arabic-First section showcases 6 features
+- [ ] FAQ accordion expands/collapses smoothly
+- [ ] Stats section shows 4 metrics
+- [ ] Footer has 3 column groups + tagline
+- [ ] Language toggle switches all content instantly
+- [ ] Dark mode looks polished (no white flashes)
+- [ ] RTL mode flips layout correctly without breaking
+- [ ] Scroll animations trigger as user scrolls
+- [ ] All anchor links smooth-scroll to correct sections
+- [ ] Mobile (375px width) renders without horizontal scroll
+- [ ] Tablet (768px) shows 2-column grids
+- [ ] Desktop (1440px) shows full 3-4 column grids
+- [ ] Existing `/landing`, `/auth`, `/` routes still work
+
+---
+
+## 🚀 Final Notes
+
+- The landing page is the **first impression**. Make it polished, trustworthy, and conversion-focused.
+- **Privacy & Security messaging is the main differentiator** — make it impossible to miss.
+- The Arabic content is **professional MSA**, not casual — keep it that way.
+- Don't be afraid to make sections **long and detailed** — privacy-conscious users WILL read every word.
+- Add subtle micro-interactions (hover states, transitions) for premium feel.
+
+When done, the landing page should make a visitor feel: **"This is the only finance app that respects me."**
+
+Good luck! 🔒
