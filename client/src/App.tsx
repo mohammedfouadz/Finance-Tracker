@@ -3,7 +3,6 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { FloatingAIChat } from "@/components/ai-chat";
 
 import AuthPage from "@/pages/auth";
 import Dashboard from "@/pages/dashboard";
@@ -81,7 +80,7 @@ function Router() {
         <Route path="/admin/users/:id">{() => <AdminPage component={AdminUserDetailPage} />}</Route>
         <Route component={NotFound} />
       </Switch>
-      {user && <FloatingAIChat />}
+
     </>
   );
 }
