@@ -1156,6 +1156,7 @@ function DangerZoneSection() {
 ═══════════════════════════════════════════════════════ */
 export default function SettingsPage() {
   const { user }   = useAuth();
+  const { t, lang } = useI18n();
   const [activeSection, setActiveSection] = useState("profile");
 
   const currentSection = NAV_SECTIONS.find(s => s.id === activeSection);
