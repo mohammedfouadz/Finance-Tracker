@@ -81,7 +81,10 @@ export default function ExpensesPage() {
     exchangeRateToUsd: "1",
   });
 
-  const MONTHS = t("common.monthsFull");
+  const MONTHS = useMemo(() => lang === "ar"
+    ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
+    : ["January","February","March","April","May","June","July","August","September","October","November","December"],
+  [lang]);
 
   const { data: budgets = [] } = useBudgets();
   const budgetMap = useMemo(() => new Map(budgets.map(b => [b.categoryId, Number(b.limit)])), [budgets]);
