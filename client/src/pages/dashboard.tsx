@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TransactionDialog } from "@/components/transaction-dialog";
+import { HealthScoreCard } from "@/components/health-score-card";
 import {
   useTransactions, useCategories, useAssets, useBankAccounts,
   useInvestments, useDebts, useGoals, useAIInsights, useCreateGoalContribution,
@@ -377,6 +378,11 @@ export default function Dashboard() {
           </Link>
         </div>
       )}
+
+      {/* ── FINANCIAL HEALTH SCORE ── */}
+      <div className="mb-6">
+        <HealthScoreCard />
+      </div>
 
       {/* ── ZAKAT COUNTDOWN WIDGET (shows when Hawl date is set and within 30 days) ── */}
       {zakatCountdown && zakatCountdown.days <= 30 && (

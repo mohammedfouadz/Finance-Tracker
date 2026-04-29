@@ -1,0 +1,675 @@
+# 💚 Wealthly Financial Health Score — Fast Implementation
+
+## 🎯 Mission
+Build a **Financial Health Score** feature that calculates a score from 0-100 based on the user's financial data, displays it as a beautiful dashboard widget, and provides actionable recommendations.
+
+**No external APIs needed. No AI calls. Pure JavaScript math + nice UI.**
+
+---
+
+## 📋 Project Context
+
+- **Stack**: React + TypeScript + Vite + Express + Drizzle + PostgreSQL
+- **Existing files used**: `client/src/hooks/use-finance.ts` (for data fetching)
+- **Files to create**:
+  1. `client/src/lib/financial-health.ts` (calculation logic)
+  2. `client/src/components/health-score-card.tsx` (full card component)
+- **Files to modify**:
+  1. `client/src/pages/dashboard.tsx` (add the card)
+  2. `client/src/lib/i18n.tsx` (add translation keys)
+
+**Time estimate: 15-20 minutes for Replit Agent.**
+
+---
+
+## ⏱️ Implementation Steps (Follow Exactly)
+
+### Step 1: Create the calculation library
+
+Create file `client/src/lib/financial-health.ts`:
+
+```typescript
+/**
+ * Wealthly Financial Health Score Calculator
+ * 
+ * Calculates a 0-100 score based on 5 pillars:
+ * 1. Savings Rate (30 points) - % of income saved
+ * 2. Debt Ratio (25 points) - debts / monthly income ratio
+ * 3. Emergency Fund (20 points) - months of expenses covered by liquid savings
+ * 4. Investment Diversity (15 points) - variety of investment types
+ * 5. Tracking Consistency (10 points) - active usage indicator
+ * 
+ * No external APIs needed - all math runs locally.
+ */
+
+export interface HealthScoreInput {
+  monthlyIncome: number;
+  monthlyExpenses: number;
+  totalLiquidSavings: number; // bank account balances
+  totalActiveDebts: number;
+  totalInvestmentValue: number;
+  investmentTypes: string[]; // unique types: "stocks", "gold", "crypto", etc.
+  transactionsLast30Days: number;
+  hasGoals: boolean;
+  hasBudget: boolean;
+}
+
+export interface PillarScore {
+  key: string;
+  label: { en: string; ar: string };
+  score: number;
+  maxScore: number;
+  status: "excellent" | "good" | "warning" | "critical";
+  message: { en: string; ar: string };
+  value?: string; // formatted value for display
+}
+
+export interface HealthScoreResult {
+  totalScore: number;
+  rating: "excellent" | "good" | "fair" | "needs-work";
+  ratingLabel: { en: string; ar: string };
+  pillars: PillarScore[];
+  topRecommendation: { en: string; ar: string };
+  color: string; // hex for the circle
+}
+
+// ─── PILLAR 1: Savings Rate ───
+function calcSavingsRate(input: HealthScoreInput): PillarScore {
+  const { monthlyIncome, monthlyExpenses } = input;
+  const savingsRate = monthlyIncome > 0 
+    ? ((monthlyIncome - monthlyExpenses) / monthlyIncome) * 100 
+    : 0;
+
+  let score = 0;
+  let status: PillarScore["status"] = "critical";
+  let messageEn = "", messageAr = "";
+
+  if (savingsRate >= 20) {
+    score = 30;
+    status = "excellent";
+    messageEn = "Excellent — you're saving more than 20%";
+    messageAr = "ممتاز — تدّخر أكثر من ٢٠٪";
+  } else if (savingsRate >= 10) {
+    score = 22;
+    status = "good";
+    messageEn = "Good savings habit, aim for 20%";
+    messageAr = "عادة ادخار جيدة، استهدف ٢٠٪";
+  } else if (savingsRate >= 5) {
+    score = 12;
+    status = "warning";
+    messageEn = "Try to save at least 10% of income";
+    messageAr = "حاول ادخار ١٠٪ من دخلك على الأقل";
+  } else if (savingsRate > 0) {
+    score = 5;
+    status = "critical";
+    messageEn = "You're saving very little, increase savings";
+    messageAr = "تدّخر القليل جداً، زِد الادخار";
+  } else {
+    score = 0;
+    status = "critical";
+    messageEn = "You're spending more than earning";
+    messageAr = "مصروفاتك تتجاوز دخلك";
+  }
+
+  return {
+    key: "savings-rate",
+    label: { en: "Savings Rate", ar: "معدل الادخار" },
+    score, maxScore: 30, status,
+    message: { en: messageEn, ar: messageAr },
+    value: `${savingsRate.toFixed(1)}%`,
+  };
+}
+
+// ─── PILLAR 2: Debt Ratio ───
+function calcDebtRatio(input: HealthScoreInput): PillarScore {
+  const { totalActiveDebts, monthlyIncome } = input;
+  const annualIncome = monthlyIncome * 12;
+  const debtRatio = annualIncome > 0 ? (totalActiveDebts / annualIncome) * 100 : 0;
+
+  let score = 0;
+  let status: PillarScore["status"] = "critical";
+  let messageEn = "", messageAr = "";
+
+  if (totalActiveDebts === 0) {
+    score = 25;
+    status = "excellent";
+    messageEn = "Debt-free — excellent!";
+    messageAr = "خالٍ من الديون — ممتاز!";
+  } else if (debtRatio < 20) {
+    score = 22;
+    status = "excellent";
+    messageEn = "Very healthy debt level";
+    messageAr = "مستوى ديون صحي جداً";
+  } else if (debtRatio < 36) {
+    score = 17;
+    status = "good";
+    messageEn = "Manageable debt, monitor closely";
+    messageAr = "ديون قابلة للإدارة، راقبها";
+  } else if (debtRatio < 50) {
+    score = 10;
+    status = "warning";
+    messageEn = "High debt level — focus on repayment";
+    messageAr = "مستوى ديون مرتفع — ركّز على السداد";
+  } else {
+    score = 3;
+    status = "critical";
+    messageEn = "Critical debt level — urgent action needed";
+    messageAr = "مستوى ديون حرج — إجراء عاجل مطلوب";
+  }
+
+  return {
+    key: "debt-ratio",
+    label: { en: "Debt Ratio", ar: "نسبة الديون" },
+    score, maxScore: 25, status,
+    message: { en: messageEn, ar: messageAr },
+    value: totalActiveDebts === 0 ? "0%" : `${debtRatio.toFixed(0)}%`,
+  };
+}
+
+// ─── PILLAR 3: Emergency Fund ───
+function calcEmergencyFund(input: HealthScoreInput): PillarScore {
+  const { totalLiquidSavings, monthlyExpenses } = input;
+  const monthsCovered = monthlyExpenses > 0 ? totalLiquidSavings / monthlyExpenses : 0;
+
+  let score = 0;
+  let status: PillarScore["status"] = "critical";
+  let messageEn = "", messageAr = "";
+
+  if (monthsCovered >= 6) {
+    score = 20;
+    status = "excellent";
+    messageEn = "Strong emergency fund — 6+ months covered";
+    messageAr = "صندوق طوارئ قوي — ٦+ أشهر مغطاة";
+  } else if (monthsCovered >= 3) {
+    score = 14;
+    status = "good";
+    messageEn = "Good emergency fund, aim for 6 months";
+    messageAr = "صندوق طوارئ جيد، استهدف ٦ أشهر";
+  } else if (monthsCovered >= 1) {
+    score = 7;
+    status = "warning";
+    messageEn = "Build your emergency fund to 3-6 months";
+    messageAr = "ابنِ صندوق طوارئ يكفي ٣-٦ أشهر";
+  } else {
+    score = 0;
+    status = "critical";
+    messageEn = "No emergency cushion — start saving now";
+    messageAr = "لا يوجد احتياطي طوارئ — ابدأ الادخار الآن";
+  }
+
+  return {
+    key: "emergency-fund",
+    label: { en: "Emergency Fund", ar: "صندوق الطوارئ" },
+    score, maxScore: 20, status,
+    message: { en: messageEn, ar: messageAr },
+    value: monthsCovered < 0.5 ? "< 1 mo" : `${monthsCovered.toFixed(1)} ${monthsCovered === 1 ? "mo" : "mos"}`,
+  };
+}
+
+// ─── PILLAR 4: Investment Diversity ───
+function calcInvestmentDiversity(input: HealthScoreInput): PillarScore {
+  const { investmentTypes, totalInvestmentValue } = input;
+  const uniqueTypes = new Set(investmentTypes).size;
+
+  let score = 0;
+  let status: PillarScore["status"] = "critical";
+  let messageEn = "", messageAr = "";
+
+  if (totalInvestmentValue === 0) {
+    score = 0;
+    status = "critical";
+    messageEn = "No investments — start with index funds";
+    messageAr = "لا استثمارات — ابدأ بصناديق المؤشرات";
+  } else if (uniqueTypes >= 4) {
+    score = 15;
+    status = "excellent";
+    messageEn = "Well-diversified portfolio";
+    messageAr = "محفظة استثمارية متنوّعة جيداً";
+  } else if (uniqueTypes >= 3) {
+    score = 12;
+    status = "good";
+    messageEn = "Good diversity, consider adding more types";
+    messageAr = "تنوّع جيد، فكّر في إضافة أنواع أخرى";
+  } else if (uniqueTypes === 2) {
+    score = 8;
+    status = "warning";
+    messageEn = "Limited diversity — diversify across asset types";
+    messageAr = "تنوّع محدود — نوّع بين أنواع الأصول";
+  } else {
+    score = 4;
+    status = "warning";
+    messageEn = "Single investment type — diversify your portfolio";
+    messageAr = "نوع استثمار واحد فقط — نوّع محفظتك";
+  }
+
+  return {
+    key: "investment-diversity",
+    label: { en: "Investment Diversity", ar: "تنوّع الاستثمار" },
+    score, maxScore: 15, status,
+    message: { en: messageEn, ar: messageAr },
+    value: `${uniqueTypes} ${uniqueTypes === 1 ? "type" : "types"}`,
+  };
+}
+
+// ─── PILLAR 5: Tracking Consistency ───
+function calcTrackingConsistency(input: HealthScoreInput): PillarScore {
+  const { transactionsLast30Days, hasGoals, hasBudget } = input;
+
+  let score = 0;
+  let status: PillarScore["status"] = "critical";
+  let messageEn = "", messageAr = "";
+
+  // Base score from transaction logging
+  if (transactionsLast30Days >= 20) score += 6;
+  else if (transactionsLast30Days >= 10) score += 4;
+  else if (transactionsLast30Days >= 5) score += 2;
+
+  // Bonus for engagement
+  if (hasGoals) score += 2;
+  if (hasBudget) score += 2;
+
+  if (score >= 9) {
+    status = "excellent";
+    messageEn = "Highly engaged — great financial discipline";
+    messageAr = "متفاعل جداً — انضباط مالي رائع";
+  } else if (score >= 6) {
+    status = "good";
+    messageEn = "Active tracking, keep it up";
+    messageAr = "تتبّع نشط، استمر";
+  } else if (score >= 3) {
+    status = "warning";
+    messageEn = "Track more regularly for better insights";
+    messageAr = "تتبّع بانتظام أكثر للحصول على رؤى أفضل";
+  } else {
+    status = "critical";
+    messageEn = "Start logging transactions consistently";
+    messageAr = "ابدأ بتسجيل المعاملات بانتظام";
+  }
+
+  return {
+    key: "tracking-consistency",
+    label: { en: "Tracking Habit", ar: "انتظام التتبع" },
+    score, maxScore: 10, status,
+    message: { en: messageEn, ar: messageAr },
+    value: `${transactionsLast30Days} tx/mo`,
+  };
+}
+
+// ─── MAIN CALCULATOR ───
+export function calculateFinancialHealth(input: HealthScoreInput): HealthScoreResult {
+  const pillars = [
+    calcSavingsRate(input),
+    calcDebtRatio(input),
+    calcEmergencyFund(input),
+    calcInvestmentDiversity(input),
+    calcTrackingConsistency(input),
+  ];
+
+  const totalScore = pillars.reduce((sum, p) => sum + p.score, 0);
+
+  let rating: HealthScoreResult["rating"];
+  let ratingLabel: { en: string; ar: string };
+  let color: string;
+
+  if (totalScore >= 80) {
+    rating = "excellent";
+    ratingLabel = { en: "Excellent", ar: "ممتاز" };
+    color = "#1D9E75"; // teal-400
+  } else if (totalScore >= 60) {
+    rating = "good";
+    ratingLabel = { en: "Healthy", ar: "صحية" };
+    color = "#1D9E75"; // green
+  } else if (totalScore >= 40) {
+    rating = "fair";
+    ratingLabel = { en: "Fair", ar: "متوسطة" };
+    color = "#EF9F27"; // amber
+  } else {
+    rating = "needs-work";
+    ratingLabel = { en: "Needs Work", ar: "تحتاج عمل" };
+    color = "#E24B4A"; // red
+  }
+
+  // Pick top recommendation: the pillar with highest gap (maxScore - score)
+  const sortedByGap = [...pillars].sort((a, b) => 
+    (b.maxScore - b.score) - (a.maxScore - a.score)
+  );
+  const weakestPillar = sortedByGap[0];
+  
+  const topRecommendation = {
+    en: weakestPillar.message.en,
+    ar: weakestPillar.message.ar,
+  };
+
+  return {
+    totalScore,
+    rating,
+    ratingLabel,
+    pillars,
+    topRecommendation,
+    color,
+  };
+}
+```
+
+---
+
+### Step 2: Create the Health Score Card component
+
+Create file `client/src/components/health-score-card.tsx`:
+
+```typescript
+import { useMemo } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useI18n } from "@/lib/i18n";
+import { useTransactions, useGoals } from "@/hooks/use-finance";
+import { useQuery } from "@tanstack/react-query";
+import { calculateFinancialHealth, type HealthScoreInput } from "@/lib/financial-health";
+import { Heart, TrendingUp, Lightbulb, Sparkles } from "lucide-react";
+import { startOfMonth, endOfMonth, subDays } from "date-fns";
+
+export function HealthScoreCard() {
+  const { lang, isRtl } = useI18n();
+  const { data: transactions = [] } = useTransactions();
+  const { data: goals = [] } = useGoals();
+
+  const { data: bankAccounts = [] } = useQuery<any[]>({ queryKey: ["/api/bank-accounts"] });
+  const { data: investments = [] } = useQuery<any[]>({ queryKey: ["/api/investments"] });
+  const { data: debts = [] } = useQuery<any[]>({ queryKey: ["/api/debts"] });
+  const { data: categories = [] } = useQuery<any[]>({ queryKey: ["/api/categories"] });
+
+  const healthScore = useMemo(() => {
+    const now = new Date();
+    const monthStart = startOfMonth(now);
+    const monthEnd = endOfMonth(now);
+    const thirtyDaysAgo = subDays(now, 30);
+
+    // Calculate this month's income & expenses
+    const incomeCatIds = new Set(
+      categories.filter((c: any) => c.type === "income").map((c: any) => c.id)
+    );
+    const expenseCatIds = new Set(
+      categories.filter((c: any) => c.type === "expense").map((c: any) => c.id)
+    );
+
+    const thisMonthTx = transactions.filter((t: any) => {
+      const d = new Date(t.date);
+      return d >= monthStart && d <= monthEnd;
+    });
+
+    const monthlyIncome = thisMonthTx
+      .filter((t: any) => incomeCatIds.has(t.categoryId))
+      .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+
+    const monthlyExpenses = thisMonthTx
+      .filter((t: any) => expenseCatIds.has(t.categoryId))
+      .reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+
+    const totalLiquidSavings = bankAccounts
+      .filter((b: any) => b.accountType !== "credit-card")
+      .reduce((s: number, b: any) => s + Number(b.balance || 0), 0);
+
+    const totalActiveDebts = debts
+      .filter((d: any) => d.status === "active")
+      .reduce((s: number, d: any) => s + Number(d.remainingAmount || 0), 0);
+
+    const totalInvestmentValue = investments.reduce(
+      (s: number, i: any) => s + Number(i.currentValue || i.purchasePrice || 0), 0
+    );
+
+    const investmentTypes = investments.map((i: any) => i.assetType || i.type || "other");
+
+    const transactionsLast30Days = transactions.filter((t: any) => 
+      new Date(t.date) >= thirtyDaysAgo
+    ).length;
+
+    const input: HealthScoreInput = {
+      monthlyIncome,
+      monthlyExpenses,
+      totalLiquidSavings,
+      totalActiveDebts,
+      totalInvestmentValue,
+      investmentTypes,
+      transactionsLast30Days,
+      hasGoals: goals.filter((g: any) => g.status === "active").length > 0,
+      hasBudget: categories.some((c: any) => Number(c.budget || 0) > 0),
+    };
+
+    return calculateFinancialHealth(input);
+  }, [transactions, goals, bankAccounts, investments, debts, categories]);
+
+  // Donut chart math
+  const radius = 65;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (healthScore.totalScore / 100) * circumference;
+
+  const isAr = lang === "ar";
+
+  // Status to color mapping
+  const statusColor = (status: string) => {
+    switch (status) {
+      case "excellent": return "#1D9E75";
+      case "good": return "#1D9E75";
+      case "warning": return "#EF9F27";
+      case "critical": return "#E24B4A";
+      default: return "#888780";
+    }
+  };
+
+  const statusBgClass = (status: string) => {
+    switch (status) {
+      case "excellent": return "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400";
+      case "good": return "bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400";
+      case "warning": return "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-700 dark:text-yellow-400";
+      case "critical": return "bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400";
+      default: return "bg-gray-50 dark:bg-gray-800";
+    }
+  };
+
+  return (
+    <Card className="overflow-hidden border-none shadow-md hover:shadow-xl transition-shadow duration-300 bg-white dark:bg-[#0F1729]" data-testid="card-health-score">
+      <CardContent className="p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-6 gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shrink-0">
+              <Heart className="w-4 h-4 text-white" fill="currentColor" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                {isAr ? "صحتك المالية" : "Your Financial Health"}
+              </p>
+              <h3 className="text-base font-bold flex items-center gap-1.5">
+                {isAr ? "Health Score" : "Health Score"}
+                <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+              </h3>
+            </div>
+          </div>
+          <Badge 
+            className="text-xs"
+            style={{ backgroundColor: `${healthScore.color}15`, color: healthScore.color, border: `1px solid ${healthScore.color}30` }}
+          >
+            {isAr ? healthScore.ratingLabel.ar : healthScore.ratingLabel.en}
+          </Badge>
+        </div>
+
+        {/* Score + Pillars */}
+        <div className="flex items-center gap-6 mb-5">
+          {/* Donut */}
+          <div className="relative w-36 h-36 shrink-0">
+            <svg viewBox="0 0 160 160" className="w-full h-full -rotate-90">
+              <circle
+                cx="80" cy="80" r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeOpacity="0.1"
+                strokeWidth="12"
+                className="text-gray-300 dark:text-gray-700"
+              />
+              <circle
+                cx="80" cy="80" r={radius}
+                fill="none"
+                stroke={healthScore.color}
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={circumference}
+                strokeDashoffset={offset}
+                style={{ transition: "stroke-dashoffset 1s ease-out" }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span 
+                className="text-4xl font-bold leading-none" 
+                style={{ color: healthScore.color }}
+                data-testid="text-health-score-value"
+              >
+                {healthScore.totalScore}
+              </span>
+              <span className="text-xs text-gray-400 mt-1">/ 100</span>
+            </div>
+          </div>
+
+          {/* Pillars */}
+          <div className="flex-1 space-y-2.5">
+            {healthScore.pillars.map((pillar) => (
+              <div key={pillar.key} data-testid={`pillar-${pillar.key}`}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">
+                    {isAr ? pillar.label.ar : pillar.label.en}
+                  </span>
+                  <span className="font-semibold" style={{ color: statusColor(pillar.status) }}>
+                    {pillar.value}
+                  </span>
+                </div>
+                <div className="h-1.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{
+                      width: `${(pillar.score / pillar.maxScore) * 100}%`,
+                      backgroundColor: statusColor(pillar.status),
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Top Recommendation */}
+        <div className="rounded-xl p-3.5 flex gap-2.5 items-start bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/50">
+          <div className="w-7 h-7 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center shrink-0">
+            <Lightbulb className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wide mb-1">
+              {isAr ? "توصية اليوم" : "Today's Tip"}
+            </p>
+            <p className="text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+              {isAr ? healthScore.topRecommendation.ar : healthScore.topRecommendation.en}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+---
+
+### Step 3: Add the card to Dashboard
+
+In `client/src/pages/dashboard.tsx`, **find** the section right after the top wealth/debt cards (look for `Total Wealth` or `إجمالي الثروة` cards). 
+
+**Add this import** at the top:
+```typescript
+import { HealthScoreCard } from "@/components/health-score-card";
+```
+
+**Add the card** in a new row, ideally right after the top stats cards. Find a good spot (e.g., before the "Income vs Expenses" chart) and add:
+
+```tsx
+{/* Financial Health Score - NEW */}
+<div className="mb-6">
+  <HealthScoreCard />
+</div>
+```
+
+If unsure where exactly, place it as the first thing inside the main content `<div>` after the greeting header and before any existing chart cards.
+
+---
+
+### Step 4: Add translation keys (optional but recommended)
+
+In `client/src/lib/i18n.tsx`, add these keys to BOTH `en` and `ar` blocks:
+
+```typescript
+// English
+"healthScore.title": "Financial Health",
+"healthScore.subtitle": "Your overall financial wellness",
+"healthScore.tip": "Today's Tip",
+
+// Arabic
+"healthScore.title": "صحتك المالية",
+"healthScore.subtitle": "صحتك المالية الشاملة",
+"healthScore.tip": "توصية اليوم",
+```
+
+(The component currently has inline labels — these keys are for future use if you want to refactor.)
+
+---
+
+## 🧪 Testing Checklist
+
+After Replit applies the changes:
+
+- [ ] Open Dashboard — Health Score card appears
+- [ ] Score shows a number 0-100
+- [ ] Donut chart fills proportionally
+- [ ] All 5 pillars show with progress bars
+- [ ] Each pillar shows a value (%, mos, etc.)
+- [ ] Tip section shows a recommendation
+- [ ] Switch language → all labels translate
+- [ ] Dark mode works properly
+- [ ] RTL mode (Arabic) — donut and bars look correct
+- [ ] Mobile responsive — card adapts to small screens
+
+---
+
+## 🎯 What This Adds to Your App
+
+1. **Instant Insight**: User opens dashboard → sees their score immediately
+2. **Actionable**: Top recommendation tells them what to fix
+3. **Gamification**: Score motivates improvement
+4. **Premium feel**: Looks like a real financial app (Mint, Personal Capital, YNAB)
+5. **No API costs**: Pure client-side calculation
+6. **Privacy**: All math runs in browser, no data leaves device
+
+---
+
+## 🚀 Score Calculation Logic Summary
+
+| Pillar | Max Points | What it measures |
+|--------|-----------|------------------|
+| Savings Rate | 30 | (Income - Expenses) / Income |
+| Debt Ratio | 25 | Active debts / Annual income |
+| Emergency Fund | 20 | Bank savings / Monthly expenses (in months) |
+| Investment Diversity | 15 | Number of unique investment types |
+| Tracking Consistency | 10 | Transactions/month + Goals + Budget |
+
+**Total Ratings**:
+- 80-100 → Excellent (green)
+- 60-79 → Healthy (green)
+- 40-59 → Fair (amber)
+- 0-39 → Needs Work (red)
+
+---
+
+## ✅ Done!
+
+When complete, the user gets a **professional financial dashboard widget** that:
+- Calculates instantly on every page load
+- Updates as user adds transactions/goals/etc.
+- Provides personalized recommendations
+- Costs $0 in API fees forever
+- Looks beautiful in both light/dark modes and both languages
