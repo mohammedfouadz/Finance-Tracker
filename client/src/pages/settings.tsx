@@ -12,6 +12,8 @@ import { useCurrency, CURRENCIES } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useTheme } from "@/lib/theme";
+import { usePreferences } from "@/lib/preferences";
 import {
   User, Palette, FolderOpen, Bell, Shield, CreditCard, Bot, Database,
   Globe, Crown, Smartphone, HelpCircle, AlertTriangle, Plus, Trash2, Save,
@@ -189,119 +191,223 @@ function ProfileSection({ user }: { user: any }) {
 }
 
 function PreferencesSection() {
-  const [theme, setTheme]   = useState<"light"|"dark"|"system">("light");
-  const [density, setDensity] = useState<"compact"|"comfortable"|"spacious">("comfortable");
-  const [toggles, setToggles] = useState({
-    reduceMotion: false, highContrast: false, autoCategory: true,
-    confirmDelete: true, shortcuts: true, tooltips: true,
-  });
-  const toggleFn = (k: keyof typeof toggles) => setToggles(p => ({ ...p, [k]: !p[k] }));
+  const { theme: currentTheme, setTheme } = useTheme();
+  const { prefs, setPrefs } = usePreferences();
+  const { t, isRtl } = useI18n();
+
+  const [saved, setSaved] = useState(false);
+
+  function save(patch: Parameters<typeof setPrefs>[0]) {
+    setPrefs(patch);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
 
   const THEMES = [
-    { id: "light",  icon: Sun,     label: "Light" },
-    { id: "dark",   icon: Moon,    label: "Dark" },
-    { id: "system", icon: Monitor, label: "System" },
+    { id: "light",  icon: Sun,     label: t("settings.themeLight") },
+    { id: "dark",   icon: Moon,    label: t("settings.themeDark") },
+    { id: "system", icon: Monitor, label: t("settings.themeSystem") },
   ] as const;
 
-  const ACCENTS = [BRAND, PURPLE, MINT, AMBER, "#EC4899", "#14B8A6"];
+  const ACCENTS = [
+    { hex: "#1B4FE4", label: "Blue" },
+    { hex: "#8B5CF6", label: "Purple" },
+    { hex: "#00C896", label: "Mint" },
+    { hex: "#F59E0B", label: "Amber" },
+    { hex: "#EC4899", label: "Pink" },
+    { hex: "#14B8A6", label: "Teal" },
+  ];
 
   return (
     <div>
-      <SectionCard title="Appearance" sub="Customize how Wealthly looks">
+      {saved && (
+        <div className="flex items-center gap-2 mb-4 px-3 py-2 rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 text-sm font-medium">
+          <Check className="w-4 h-4" />
+          {isRtl ? "تم الحفظ تلقائياً" : "Changes saved automatically"}
+        </div>
+      )}
+
+      <SectionCard title={isRtl ? "المظهر" : "Appearance"} sub={isRtl ? "تخصيص مظهر Wealthly" : "Customize how Wealthly looks"}>
         <div className="space-y-5">
+
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Theme</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t("settings.theme")}</p>
             <div className="grid grid-cols-3 gap-3">
-              {THEMES.map(t => (
-                <button key={t.id} onClick={() => setTheme(t.id)}
+              {THEMES.map(th => (
+                <button
+                  key={th.id}
+                  data-testid={`btn-theme-${th.id}`}
+                  onClick={() => { setTheme(th.id); save({}); }}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all"
-                  style={theme === t.id ? { borderColor: BRAND, backgroundColor: "#EEF4FF" } : { borderColor: "#E2E8F0", backgroundColor: "transparent" }}>
-                  <t.icon className="w-5 h-5" style={{ color: theme === t.id ? BRAND : "#94A3B8" }} />
-                  <span className="text-xs font-medium" style={{ color: theme === t.id ? BRAND : "#64748B" }}>{t.label}</span>
+                  style={currentTheme === th.id
+                    ? { borderColor: prefs.accentColor, backgroundColor: "#EEF4FF" }
+                    : { borderColor: "#E2E8F0", backgroundColor: "transparent" }}>
+                  <th.icon className="w-5 h-5" style={{ color: currentTheme === th.id ? prefs.accentColor : "#94A3B8" }} />
+                  <span className="text-xs font-medium" style={{ color: currentTheme === th.id ? prefs.accentColor : "#64748B" }}>{th.label}</span>
                 </button>
               ))}
             </div>
           </div>
+
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Accent Color</p>
-            <div className="flex gap-2">
-              {ACCENTS.map(c => (
-                <button key={c} className="w-7 h-7 rounded-full border-2 border-white shadow-sm transition-transform hover:scale-110" style={{ backgroundColor: c, outlineOffset: 2, outline: c === BRAND ? `2px solid ${BRAND}` : "none" }} />
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+              {isRtl ? "لون التمييز" : "Accent Color"}
+            </p>
+            <div className="flex gap-3">
+              {ACCENTS.map(({ hex, label }) => (
+                <button
+                  key={hex}
+                  data-testid={`btn-accent-${label.toLowerCase()}`}
+                  title={label}
+                  onClick={() => save({ accentColor: hex })}
+                  className="w-8 h-8 rounded-full transition-all hover:scale-110 relative"
+                  style={{
+                    backgroundColor: hex,
+                    boxShadow: prefs.accentColor === hex ? `0 0 0 3px white, 0 0 0 5px ${hex}` : "0 1px 3px rgba(0,0,0,.2)",
+                  }}
+                >
+                  {prefs.accentColor === hex && (
+                    <Check className="w-4 h-4 text-white absolute inset-0 m-auto" />
+                  )}
+                </button>
               ))}
             </div>
           </div>
+
           <div>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Layout Density</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              {isRtl ? "كثافة التخطيط" : "Layout Density"}
+            </p>
             <div className="flex gap-2">
-              {(["compact","comfortable","spacious"] as const).map(d => (
-                <button key={d} onClick={() => setDensity(d)}
+              {([
+                { id: "compact",     label: isRtl ? "مضغوط"    : "Compact" },
+                { id: "comfortable", label: isRtl ? "مريح"      : "Comfortable" },
+                { id: "spacious",    label: isRtl ? "متسع"      : "Spacious" },
+              ] as const).map(d => (
+                <button
+                  key={d.id}
+                  data-testid={`btn-density-${d.id}`}
+                  onClick={() => save({ density: d.id })}
                   className="flex-1 py-2 rounded-xl text-xs font-medium border-2 capitalize transition-all"
-                  style={density === d ? { borderColor: BRAND, color: BRAND, backgroundColor: "#EEF4FF" } : { borderColor: "#E2E8F0", color: "#64748B" }}>
-                  {d}
+                  style={prefs.density === d.id
+                    ? { borderColor: prefs.accentColor, color: prefs.accentColor, backgroundColor: "#EEF4FF" }
+                    : { borderColor: "#E2E8F0", color: "#64748B" }}>
+                  {d.label}
                 </button>
               ))}
             </div>
           </div>
-          <Toggle checked={toggles.reduceMotion}  onChange={() => toggleFn("reduceMotion")}  label="Reduce Motion"    sub="Disable animations and transitions" />
-          <Toggle checked={toggles.highContrast}  onChange={() => toggleFn("highContrast")}  label="High Contrast Mode" sub="Increase visual contrast" />
+
+          <Toggle
+            checked={prefs.reduceMotion}
+            onChange={() => save({ reduceMotion: !prefs.reduceMotion })}
+            label={isRtl ? "تقليل الحركة" : "Reduce Motion"}
+            sub={isRtl ? "تعطيل الرسوم المتحركة والانتقالات" : "Disable animations and transitions"}
+          />
+          <Toggle
+            checked={prefs.highContrast}
+            onChange={() => save({ highContrast: !prefs.highContrast })}
+            label={isRtl ? "وضع التباين العالي" : "High Contrast Mode"}
+            sub={isRtl ? "زيادة التباين البصري" : "Increase visual contrast"}
+          />
         </div>
       </SectionCard>
 
-      <SectionCard title="Display Preferences" sub="Numbers, dates, and chart defaults">
+      <SectionCard title={isRtl ? "تفضيلات العرض" : "Display Preferences"} sub={isRtl ? "الأرقام والتواريخ وإعدادات المخططات" : "Numbers, dates, and chart defaults"}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Default Landing Page</label>
-            <Select defaultValue="dashboard">
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              {isRtl ? "الصفحة الافتراضية" : "Default Landing Page"}
+            </label>
+            <Select
+              value={prefs.landingPage}
+              onValueChange={v => save({ landingPage: v })}
+            >
+              <SelectTrigger data-testid="select-landing-page"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="dashboard">Home Dashboard</SelectItem>
-                <SelectItem value="net-worth">Net Worth</SelectItem>
-                <SelectItem value="expenses">Expenses</SelectItem>
-                <SelectItem value="budget">Budget</SelectItem>
+                <SelectItem value="dashboard">{isRtl ? "لوحة التحكم" : "Home Dashboard"}</SelectItem>
+                <SelectItem value="net-worth">{isRtl ? "صافي الثروة" : "Net Worth"}</SelectItem>
+                <SelectItem value="expenses">{isRtl ? "المصروفات" : "Expenses"}</SelectItem>
+                <SelectItem value="budget">{isRtl ? "الميزانية" : "Budget"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Date Format</label>
-            <Select defaultValue="mdy">
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              {t("settings.dateFormat")}
+            </label>
+            <Select
+              value={prefs.dateFormat}
+              onValueChange={v => save({ dateFormat: v })}
+            >
+              <SelectTrigger data-testid="select-date-format"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="mdy">MM/DD/YYYY</SelectItem>
-                <SelectItem value="dmy">DD/MM/YYYY</SelectItem>
-                <SelectItem value="ymd">YYYY-MM-DD</SelectItem>
+                <SelectItem value="MM/DD/YYYY">MM/DD/YYYY</SelectItem>
+                <SelectItem value="DD/MM/YYYY">DD/MM/YYYY</SelectItem>
+                <SelectItem value="YYYY-MM-DD">YYYY-MM-DD</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Number Format</label>
-            <Select defaultValue="en">
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              {t("settings.numberFormat")}
+            </label>
+            <Select
+              value={prefs.numberFormat}
+              onValueChange={v => save({ numberFormat: v })}
+            >
+              <SelectTrigger data-testid="select-number-format"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="en">1,000.00 (US)</SelectItem>
                 <SelectItem value="eu">1.000,00 (EU)</SelectItem>
-                <SelectItem value="in">1 000,00 (FR)</SelectItem>
+                <SelectItem value="fr">1 000,00 (FR)</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div>
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">Default Chart Type</label>
-            <Select defaultValue="bar">
-              <SelectTrigger><SelectValue /></SelectTrigger>
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">
+              {isRtl ? "نوع المخطط الافتراضي" : "Default Chart Type"}
+            </label>
+            <Select
+              value={prefs.chartType}
+              onValueChange={v => save({ chartType: v })}
+            >
+              <SelectTrigger data-testid="select-chart-type"><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="bar">Bar Chart</SelectItem>
-                <SelectItem value="line">Line Chart</SelectItem>
-                <SelectItem value="area">Area Chart</SelectItem>
+                <SelectItem value="bar">{isRtl ? "مخطط أعمدة" : "Bar Chart"}</SelectItem>
+                <SelectItem value="line">{isRtl ? "مخطط خطي" : "Line Chart"}</SelectItem>
+                <SelectItem value="area">{isRtl ? "مخطط مساحة" : "Area Chart"}</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Behavior" sub="App interaction preferences">
-        <Toggle checked={toggles.autoCategory}  onChange={() => toggleFn("autoCategory")}  label="Auto-categorize Transactions" sub="AI suggests category based on merchant name" />
-        <Toggle checked={toggles.confirmDelete}  onChange={() => toggleFn("confirmDelete")}  label="Confirm Before Delete"         sub="Show confirmation dialog before deleting records" />
-        <Toggle checked={toggles.shortcuts}      onChange={() => toggleFn("shortcuts")}      label="Keyboard Shortcuts"            sub="Enable hotkeys for quick navigation" />
-        <Toggle checked={toggles.tooltips}       onChange={() => toggleFn("tooltips")}       label="Show Tooltips"                 sub="Display helpful hints throughout the app" />
+      <SectionCard title={isRtl ? "السلوك" : "Behavior"} sub={isRtl ? "تفضيلات التفاعل مع التطبيق" : "App interaction preferences"}>
+        <Toggle
+          checked={prefs.autoCategory}
+          onChange={() => save({ autoCategory: !prefs.autoCategory })}
+          label={isRtl ? "تصنيف المعاملات تلقائياً" : "Auto-categorize Transactions"}
+          sub={isRtl ? "الذكاء الاصطناعي يقترح التصنيف بناءً على اسم التاجر" : "AI suggests category based on merchant name"}
+        />
+        <Toggle
+          checked={prefs.confirmDelete}
+          onChange={() => save({ confirmDelete: !prefs.confirmDelete })}
+          label={isRtl ? "تأكيد قبل الحذف" : "Confirm Before Delete"}
+          sub={isRtl ? "عرض نافذة تأكيد قبل حذف السجلات" : "Show confirmation dialog before deleting records"}
+        />
+        <Toggle
+          checked={prefs.shortcuts}
+          onChange={() => save({ shortcuts: !prefs.shortcuts })}
+          label={isRtl ? "اختصارات لوحة المفاتيح" : "Keyboard Shortcuts"}
+          sub={isRtl ? "تمكين المفاتيح السريعة للتنقل" : "Enable hotkeys for quick navigation"}
+        />
+        <Toggle
+          checked={prefs.tooltips}
+          onChange={() => save({ tooltips: !prefs.tooltips })}
+          label={isRtl ? "عرض التلميحات" : "Show Tooltips"}
+          sub={isRtl ? "عرض تلميحات مساعدة في التطبيق" : "Display helpful hints throughout the app"}
+        />
       </SectionCard>
     </div>
   );

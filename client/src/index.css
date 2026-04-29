@@ -446,3 +446,71 @@ html[dir="rtl"] input[type="date"]::-webkit-calendar-picker-indicator {
   margin-right: auto;
 }
 
+/* ──────────────────────────────────────────────────────
+   17. Layout Density
+   ────────────────────────────────────────────────────── */
+html.density-compact .card-content-density,
+html.density-compact [data-slot="card-content"] {
+  padding: 0.75rem !important;
+}
+html.density-compact .py-6 { padding-top: 0.75rem !important; padding-bottom: 0.75rem !important; }
+html.density-compact .py-4 { padding-top: 0.5rem !important; padding-bottom: 0.5rem !important; }
+html.density-compact .gap-6 { gap: 0.75rem !important; }
+html.density-compact .gap-4 { gap: 0.5rem !important; }
+html.density-compact .space-y-6 > * + * { margin-top: 0.75rem !important; }
+html.density-compact .space-y-4 > * + * { margin-top: 0.5rem !important; }
+html.density-compact .p-6 { padding: 0.75rem !important; }
+html.density-compact .p-4 { padding: 0.5rem !important; }
+
+html.density-spacious .card-content-density,
+html.density-spacious [data-slot="card-content"] {
+  padding: 2rem !important;
+}
+html.density-spacious .py-6 { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+html.density-spacious .py-4 { padding-top: 1.5rem !important; padding-bottom: 1.5rem !important; }
+html.density-spacious .gap-6 { gap: 2rem !important; }
+html.density-spacious .gap-4 { gap: 1.5rem !important; }
+html.density-spacious .space-y-6 > * + * { margin-top: 2rem !important; }
+html.density-spacious .space-y-4 > * + * { margin-top: 1.5rem !important; }
+html.density-spacious .p-6 { padding: 2rem !important; }
+html.density-spacious .p-4 { padding: 1.5rem !important; }
+
+/* ──────────────────────────────────────────────────────
+   18. Reduce Motion
+   ────────────────────────────────────────────────────── */
+html.reduce-motion *,
+html.reduce-motion *::before,
+html.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* ──────────────────────────────────────────────────────
+   19. High Contrast Mode
+   ────────────────────────────────────────────────────── */
+html.high-contrast {
+  --border: 215 28% 55%;
+  --input: 215 28% 55%;
+  --ring: 221 76% 40%;
+  --muted-foreground: 215 16% 25%;
+}
+html.high-contrast.dark,
+html.high-contrast .dark {
+  --border: 217 19% 50%;
+  --input: 217 19% 50%;
+  --muted-foreground: 215 16% 80%;
+}
+html.high-contrast .text-gray-400,
+html.high-contrast .text-gray-500 {
+  color: rgb(55 65 81) !important;
+}
+html.high-contrast.dark .text-gray-400,
+html.high-contrast.dark .text-gray-500 {
+  color: rgb(209 213 219) !important;
+}
+html.high-contrast [class*="border"] {
+  border-color: hsl(var(--border)) !important;
+}
+

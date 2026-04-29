@@ -29,6 +29,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { ThemeProvider } from "@/lib/theme";
 import { I18nProvider } from "@/lib/i18n";
 import { CurrencyProvider } from "@/lib/currency";
+import { PreferencesProvider } from "@/lib/preferences";
 import { Loader2 } from "lucide-react";
 
 function ProtectedPage({ component: Component }: { component: () => JSX.Element }) {
@@ -88,13 +89,15 @@ function Router() {
 function AppProviders({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   return (
-    <ThemeProvider initialTheme={(user as any)?.theme || "light"}>
-      <I18nProvider initialLang={(user as any)?.language || "en"}>
-        <CurrencyProvider initialCurrency={(user as any)?.currency || "USD"}>
-          {children}
-        </CurrencyProvider>
-      </I18nProvider>
-    </ThemeProvider>
+    <PreferencesProvider>
+      <ThemeProvider initialTheme={(user as any)?.theme || "light"}>
+        <I18nProvider initialLang={(user as any)?.language || "en"}>
+          <CurrencyProvider initialCurrency={(user as any)?.currency || "USD"}>
+            {children}
+          </CurrencyProvider>
+        </I18nProvider>
+      </ThemeProvider>
+    </PreferencesProvider>
   );
 }
 
