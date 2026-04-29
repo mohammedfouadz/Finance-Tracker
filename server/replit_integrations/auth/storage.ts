@@ -7,6 +7,13 @@ export interface IAuthStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPreferences(id: string, prefs: { currency?: string; language?: string; theme?: string }): Promise<User | undefined>;
+  updatePrivacySettings(id: string, prefs: {
+    anonymousAnalytics?: boolean;
+    shareDataToImproveAi?: boolean;
+    productUpdatesEmail?: boolean;
+    marketingCommunications?: boolean;
+    dataRetentionYears?: number | null;
+  }): Promise<User | undefined>;
   ensureAdminByEmail(email: string): Promise<void>;
   getAllUsers(): Promise<Omit<User, "password">[]>;
   adminUpdateUser(id: string, data: Partial<Pick<User, "firstName" | "lastName" | "email" | "phone" | "country" | "isActive" | "isAdmin">>): Promise<User | undefined>;
@@ -45,6 +52,22 @@ class AuthStorage implements IAuthStorage {
     if (prefs.currency !== undefined) updates.currency = prefs.currency;
     if (prefs.language !== undefined) updates.language = prefs.language;
     if (prefs.theme !== undefined) updates.theme = prefs.theme;
+    const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
+    return user;
+  }
+
+  async updatePrivacySettings(id: string, prefs: {
+    anonymousAnalytics?: boolean;
+    shareDataToImproveAi?: boolean;
+    productUpdatesEmail?: boolean;
+    marketingCommunications?: boolean;
+    dataRetentionYears?: number | null;
+  }): Promise<User | undefined> {
+    const updates: any = { updatedAt: new Date() };
+    const allowed = ["anonymousAnalytics", "shareDataToImproveAi", "productUpdatesEmail", "marketingCommunications", "dataRetentionYears"] as const;
+    for (const key of allowed) {
+      if (prefs[key] !== undefined) updates[key] = prefs[key];
+    }
     const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return user;
   }

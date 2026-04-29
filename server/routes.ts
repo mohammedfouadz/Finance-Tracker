@@ -497,6 +497,48 @@ Be conversational, warm, and specific. Use actual numbers from their data. Keep 
     }
   });
 
+  // Bulk import transactions
+  app.post("/api/transactions/bulk", isAuthenticated, async (req: Request, res: any) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      const { transactions } = req.body;
+      if (!Array.isArray(transactions)) {
+        return res.status(400).json({ error: "transactions array required" });
+      }
+      let imported = 0;
+      for (const tx of transactions) {
+        try {
+          await storage.createTransaction({ ...tx, userId });
+          imported++;
+        } catch (e) {
+          console.error("Failed to import transaction:", e);
+        }
+      }
+      res.json({ imported, total: transactions.length });
+    } catch (error: any) {
+      console.error("Bulk import error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update privacy preferences
+  app.put("/api/auth/privacy", isAuthenticated, async (req: Request, res: any) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) return res.status(401).json({ error: "Unauthorized" });
+      const allowed = ["anonymousAnalytics", "shareDataToImproveAi", "productUpdatesEmail", "marketingCommunications", "dataRetentionYears"];
+      const prefs: any = {};
+      for (const key of allowed) {
+        if (req.body[key] !== undefined) prefs[key] = req.body[key];
+      }
+      const user = await authStorage.updatePrivacySettings(userId, prefs);
+      res.json(user);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // AI Insights
   app.post(api.ai.insights.path, isAuthenticated, async (req, res) => {
     try {

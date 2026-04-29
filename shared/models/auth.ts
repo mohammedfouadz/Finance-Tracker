@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { boolean, index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const sessions = pgTable(
   "sessions",
@@ -25,6 +25,11 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   isAdmin: boolean("is_admin").default(false),
   isActive: boolean("is_active").default(true),
+  anonymousAnalytics: boolean("anonymous_analytics").default(false).notNull(),
+  shareDataToImproveAi: boolean("share_data_to_improve_ai").default(false).notNull(),
+  productUpdatesEmail: boolean("product_updates_email").default(true).notNull(),
+  marketingCommunications: boolean("marketing_communications").default(false).notNull(),
+  dataRetentionYears: integer("data_retention_years"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
