@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/layout-sidebar";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,9 +18,8 @@ import {
   User, Palette, FolderOpen, Bell, Shield, CreditCard, Bot, Database,
   Globe, Crown, Smartphone, HelpCircle, AlertTriangle, Plus, Trash2, Save,
   Edit2, ChevronRight, Check, X, Sparkles, Lock, Eye, EyeOff, Download,
-  Upload, RefreshCw, Settings2, Moon, Sun, Monitor, Zap, Info, Loader2,
+  Upload, RefreshCw, Settings2, Moon, Sun, Monitor, Zap, Info,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const BRAND  = "#1B4FE4";
 const DANGER = "#EF4444";
@@ -922,349 +921,51 @@ function AISection() {
 }
 
 function DataSection() {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const { lang } = useI18n();
-  const isAr = lang === "ar";
-
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "json" | "pdf">("csv");
-  const [isExporting, setIsExporting] = useState(false);
-  const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPreview, setImportPreview] = useState<any>(null);
-  const [isImporting, setIsImporting] = useState(false);
-  const [importDialogOpen, setImportDialogOpen] = useState(false);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const u = user as any;
-  const [privacy, setPrivacy] = useState({
-    anonymousAnalytics: u?.anonymousAnalytics ?? false,
-    shareDataToImproveAi: u?.shareDataToImproveAi ?? false,
-    productUpdatesEmail: u?.productUpdatesEmail ?? true,
-    marketingCommunications: u?.marketingCommunications ?? false,
-  });
-  const [retention, setRetention] = useState<string>(
-    u?.dataRetentionYears ? String(u.dataRetentionYears) : "never"
-  );
-
-  const updatePrivacy = async (key: string, value: boolean) => {
-    const prev = { ...privacy };
-    const newState = { ...privacy, [key]: value };
-    setPrivacy(newState);
-    try {
-      const res = await fetch("/api/auth/privacy", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ [key]: value }),
-      });
-      if (!res.ok) throw new Error();
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: isAr ? "تم الحفظ" : "Saved" });
-    } catch {
-      setPrivacy(prev);
-      toast({ title: isAr ? "فشل الحفظ" : "Failed to save", variant: "destructive" });
-    }
-  };
-
-  const updateRetention = async (value: string) => {
-    setRetention(value);
-    const years = value === "never" ? null : parseInt(value);
-    try {
-      await fetch("/api/auth/privacy", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ dataRetentionYears: years }),
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({ title: isAr ? "تم تحديث مدة الاحتفاظ" : "Retention period updated" });
-    } catch {
-      toast({ title: isAr ? "فشل الحفظ" : "Failed to save", variant: "destructive" });
-    }
-  };
-
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      const { exportUserData } = await import("@/lib/data-export");
-      await exportUserData(exportFormat);
-      toast({
-        title: isAr ? "تم التصدير بنجاح" : "Export successful",
-        description: isAr
-          ? `تم تنزيل بياناتك بصيغة ${exportFormat.toUpperCase()}`
-          : `Your data has been downloaded as ${exportFormat.toUpperCase()}`,
-      });
-    } catch (error: any) {
-      toast({
-        title: isAr ? "فشل التصدير" : "Export failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const handleImportFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    setImportFile(file);
-    try {
-      const { previewImport } = await import("@/lib/data-import");
-      const preview = await previewImport(file);
-      setImportPreview(preview);
-      setImportDialogOpen(true);
-    } catch (error: any) {
-      toast({
-        title: isAr ? "فشل قراءة الملف" : "Failed to read file",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleImportConfirm = async () => {
-    if (!importFile || !importPreview) return;
-    setIsImporting(true);
-    try {
-      const { importTransactions } = await import("@/lib/data-import");
-      const result = await importTransactions(importFile, importPreview.suggestedMapping);
-      if (result.success) {
-        toast({
-          title: isAr ? "تم الاستيراد بنجاح" : "Import successful",
-          description: isAr
-            ? `تم استيراد ${result.imported} معاملة (تم تجاهل ${result.skipped})`
-            : `Imported ${result.imported} transactions (${result.skipped} skipped)`,
-        });
-        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
-        setImportDialogOpen(false);
-        setImportFile(null);
-        setImportPreview(null);
-      } else {
-        toast({
-          title: isAr ? "فشل الاستيراد" : "Import failed",
-          description: result.errors.slice(0, 3).join(", "),
-          variant: "destructive",
-        });
-      }
-    } finally {
-      setIsImporting(false);
-    }
-  };
-
   return (
     <div>
-      <SectionCard title={isAr ? "تصدير البيانات" : "Export Data"} sub={isAr ? "نزّل بياناتك المالية" : "Download your financial data"}>
+      <SectionCard title="Export Data" sub="Download your financial data">
         <div className="space-y-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            {(["csv", "excel", "json", "pdf"] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setExportFormat(f)}
-                data-testid={`button-format-${f}`}
-                className={cn(
-                  "px-3 py-1.5 rounded-lg border text-xs font-medium transition-all",
-                  exportFormat === f
-                    ? "bg-blue-600 text-white border-blue-600"
-                    : "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                )}
-              >
-                {f.toUpperCase()}
-              </button>
+          <div className="flex items-center gap-3">
+            {["CSV","Excel","JSON","PDF"].map(f => (
+              <button key={f} className="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">{f}</button>
             ))}
           </div>
-          <Button
-            onClick={handleExport}
-            disabled={isExporting}
-            className="gap-2 rounded-xl"
-            style={{ backgroundColor: BRAND }}
-            data-testid="button-export-all"
-          >
-            {isExporting ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> {isAr ? "جارٍ التصدير..." : "Exporting..."}</>
-            ) : (
-              <><Download className="w-4 h-4" /> {isAr ? "صدّر كل بياناتي" : "Export All My Data"}</>
-            )}
+          <Button className="gap-2 rounded-xl" style={{ backgroundColor: BRAND }}>
+            <Download className="w-4 h-4" /> Export All My Data
           </Button>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            🔒 {isAr
-              ? "كل التصدير يحدث محلياً في متصفحك. لا ترفع بياناتك لأي خادم خارجي."
-              : "All export happens locally in your browser. Your data never leaves your device."}
-          </p>
         </div>
       </SectionCard>
 
-      <SectionCard title={isAr ? "استيراد البيانات" : "Import Data"} sub={isAr ? "استورد من تطبيقات أخرى" : "Bring data from other apps"}>
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".csv"
-          onChange={handleImportFileSelect}
-          style={{ display: "none" }}
-          data-testid="input-import-file"
-        />
+      <SectionCard title="Import Data" sub="Bring data from other apps">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3">
-          {[
-            { id: "csv",              label: isAr ? "ملف CSV" : "CSV File",          available: true  },
-            { id: "mint",             label: "Mint",                                  available: true  },
-            { id: "ynab",             label: "YNAB",                                  available: true  },
-            { id: "personal-capital", label: "Personal Capital",                      available: true  },
-            { id: "quicken",          label: "Quicken",                               available: true  },
-            { id: "excel",            label: "Excel",                                 available: false },
-          ].map(src => (
-            <button
-              key={src.id}
-              onClick={() => src.available && fileInputRef.current?.click()}
-              disabled={!src.available}
-              data-testid={`button-import-${src.id}`}
-              className={cn(
-                "px-3 py-2 rounded-xl border text-xs font-medium transition-colors text-center",
-                src.available
-                  ? "border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
-                  : "border-gray-100 dark:border-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
-              )}
-            >
-              {src.label}
-              {!src.available && <span className="block text-[9px] mt-0.5">{isAr ? "قريباً" : "Soon"}</span>}
-            </button>
+          {["CSV File","Mint","YNAB","Personal Capital","Quicken","Excel"].map(src => (
+            <button key={src} className="px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-600 hover:bg-gray-50 transition-colors text-center">{src}</button>
           ))}
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          📁 {isAr
-            ? "صدّر بياناتك من التطبيقات الأخرى بصيغة CSV واستوردها هنا."
-            : "Export your data from other apps as CSV and import it here."}
-        </p>
       </SectionCard>
 
-      <SectionCard title={isAr ? "ضوابط الخصوصية" : "Privacy Controls"}>
-        <Toggle
-          checked={privacy.anonymousAnalytics}
-          onChange={(v) => updatePrivacy("anonymousAnalytics", v)}
-          label={isAr ? "تحليلات مجهولة" : "Anonymous Analytics"}
-          sub={isAr ? "ساعد في تحسين Wealthly (بدون بيانات شخصية)" : "Help improve Wealthly (no personal data)"}
-        />
-        <Toggle
-          checked={privacy.shareDataToImproveAi}
-          onChange={(v) => updatePrivacy("shareDataToImproveAi", v)}
-          label={isAr ? "مشاركة بيانات لتحسين الذكاء الاصطناعي" : "Share Data to Improve AI"}
-          sub={isAr ? "أنماط معاملات مجهولة الهوية فقط" : "Anonymized transaction patterns only"}
-        />
-        <Toggle
-          checked={privacy.productUpdatesEmail}
-          onChange={(v) => updatePrivacy("productUpdatesEmail", v)}
-          label={isAr ? "تحديثات المنتج عبر البريد" : "Product Updates via Email"}
-          sub={isAr ? "ميزات وتحسينات جديدة" : "New features and improvements"}
-        />
-        <Toggle
-          checked={privacy.marketingCommunications}
-          onChange={(v) => updatePrivacy("marketingCommunications", v)}
-          label={isAr ? "اتصالات تسويقية" : "Marketing Communications"}
-          sub={isAr ? "عروض وترقيات" : "Promotions and offers"}
-        />
+      <SectionCard title="Privacy Controls">
+        <Toggle checked={false} onChange={() => {}} label="Anonymous Analytics"           sub="Help improve Wealthly (no personal data)" />
+        <Toggle checked={false} onChange={() => {}} label="Share Data to Improve AI"      sub="Anonymized transaction patterns only" />
+        <Toggle checked={true}  onChange={() => {}} label="Product Updates via Email"     sub="New features and improvements" />
+        <Toggle checked={false} onChange={() => {}} label="Marketing Communications"      sub="Promotions and offers" />
       </SectionCard>
 
-      <SectionCard title={isAr ? "الاحتفاظ بالبيانات" : "Data Retention"}>
+      <SectionCard title="Data Retention">
         <div className="flex items-center justify-between">
-          <p className="text-sm text-gray-700 dark:text-gray-300">
-            {isAr ? "حذف تلقائي للمعاملات الأقدم من" : "Auto-delete transactions older than"}
-          </p>
-          <Select value={retention} onValueChange={updateRetention}>
-            <SelectTrigger className="w-36" data-testid="select-retention">
-              <SelectValue />
-            </SelectTrigger>
+          <p className="text-sm text-gray-700 dark:text-gray-300">Auto-delete transactions older than</p>
+          <Select defaultValue="never">
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="never">{isAr ? "أبداً" : "Never"}</SelectItem>
-              <SelectItem value="1">{isAr ? "سنة" : "1 Year"}</SelectItem>
-              <SelectItem value="3">{isAr ? "3 سنوات" : "3 Years"}</SelectItem>
-              <SelectItem value="5">{isAr ? "5 سنوات" : "5 Years"}</SelectItem>
-              <SelectItem value="10">{isAr ? "10 سنوات" : "10 Years"}</SelectItem>
+              <SelectItem value="never">Never</SelectItem>
+              <SelectItem value="1y">1 Year</SelectItem>
+              <SelectItem value="3y">3 Years</SelectItem>
+              <SelectItem value="5y">5 Years</SelectItem>
+              <SelectItem value="10y">10 Years</SelectItem>
             </SelectContent>
           </Select>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          ⚠️ {isAr
-            ? "البيانات المحذوفة لا يمكن استعادتها. صدّر نسخة احتياطية أولاً."
-            : "Deleted data cannot be recovered. Export a backup first."}
-        </p>
       </SectionCard>
-
-      {/* Import Preview Dialog */}
-      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{isAr ? "معاينة الاستيراد" : "Import Preview"}</DialogTitle>
-          </DialogHeader>
-          {importPreview && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-3 text-sm">
-                <div>
-                  <p className="text-xs text-gray-500">{isAr ? "الصيغة المكتشفة" : "Detected Format"}</p>
-                  <p className="font-semibold capitalize">{importPreview.detectedFormat}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">{isAr ? "إجمالي الصفوف" : "Total Rows"}</p>
-                  <p className="font-semibold">{importPreview.totalRows}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">{isAr ? "الأعمدة المعرّفة" : "Mapped Columns"}</p>
-                  <p className="font-semibold">{Object.keys(importPreview.suggestedMapping).length}</p>
-                </div>
-              </div>
-
-              <div className="border rounded-lg overflow-hidden">
-                <div className="bg-gray-50 dark:bg-gray-800 p-2 text-xs font-semibold">
-                  {isAr ? "أول 5 صفوف:" : "First 5 rows:"}
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-xs">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
-                      <tr>
-                        {importPreview.headers.map((h: string, i: number) => (
-                          <th key={i} className="px-2 py-1 text-start">
-                            {h}
-                            {importPreview.suggestedMapping[h] && (
-                              <span className="block text-[9px] text-blue-500">→ {importPreview.suggestedMapping[h]}</span>
-                            )}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {importPreview.sampleRows.map((row: string[], i: number) => (
-                        <tr key={i} className="border-t">
-                          {row.map((cell, j) => (
-                            <td key={j} className="px-2 py-1">{cell}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-2">
-                <Button variant="outline" onClick={() => setImportDialogOpen(false)}>
-                  {isAr ? "إلغاء" : "Cancel"}
-                </Button>
-                <Button
-                  onClick={handleImportConfirm}
-                  disabled={isImporting}
-                  style={{ backgroundColor: BRAND }}
-                  data-testid="button-confirm-import"
-                >
-                  {isImporting ? (
-                    <><Loader2 className="w-4 h-4 animate-spin me-2" /> {isAr ? "جارٍ الاستيراد..." : "Importing..."}</>
-                  ) : (
-                    isAr ? `استورد ${importPreview.totalRows} معاملة` : `Import ${importPreview.totalRows} transactions`
-                  )}
-                </Button>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
