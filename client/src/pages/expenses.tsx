@@ -5,14 +5,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
-  useTransactions, useCategories, useCreateTransaction, useDeleteTransaction,
+  useTransactions, useCategories, useDeleteTransaction,
   useBudgets,
 } from "@/hooks/use-finance";
+import { TransactionDialog } from "@/components/transaction-dialog";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
-import { CurrencyFields } from "@/components/currency-fields";
+import { useCurrency, toUsd } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
 import { format, getDaysInMonth } from "date-fns";
@@ -59,7 +58,6 @@ export default function ExpensesPage() {
   const { user } = useAuth();
   const { data: transactions, isLoading } = useTransactions();
   const { data: categories } = useCategories();
-  const createTransaction = useCreateTransaction();
   const deleteTransaction  = useDeleteTransaction();
   const { toast }          = useToast();
   const { formatAmount }   = useCurrency();
@@ -68,18 +66,8 @@ export default function ExpensesPage() {
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear,  setSelectedYear]  = useState(now.getFullYear());
-  const [showForm,      setShowForm]      = useState(false);
   const [catFilter,     setCatFilter]     = useState<number | "all">("all");
   const [alertDismissed, setAlertDismissed] = useState(false);
-
-  const [formData, setFormData] = useState({
-    description: "",
-    amount: "",
-    categoryId: "",
-    date: now.toISOString().split("T")[0],
-    currencyCode: "USD",
-    exchangeRateToUsd: "1",
-  });
 
   const MONTHS = useMemo(() => lang === "ar"
     ? ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"]
@@ -160,25 +148,6 @@ export default function ExpensesPage() {
     return list;
   }, [expenseTx, catFilter]);
 
-  /* submit */
-  const handleSubmit = async (e: any) => {
-    e.preventDefault();
-    if (!formData.description || !formData.amount || !formData.categoryId) return;
-    try {
-      await createTransaction.mutateAsync({
-        userId: user!.id,
-        description: formData.description,
-        amount: formData.amount,
-        categoryId: Number(formData.categoryId),
-        date: new Date(formData.date),
-        currencyCode: formData.currencyCode,
-        exchangeRateToUsd: formData.exchangeRateToUsd,
-      });
-      setFormData({ description: "", amount: "", categoryId: "", date: now.toISOString().split("T")[0], currencyCode: "USD", exchangeRateToUsd: "1" });
-      setShowForm(false);
-      toast({ title: t("common.saveSuccess") });
-    } catch { toast({ title: t("common.errorGeneric"), variant: "destructive" }); }
-  };
 
   if (isLoading) {
     return <Layout><div className="flex items-center justify-center h-[60vh]"><div className="animate-spin rounded-full h-8 w-8 border-b-2" style={{ borderColor: BRAND }} /></div></Layout>;
@@ -244,9 +213,7 @@ export default function ExpensesPage() {
               <SelectTrigger className="w-24 h-9 rounded-xl text-sm"><SelectValue /></SelectTrigger>
               <SelectContent>{[2024, 2025, 2026].map(y => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
             </Select>
-            <Button onClick={() => setShowForm(true)} className="gap-2 rounded-xl h-9" style={{ backgroundColor: BRAND }} data-testid="button-add-expense">
-              <Plus className="w-4 h-4" /> {t("expenses.addExpense")}
-            </Button>
+            <TransactionDialog defaultType="expense" />
           </div>
         </div>
 
@@ -510,51 +477,6 @@ export default function ExpensesPage() {
 
       </div>
 
-      {/* ── ADD EXPENSE DIALOG ── */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-md">
-          <DialogHeader><DialogTitle>{t("expenses.addExpense")}</DialogTitle></DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.description")}</label>
-              <Input placeholder={t("expenses.descriptionPlaceholder")} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} data-testid="input-description" />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.amount")}</label>
-                <Input type="number" step="0.01" placeholder={t("expenses.amountPlaceholder")} value={formData.amount} onChange={e => setFormData({ ...formData, amount: e.target.value })} data-testid="input-amount" />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.date")}</label>
-                <Input type="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} data-testid="input-date" />
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.category")}</label>
-              <Select value={formData.categoryId || undefined} onValueChange={v => setFormData({ ...formData, categoryId: v })}>
-                <SelectTrigger data-testid="select-category"><SelectValue placeholder={t("common.search")} /></SelectTrigger>
-                <SelectContent>
-                  {expenseCategories.map((c: any) => <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <CurrencyFields
-              currencyCode={formData.currencyCode}
-              exchangeRate={formData.exchangeRateToUsd}
-              amount={formData.amount}
-              onCurrencyChange={code => setFormData(p => ({ ...p, currencyCode: code }))}
-              onExchangeRateChange={rate => setFormData(p => ({ ...p, exchangeRateToUsd: rate }))}
-              showUsdPreview={true}
-            />
-            <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
-              <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }} disabled={createTransaction.isPending} data-testid="button-submit-expense">
-                {createTransaction.isPending ? t("common.saving") : t("expenses.addExpense")}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </Layout>
   );
 }

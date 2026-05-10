@@ -4,29 +4,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { insertTransactionSchema } from "@shared/schema";
-import { useTransactions, useCategories, useCreateTransaction, useDeleteTransaction, useUpdateTransaction } from "@/hooks/use-finance";
+import { useTransactions, useCategories, useDeleteTransaction } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
-import { CurrencyFields } from "@/components/currency-fields";
+import { useCurrency, toUsd } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
-import { format, subYears, startOfYear } from "date-fns";
+import { format } from "date-fns";
 import {
-  Plus, Trash2, DollarSign, TrendingUp, TrendingDown, Calendar,
-  BarChart3, Star, Search, Download, ArrowUpDown, Edit3, X,
-  Sparkles, RefreshCw, ChevronLeft, ChevronRight,
+  Trash2, DollarSign, TrendingUp, TrendingDown, Calendar,
+  BarChart3, Star, Download, ArrowUpDown,
+  Sparkles, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   PieChart, Pie, Cell,
 } from "recharts";
-import { z } from "zod";
+import { TransactionDialog } from "@/components/transaction-dialog";
 
 /* ── palette ── */
 const BRAND  = "#1B4FE4";
@@ -55,117 +49,6 @@ function catStyle(name: string) {
 const CHART_PALETTE = [BRAND, MINT, PURPLE, AMBER, "#EF4444", "#06B6D4", "#EC4899", "#84CC16"];
 const MONTHS_SHORT  = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 
-/* ── form schema ── */
-const txSchema = insertTransactionSchema.extend({
-  amount:            z.string().refine(v => Number(v) > 0, "Must be positive"),
-  currencyCode:      z.string().default("USD"),
-  exchangeRateToUsd: z.string().default("1"),
-  date:              z.string(),
-});
-type TxValues = z.infer<typeof txSchema>;
-
-/* ── Add Income dialog ── */
-function AddIncomeDialog({ incomeCategories, userId, onSuccess }: {
-  incomeCategories: any[];
-  userId: string;
-  onSuccess: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const createTx = useCreateTransaction();
-  const { toast } = useToast();
-  const { t } = useI18n();
-
-  const form = useForm<TxValues>({
-    resolver: zodResolver(txSchema),
-    defaultValues: {
-      userId,
-      description: "",
-      amount: "",
-      categoryId: undefined as any,
-      date: new Date().toISOString().split("T")[0],
-      currencyCode: "USD",
-      exchangeRateToUsd: "1",
-    },
-  });
-
-  const onSubmit = async (v: TxValues) => {
-    try {
-      await createTx.mutateAsync({ ...v, userId, amount: v.amount, categoryId: Number(v.categoryId) });
-      toast({ title: t("common.saveSuccess"), description: `${v.description} recorded successfully.` });
-      setOpen(false);
-      form.reset();
-      onSuccess();
-    } catch {
-      toast({ title: t("common.errorGeneric"), description: "Failed to add income.", variant: "destructive" });
-    }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="gap-2 rounded-xl shadow-sm" style={{ backgroundColor: BRAND }} data-testid="button-add-income">
-          <Plus className="w-4 h-4" /> {t("income.addIncome")}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{t("income.addIncome")}</DialogTitle>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField control={form.control} name="description" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("common.description")}</FormLabel>
-                <FormControl><Input placeholder={t("income.descriptionPlaceholder")} {...field} data-testid="input-description" /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <div className="grid grid-cols-2 gap-3">
-              <FormField control={form.control} name="amount" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("common.amount")}</FormLabel>
-                  <FormControl><Input type="number" step="0.01" placeholder={t("income.amountPlaceholder")} {...field} data-testid="input-amount" /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="date" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t("common.date")}</FormLabel>
-                  <FormControl><Input type="date" {...field} data-testid="input-date" /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
-            <FormField control={form.control} name="categoryId" render={({ field }) => (
-              <FormItem>
-                <FormLabel>{t("common.category")}</FormLabel>
-                <Select value={field.value ? String(field.value) : undefined} onValueChange={v => field.onChange(Number(v))}>
-                  <FormControl>
-                    <SelectTrigger data-testid="select-category"><SelectValue placeholder={t("common.search")} /></SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {incomeCategories.map((c: any) => (
-                      <SelectItem key={c.id} value={String(c.id)}>{c.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )} />
-            <CurrencyFields form={form} />
-            <div className="flex gap-2 pt-1">
-              <Button type="button" variant="outline" className="flex-1" onClick={() => setOpen(false)}>{t("common.cancel")}</Button>
-              <Button type="submit" className="flex-1" style={{ backgroundColor: BRAND }}
-                disabled={createTx.isPending} data-testid="button-save-income">
-                {createTx.isPending ? t("common.saving") : t("income.addIncome")}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 /* ── KPI card ── */
 function KpiCard({ label, value, sub, icon: Icon, color, bg, trend, trendUp }: {
@@ -368,11 +251,7 @@ export default function IncomePage() {
               <Download className="w-3.5 h-3.5" /> {t("reports.exportCsv")}
             </Button>
 
-            <AddIncomeDialog
-              incomeCategories={incomeCats}
-              userId={user?.id ?? ""}
-              onSuccess={() => {}}
-            />
+            <TransactionDialog defaultType="income" />
           </div>
         </div>
 
