@@ -296,7 +296,7 @@ export default function AssetsPage() {
 
         {/* KPI strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KpiCard label={t("assets.totalValue")} value={formatAmount(totalValue)} sub={`${allAccounts.length} asset${allAccounts.length !== 1 ? "s" : ""}`} icon={Building2} color={BRAND} bg="#EEF4FF" />
+          <KpiCard label={t("assets.totalValue")} value={formatAmount(totalValue)} sub={`${allAssets.length} asset${allAssets.length !== 1 ? "s" : ""}`} icon={Building2} color={BRAND} bg="#EEF4FF" />
           <KpiCard label="Monthly Income" value={formatAmount(totalMonthlyIncome)} sub="Rental / lease income" icon={DollarSign} color={MINT} bg="#ECFDF5" />
           <KpiCard label="Number of Assets" value={String(allAssets.length)} sub={`${typeBreakdown.filter(t_info => t_info.count > 0).map(t_info => `${t_info.count} ${t_info.label.toLowerCase()}`).join(" · ") || t("assets.noAssets")}`} icon={Hash} color={PURPLE} bg="#F5F3FF" />
           <KpiCard label={t("assets.appreciation")} value={`${avgAppreciation >= 0 ? "+" : ""}${avgAppreciation.toFixed(1)}%`} sub={avgAppreciation >= 0 ? "Assets appreciating" : "Assets depreciating"} icon={avgAppreciation >= 0 ? TrendingUp : TrendingDown} color={avgAppreciation >= 0 ? MINT : DANGER} bg={avgAppreciation >= 0 ? "#ECFDF5" : "#FEF2F2"} />
