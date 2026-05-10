@@ -466,6 +466,8 @@ const translations: Translations = {
     "reports.cashflowTrend": "Cashflow Trend",
     "reports.topSpending": "Top Spending Categories",
     "reports.incomeBySource": "Income by Source",
+    "reports.thisMonth": "This Month",
+    "reports.budgetVsActual": "Budget vs Actual",
 
     // ─────────── AI REPORTS / COACH ───────────
     "aiReports.title": "AI Financial Reports",
@@ -1085,6 +1087,8 @@ const translations: Translations = {
     "reports.cashflowTrend": "اتجاه التدفق النقدي",
     "reports.topSpending": "أعلى فئات الإنفاق",
     "reports.incomeBySource": "الدخل حسب المصدر",
+    "reports.thisMonth": "هذا الشهر",
+    "reports.budgetVsActual": "الميزانية مقابل الفعلي",
 
     // ─────────── AI REPORTS / COACH ───────────
     "aiReports.title": "تقارير الذكاء الاصطناعي",
