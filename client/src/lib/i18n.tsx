@@ -458,6 +458,14 @@ const translations: Translations = {
     "reports.lastYear": "Last Year",
     "reports.allTime": "All Time",
     "reports.custom": "Custom Range",
+    "reports.totalIncome": "Total Income",
+    "reports.totalExpenses": "Total Expenses",
+    "reports.netSavings": "Net Savings",
+    "reports.savingsRate": "Savings Rate",
+    "reports.expenseDistribution": "Expense Distribution",
+    "reports.cashflowTrend": "Cashflow Trend",
+    "reports.topSpending": "Top Spending Categories",
+    "reports.incomeBySource": "Income by Source",
 
     // ─────────── AI REPORTS / COACH ───────────
     "aiReports.title": "AI Financial Reports",
@@ -1069,6 +1077,14 @@ const translations: Translations = {
     "reports.lastYear": "آخر سنة",
     "reports.allTime": "كل الفترات",
     "reports.custom": "نطاق مخصص",
+    "reports.totalIncome": "إجمالي الدخل",
+    "reports.totalExpenses": "إجمالي المصروفات",
+    "reports.netSavings": "صافي المدخرات",
+    "reports.savingsRate": "معدل الادخار",
+    "reports.expenseDistribution": "توزيع المصروفات",
+    "reports.cashflowTrend": "اتجاه التدفق النقدي",
+    "reports.topSpending": "أعلى فئات الإنفاق",
+    "reports.incomeBySource": "الدخل حسب المصدر",
 
     // ─────────── AI REPORTS / COACH ───────────
     "aiReports.title": "تقارير الذكاء الاصطناعي",
