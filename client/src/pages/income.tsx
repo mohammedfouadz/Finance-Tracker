@@ -7,14 +7,14 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTransactions, useCategories, useDeleteTransaction } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
-import { useCurrency, toUsd } from "@/lib/currency";
+import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
 import { format } from "date-fns";
 import {
   Trash2, DollarSign, TrendingUp, TrendingDown, Calendar,
   BarChart3, Star, Download, ArrowUpDown,
-  Sparkles, ChevronLeft, ChevronRight,
+  Sparkles, ChevronLeft, ChevronRight, X, Search, RefreshCw,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
