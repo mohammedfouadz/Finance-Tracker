@@ -26,6 +26,7 @@ export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
   categoryId: integer("category_id").references(() => categories.id),
+  bankAccountId: integer("bank_account_id"),
   amount: numeric("amount").notNull(),
   currencyCode: text("currency_code").notNull().default("USD"),
   exchangeRateToUsd: numeric("exchange_rate_to_usd").notNull().default("1"),

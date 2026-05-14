@@ -31,7 +31,7 @@ const formSchema = insertTransactionSchema.extend({
   exchangeRateToUsd:z.string().default("1"),
   isRecurring:      z.boolean().default(false),
   notes:            z.string().optional(),
-  sourceAccountId:  z.string().optional(),
+  bankAccountId:    z.coerce.number().optional().nullable(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -68,7 +68,7 @@ export function TransactionDialog({ defaultType, trigger }: TransactionDialogPro
       exchangeRateToUsd: "1",
       isRecurring: false,
       notes: "",
-      sourceAccountId: "",
+      bankAccountId: null,
     },
   });
 
@@ -84,14 +84,12 @@ export function TransactionDialog({ defaultType, trigger }: TransactionDialogPro
         values.notes ? `\n---\n${values.notes}` : "",
       ].filter(Boolean).join("").trim();
 
-      const tags: string[] = [];
-      if (values.sourceAccountId) tags.push(`source:${values.sourceAccountId}`);
-
       await createTransaction.mutateAsync({
         ...values,
         userId: user!.id,
         description: description || null,
-        tags: tags.length ? tags : null,
+        tags: null,
+        bankAccountId: values.bankAccountId || null,
         type: txType,
       } as any);
 
@@ -106,7 +104,7 @@ export function TransactionDialog({ defaultType, trigger }: TransactionDialogPro
         exchangeRateToUsd: "1",
         isRecurring: false,
         notes: "",
-        sourceAccountId: "",
+        bankAccountId: null,
       });
     } catch (error) {
       console.error(error);
@@ -126,7 +124,7 @@ export function TransactionDialog({ defaultType, trigger }: TransactionDialogPro
         exchangeRateToUsd: "1",
         isRecurring: false,
         notes: "",
-        sourceAccountId: "",
+        bankAccountId: null,
       });
     }
   };
@@ -352,17 +350,20 @@ export function TransactionDialog({ defaultType, trigger }: TransactionDialogPro
 
                 <div>
                   <p className="text-[10px] font-bold tracking-widest text-gray-400 dark:text-gray-500 uppercase mb-1.5">
-                    {isAr ? "حساب المصدر" : "Source Account"}
+                    {isAr ? (txType === "income" ? "الحساب الوجهة" : "حساب المصدر") : (txType === "income" ? "Target Account" : "Source Account")}
                   </p>
                   <FormField
                     control={form.control}
-                    name="sourceAccountId"
+                    name="bankAccountId"
                     render={({ field }) => (
                       <FormItem>
-                        <Select value={field.value ?? ""} onValueChange={field.onChange}>
+                        <Select
+                          value={field.value != null ? String(field.value) : ""}
+                          onValueChange={v => field.onChange(v && v !== "none" ? Number(v) : null)}
+                        >
                           <FormControl>
                             <SelectTrigger data-testid="select-source-account" className="rounded-xl bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                              <SelectValue placeholder={isAr ? "اختر الحساب" : "Select account"} />
+                              <SelectValue placeholder={isAr ? "اختر الحساب (اختياري)" : "Select account (optional)"} />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>

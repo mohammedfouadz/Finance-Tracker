@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useTransactions, useCategories, useDeleteTransaction } from "@/hooks/use-finance";
+import { useTransactions, useCategories, useDeleteTransaction, useBankAccounts } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
@@ -100,6 +100,7 @@ export default function IncomePage() {
 
   const { data: transactions = [] } = useTransactions();
   const { data: categories   = [] } = useCategories();
+  const { data: bankAccounts = [] } = useBankAccounts();
   const deleteTransaction = useDeleteTransaction();
 
   const [selectedYear,   setSelectedYear]   = useState(new Date().getFullYear());
@@ -529,7 +530,10 @@ export default function IncomePage() {
                             </td>
                             <td className="py-3.5 px-4">
                               <p className="font-semibold text-gray-900 dark:text-white text-sm">{t.description || "—"}</p>
-                              <p className="text-xs text-gray-400 mt-0.5">{curr}</p>
+                              <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                <span className="text-xs text-gray-400">{curr}</span>
+                                {t.bankAccountId && (() => { const acc = (bankAccounts as any[]).find((a: any) => a.id === t.bankAccountId); return acc ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium">{acc.bankName}</span> : null; })()}
+                              </div>
                             </td>
                             <td className="py-3.5 px-4">
                               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"

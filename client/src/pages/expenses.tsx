@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   useTransactions, useCategories, useDeleteTransaction,
-  useBudgets,
+  useBudgets, useBankAccounts,
 } from "@/hooks/use-finance";
 import { TransactionDialog } from "@/components/transaction-dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -75,6 +75,7 @@ export default function ExpensesPage() {
   [lang]);
 
   const { data: budgets = [] } = useBudgets();
+  const { data: bankAccounts = [] } = useBankAccounts();
   const budgetMap = useMemo(() => new Map(budgets.map(b => [b.categoryId, Number(b.limit)])), [budgets]);
 
   /* filtered transactions */
@@ -375,9 +376,11 @@ export default function ExpensesPage() {
             {displayTx.length === 0 ? (
               <div className="text-center py-10">
                 <p className="text-sm text-gray-400">{t("expenses.noEntries")}</p>
-                <Button onClick={() => setShowForm(true)} className="mt-3 gap-1.5 rounded-xl" style={{ backgroundColor: BRAND }}>
-                  <Plus className="w-4 h-4" /> {t("expenses.addExpense")}
-                </Button>
+                <TransactionDialog defaultType="expense" trigger={
+                  <Button className="mt-3 gap-1.5 rounded-xl" style={{ backgroundColor: BRAND }}>
+                    <Plus className="w-4 h-4" /> {t("expenses.addExpense")}
+                  </Button>
+                } />
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -403,7 +406,10 @@ export default function ExpensesPage() {
                           <td className="py-3 px-3 text-xs text-gray-500 whitespace-nowrap text-xs">{format(new Date(t.date), "MMM d")}</td>
                           <td className="py-3 px-3">
                             <p className="font-medium text-gray-900 dark:text-white text-xs">{t.description}</p>
-                            {isOverBudgetTx && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">Over Budget</span>}
+                            <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+                              {isOverBudgetTx && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">Over Budget</span>}
+                              {t.bankAccountId && (() => { const acc = (bankAccounts as any[]).find(a => a.id === t.bankAccountId); return acc ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium">{acc.bankName}</span> : null; })()}
+                            </div>
                           </td>
                           <td className="py-3 px-3">
                             <span className="inline-flex items-center gap-1 text-[10px] font-medium text-gray-500">
