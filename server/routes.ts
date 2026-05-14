@@ -72,8 +72,15 @@ export async function registerRoutes(
     const body = { ...req.body, userId };
     if (body.date && typeof body.date === "string") body.date = new Date(body.date);
     const input = api.transactions.create.input.parse(body);
-    const transaction = await storage.createTransaction(input);
-    res.status(201).json(transaction);
+    try {
+      const transaction = await storage.createTransaction(input);
+      res.status(201).json(transaction);
+    } catch (err: any) {
+      if (err?.message === "Bank account not found or not owned by user") {
+        return res.status(400).json({ message: err.message });
+      }
+      throw err;
+    }
   });
 
   app.put(api.transactions.update.path, isAuthenticated, async (req, res) => {
