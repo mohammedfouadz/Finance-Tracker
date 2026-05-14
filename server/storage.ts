@@ -75,6 +75,8 @@ export interface IStorage extends IAuthStorage, IChatStorage {
   deleteDebt(id: number): Promise<void>;
   getDebtPayments(debtId: number): Promise<typeof debtPayments.$inferSelect[]>;
   createDebtPayment(payment: InsertDebtPayment): Promise<typeof debtPayments.$inferSelect>;
+  updateDebtPayment(id: number, updates: Partial<InsertDebtPayment>): Promise<typeof debtPayments.$inferSelect>;
+  deleteDebtPayment(id: number): Promise<void>;
 
   // Goal Contributions
   getGoalContributions(goalId: number): Promise<typeof goalContributions.$inferSelect[]>;
@@ -348,6 +350,28 @@ export class DatabaseStorage implements IStorage {
       remainingAmount: sql`${debts.remainingAmount}::numeric - ${payment.amount}::numeric`,
     }).where(eq(debts.id, payment.debtId));
     return newPayment;
+  }
+
+  async updateDebtPayment(id: number, updates: Partial<InsertDebtPayment>) {
+    const [existing] = await db.select().from(debtPayments).where(eq(debtPayments.id, id));
+    if (!existing) throw new Error("Payment not found");
+    const [updated] = await db.update(debtPayments).set(updates).where(eq(debtPayments.id, id)).returning();
+    if (updates.amount !== undefined) {
+      const diff = Number(updates.amount) - Number(existing.amount);
+      await db.update(debts).set({
+        remainingAmount: sql`${debts.remainingAmount}::numeric - ${String(diff)}::numeric`,
+      }).where(eq(debts.id, existing.debtId));
+    }
+    return updated;
+  }
+
+  async deleteDebtPayment(id: number) {
+    const [existing] = await db.select().from(debtPayments).where(eq(debtPayments.id, id));
+    if (!existing) throw new Error("Payment not found");
+    await db.delete(debtPayments).where(eq(debtPayments.id, id));
+    await db.update(debts).set({
+      remainingAmount: sql`${debts.remainingAmount}::numeric + ${existing.amount}::numeric`,
+    }).where(eq(debts.id, existing.debtId));
   }
 
   // Goal Contributions

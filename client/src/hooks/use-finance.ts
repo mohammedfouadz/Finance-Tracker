@@ -601,6 +601,42 @@ export function useCreateDebtPayment() {
   });
 }
 
+export function useDeleteDebtPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ debtId, paymentId }: { debtId: number; paymentId: number }) => {
+      const url = buildUrl(api.debts.deletePayment.path, { id: debtId, paymentId });
+      const res = await fetch(url, { method: "DELETE", credentials: "include" });
+      if (!res.ok) throw new Error("Failed to delete payment");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.debts.payments.path] });
+      queryClient.invalidateQueries({ queryKey: [api.debts.list.path] });
+    },
+  });
+}
+
+export function useUpdateDebtPayment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ debtId, paymentId, ...data }: { debtId: number; paymentId: number; amount?: string; paymentDate?: Date; notes?: string; currencyCode?: string }) => {
+      const url = buildUrl(api.debts.updatePayment.path, { id: debtId, paymentId });
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to update payment");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [api.debts.payments.path] });
+      queryClient.invalidateQueries({ queryKey: [api.debts.list.path] });
+    },
+  });
+}
+
 // --- Goal Contributions ---
 
 export function useGoalContributions(goalId: number) {

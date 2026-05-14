@@ -341,6 +341,23 @@ export const api = {
         400: errorSchemas.validation,
       },
     },
+    updatePayment: {
+      method: 'PUT' as const,
+      path: '/api/debts/:id/payments/:paymentId' as const,
+      input: insertDebtPaymentSchema.partial(),
+      responses: {
+        200: z.custom<typeof debtPayments.$inferSelect>(),
+        404: errorSchemas.notFound,
+      },
+    },
+    deletePayment: {
+      method: 'DELETE' as const,
+      path: '/api/debts/:id/payments/:paymentId' as const,
+      responses: {
+        204: z.void(),
+        404: errorSchemas.notFound,
+      },
+    },
   },
   goalContributions: {
     list: {

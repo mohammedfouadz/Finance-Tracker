@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useDebts, useCreateDebt, useUpdateDebt, useDeleteDebt, useDebtPayments, useCreateDebtPayment } from "@/hooks/use-finance";
+import { useDebts, useCreateDebt, useUpdateDebt, useDeleteDebt, useDebtPayments, useCreateDebtPayment, useDeleteDebtPayment, useUpdateDebtPayment } from "@/hooks/use-finance";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
@@ -167,21 +167,134 @@ function JourneyBar({ debts }: { debts: any[] }) {
 /* ── individual debt payment history sub-component ── */
 function DebtPaymentHistory({ debt }: { debt: any }) {
   const { data: payments = [] } = useDebtPayments(debt.id);
-  const { formatAmount } = useCurrency();
   const { t } = useI18n();
-  const list = (payments as any[]).slice(0, 5);
+  const { toast } = useToast();
+  const deletePayment = useDeleteDebtPayment();
+  const updatePayment = useUpdateDebtPayment();
+
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ amount: "", paymentDate: "", notes: "" });
+
+  const openEdit = (p: any) => {
+    setEditingPayment(p);
+    setEditForm({
+      amount: String(p.amount),
+      paymentDate: p.paymentDate ? format(new Date(p.paymentDate), "yyyy-MM-dd") : "",
+      notes: p.notes || "",
+    });
+  };
+
+  const handleDelete = async (p: any) => {
+    if (!confirm(t("debts.confirmDeletePayment") || "Delete this payment? The debt remaining amount will be restored.")) return;
+    try {
+      await deletePayment.mutateAsync({ debtId: debt.id, paymentId: p.id });
+      toast({ title: t("common.deleted") || "Deleted", description: t("debts.paymentDeleted") || "Payment removed and balance restored." });
+    } catch {
+      toast({ title: t("common.error") || "Error", variant: "destructive" });
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!editingPayment) return;
+    try {
+      await updatePayment.mutateAsync({
+        debtId: debt.id,
+        paymentId: editingPayment.id,
+        amount: editForm.amount,
+        paymentDate: editForm.paymentDate ? new Date(editForm.paymentDate) : undefined,
+        notes: editForm.notes || undefined,
+      });
+      toast({ title: t("common.saved") || "Saved", description: t("debts.paymentUpdated") || "Payment updated successfully." });
+      setEditingPayment(null);
+    } catch {
+      toast({ title: t("common.error") || "Error", variant: "destructive" });
+    }
+  };
+
+  const list = payments as any[];
   if (!list.length) return <p className="text-xs text-gray-400 py-2 text-center">{t("debts.noPayments") || "No payments recorded yet."}</p>;
   return (
-    <div className="space-y-1.5 mt-2">
-      {list.map((p: any) => (
-        <div key={p.id} className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 dark:border-gray-800">
-          <span className="text-gray-400">{p.paymentDate ? format(new Date(p.paymentDate), "MMM d, yyyy") : "—"}</span>
-          <span className="font-semibold" style={{ color: MINT }}>
-            -{getCurrencySymbol(p.currencyCode || "USD")}{Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
-          </span>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="space-y-1 mt-2">
+        {list.map((p: any) => (
+          <div key={p.id} className="flex items-center justify-between text-xs py-1.5 border-b border-gray-50 dark:border-gray-800 group">
+            <span className="text-gray-400">{p.paymentDate ? format(new Date(p.paymentDate), "MMM d, yyyy") : "—"}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-semibold" style={{ color: MINT }}>
+                -{getCurrencySymbol(p.currencyCode || "USD")}{Number(p.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              </span>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => openEdit(p)}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-blue-500 transition-colors"
+                  data-testid={`button-edit-payment-${p.id}`}
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+                <button
+                  onClick={() => handleDelete(p)}
+                  className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-red-500 transition-colors"
+                  data-testid={`button-delete-payment-${p.id}`}
+                >
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Edit payment dialog */}
+      <Dialog open={!!editingPayment} onOpenChange={open => !open && setEditingPayment(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t("debts.editPayment") || "Edit Payment"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.amount")}</label>
+              <Input
+                type="number"
+                step="0.01"
+                value={editForm.amount}
+                onChange={e => setEditForm(f => ({ ...f, amount: e.target.value }))}
+                data-testid="input-edit-payment-amount"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.date")}</label>
+              <Input
+                type="date"
+                value={editForm.paymentDate}
+                onChange={e => setEditForm(f => ({ ...f, paymentDate: e.target.value }))}
+                data-testid="input-edit-payment-date"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("common.notes")}</label>
+              <Textarea
+                rows={2}
+                value={editForm.notes}
+                onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))}
+                data-testid="input-edit-payment-notes"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => setEditingPayment(null)}>{t("common.cancel")}</Button>
+              <Button
+                className="flex-1 rounded-xl"
+                style={{ backgroundColor: BRAND }}
+                onClick={handleEditSave}
+                disabled={updatePayment.isPending}
+                data-testid="button-save-edit-payment"
+              >
+                {updatePayment.isPending ? t("common.saving") : t("common.save")}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

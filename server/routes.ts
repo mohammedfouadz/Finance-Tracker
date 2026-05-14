@@ -225,6 +225,15 @@ export async function registerRoutes(
     const input = api.debts.createPayment.input.parse(body);
     res.status(201).json(await storage.createDebtPayment(input));
   });
+  app.put(api.debts.updatePayment.path, isAuthenticated, async (req, res) => {
+    const body = { ...req.body };
+    if (body.paymentDate && typeof body.paymentDate === "string") body.paymentDate = new Date(body.paymentDate);
+    res.json(await storage.updateDebtPayment(parseInt(req.params.paymentId), body));
+  });
+  app.delete(api.debts.deletePayment.path, isAuthenticated, async (req, res) => {
+    await storage.deleteDebtPayment(parseInt(req.params.paymentId));
+    res.status(204).send();
+  });
 
   // Budgets
   app.get(api.budgets.list.path, isAuthenticated, async (req, res) => {
