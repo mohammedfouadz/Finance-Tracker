@@ -191,34 +191,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTransaction(transaction: InsertTransaction) {
-    const [newTransaction] = await db.insert(transactions).values(transaction).returning();
-    if (newTransaction.bankAccountId) {
-      const [account] = await db.select().from(bankAccounts).where(
-        and(eq(bankAccounts.id, newTransaction.bankAccountId), eq(bankAccounts.userId, newTransaction.userId))
+    if (transaction.bankAccountId) {
+      const [ownedAccount] = await db.select().from(bankAccounts).where(
+        and(eq(bankAccounts.id, transaction.bankAccountId), eq(bankAccounts.userId, transaction.userId))
       );
-      if (account) {
-        const amountUsd = Number(newTransaction.amount) * Number(newTransaction.exchangeRateToUsd);
-        const accountRate = Number(account.exchangeRateToUsd) || 1;
-        const delta = amountUsd / accountRate;
-        const prevBal = Number(account.balance);
-        const isIncome = await (async () => {
-          if (!newTransaction.categoryId) return false;
-          const [cat] = await db.select().from(categories).where(eq(categories.id, newTransaction.categoryId));
-          return cat?.type === "income";
-        })();
-        const newBal = isIncome ? prevBal + delta : prevBal - delta;
-        await db.update(bankAccounts).set({
-          balance: String(newBal.toFixed(2)),
-          lastUpdated: new Date(),
-        }).where(eq(bankAccounts.id, newTransaction.bankAccountId));
-        await db.insert(balanceHistory).values({
-          bankAccountId: newTransaction.bankAccountId,
-          previousBalance: String(prevBal.toFixed(2)),
-          newBalance: String(newBal.toFixed(2)),
-        });
+      if (!ownedAccount) {
+        throw new Error("Bank account not found or not owned by user");
       }
     }
-    return newTransaction;
+
+    return await db.transaction(async (tx) => {
+      const [newTransaction] = await tx.insert(transactions).values(transaction).returning();
+
+      if (newTransaction.bankAccountId) {
+        const [account] = await tx.select().from(bankAccounts).where(
+          and(eq(bankAccounts.id, newTransaction.bankAccountId), eq(bankAccounts.userId, newTransaction.userId))
+        );
+        if (account) {
+          const amountUsd = Number(newTransaction.amount) * Number(newTransaction.exchangeRateToUsd);
+          const accountRate = Number(account.exchangeRateToUsd) || 1;
+          const delta = amountUsd / accountRate;
+          const prevBal = Number(account.balance);
+          let isIncome = false;
+          if (newTransaction.categoryId) {
+            const [cat] = await tx.select().from(categories).where(eq(categories.id, newTransaction.categoryId));
+            isIncome = cat?.type === "income";
+          }
+          const newBal = isIncome ? prevBal + delta : prevBal - delta;
+          await tx.update(bankAccounts).set({
+            balance: String(newBal.toFixed(2)),
+            lastUpdated: new Date(),
+          }).where(eq(bankAccounts.id, newTransaction.bankAccountId));
+          await tx.insert(balanceHistory).values({
+            bankAccountId: newTransaction.bankAccountId,
+            previousBalance: String(prevBal.toFixed(2)),
+            newBalance: String(newBal.toFixed(2)),
+          });
+        }
+      }
+      return newTransaction;
+    });
   }
 
   async updateTransaction(id: number, updates: UpdateTransactionRequest) {
@@ -227,33 +239,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteTransaction(id: number, userId: string) {
-    const [tx] = await db.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
-    if (tx?.bankAccountId) {
-      const [account] = await db.select().from(bankAccounts).where(
-        and(eq(bankAccounts.id, tx.bankAccountId), eq(bankAccounts.userId, tx.userId))
-      );
-      if (account) {
-        const amountUsd = Number(tx.amount) * Number(tx.exchangeRateToUsd);
-        const accountRate = Number(account.exchangeRateToUsd) || 1;
-        const delta = amountUsd / accountRate;
-        const prevBal = Number(account.balance);
-        const [cat] = tx.categoryId
-          ? await db.select().from(categories).where(eq(categories.id, tx.categoryId))
-          : [undefined];
-        const isIncome = cat?.type === "income";
-        const newBal = isIncome ? prevBal - delta : prevBal + delta;
-        await db.update(bankAccounts).set({
-          balance: String(newBal.toFixed(2)),
-          lastUpdated: new Date(),
-        }).where(eq(bankAccounts.id, tx.bankAccountId));
-        await db.insert(balanceHistory).values({
-          bankAccountId: tx.bankAccountId,
-          previousBalance: String(prevBal.toFixed(2)),
-          newBalance: String(newBal.toFixed(2)),
-        });
+    const [existingTx] = await db.select().from(transactions).where(
+      and(eq(transactions.id, id), eq(transactions.userId, userId))
+    );
+    if (!existingTx) return;
+
+    await db.transaction(async (dbTx) => {
+      if (existingTx.bankAccountId) {
+        const [account] = await dbTx.select().from(bankAccounts).where(
+          and(eq(bankAccounts.id, existingTx.bankAccountId), eq(bankAccounts.userId, existingTx.userId))
+        );
+        if (account) {
+          const amountUsd = Number(existingTx.amount) * Number(existingTx.exchangeRateToUsd);
+          const accountRate = Number(account.exchangeRateToUsd) || 1;
+          const delta = amountUsd / accountRate;
+          const prevBal = Number(account.balance);
+          let isIncome = false;
+          if (existingTx.categoryId) {
+            const [cat] = await dbTx.select().from(categories).where(eq(categories.id, existingTx.categoryId));
+            isIncome = cat?.type === "income";
+          }
+          const newBal = isIncome ? prevBal - delta : prevBal + delta;
+          await dbTx.update(bankAccounts).set({
+            balance: String(newBal.toFixed(2)),
+            lastUpdated: new Date(),
+          }).where(eq(bankAccounts.id, existingTx.bankAccountId));
+          await dbTx.insert(balanceHistory).values({
+            bankAccountId: existingTx.bankAccountId,
+            previousBalance: String(prevBal.toFixed(2)),
+            newBalance: String(newBal.toFixed(2)),
+          });
+        }
       }
-    }
-    await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+      await dbTx.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+    });
   }
 
   // Goals

@@ -51,7 +51,8 @@ export function useCreateTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.transactions.list.path] });
-      queryClient.invalidateQueries({ queryKey: [api.budgets.list.path] }); // Transactions affect budgets
+      queryClient.invalidateQueries({ queryKey: [api.budgets.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.bankAccounts.list.path] });
     },
   });
 }
@@ -89,6 +90,7 @@ export function useDeleteTransaction() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [api.transactions.list.path] });
+      queryClient.invalidateQueries({ queryKey: [api.bankAccounts.list.path] });
     },
   });
 }
