@@ -193,18 +193,19 @@ export class DatabaseStorage implements IStorage {
   async createTransaction(transaction: InsertTransaction) {
     const [newTransaction] = await db.insert(transactions).values(transaction).returning();
     if (newTransaction.bankAccountId) {
-      const [account] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, newTransaction.bankAccountId));
+      const [account] = await db.select().from(bankAccounts).where(
+        and(eq(bankAccounts.id, newTransaction.bankAccountId), eq(bankAccounts.userId, newTransaction.userId))
+      );
       if (account) {
         const amountUsd = Number(newTransaction.amount) * Number(newTransaction.exchangeRateToUsd);
         const accountRate = Number(account.exchangeRateToUsd) || 1;
         const delta = amountUsd / accountRate;
         const prevBal = Number(account.balance);
-        const isIncome = newTransaction.tags?.some(t => t === "income") ||
-          (await (async () => {
-            if (!newTransaction.categoryId) return false;
-            const [cat] = await db.select().from(categories).where(eq(categories.id, newTransaction.categoryId));
-            return cat?.type === "income";
-          })());
+        const isIncome = await (async () => {
+          if (!newTransaction.categoryId) return false;
+          const [cat] = await db.select().from(categories).where(eq(categories.id, newTransaction.categoryId));
+          return cat?.type === "income";
+        })();
         const newBal = isIncome ? prevBal + delta : prevBal - delta;
         await db.update(bankAccounts).set({
           balance: String(newBal.toFixed(2)),
@@ -228,7 +229,9 @@ export class DatabaseStorage implements IStorage {
   async deleteTransaction(id: number) {
     const [tx] = await db.select().from(transactions).where(eq(transactions.id, id));
     if (tx?.bankAccountId) {
-      const [account] = await db.select().from(bankAccounts).where(eq(bankAccounts.id, tx.bankAccountId));
+      const [account] = await db.select().from(bankAccounts).where(
+        and(eq(bankAccounts.id, tx.bankAccountId), eq(bankAccounts.userId, tx.userId))
+      );
       if (account) {
         const amountUsd = Number(tx.amount) * Number(tx.exchangeRateToUsd);
         const accountRate = Number(account.exchangeRateToUsd) || 1;
