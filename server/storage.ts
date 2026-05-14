@@ -35,7 +35,7 @@ export interface IStorage extends IAuthStorage, IChatStorage {
   getTransaction(id: number): Promise<typeof transactions.$inferSelect | undefined>;
   createTransaction(transaction: InsertTransaction): Promise<typeof transactions.$inferSelect>;
   updateTransaction(id: number, updates: UpdateTransactionRequest): Promise<typeof transactions.$inferSelect>;
-  deleteTransaction(id: number): Promise<void>;
+  deleteTransaction(id: number, userId: string): Promise<void>;
 
   // Goals
   getGoals(userId: string): Promise<typeof goals.$inferSelect[]>;
@@ -226,8 +226,8 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
-  async deleteTransaction(id: number) {
-    const [tx] = await db.select().from(transactions).where(eq(transactions.id, id));
+  async deleteTransaction(id: number, userId: string) {
+    const [tx] = await db.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
     if (tx?.bankAccountId) {
       const [account] = await db.select().from(bankAccounts).where(
         and(eq(bankAccounts.id, tx.bankAccountId), eq(bankAccounts.userId, tx.userId))
@@ -253,7 +253,7 @@ export class DatabaseStorage implements IStorage {
         });
       }
     }
-    await db.delete(transactions).where(eq(transactions.id, id));
+    await db.delete(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
   }
 
   // Goals

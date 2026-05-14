@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTransactions, useCategories, useDeleteTransaction, useBankAccounts } from "@/hooks/use-finance";
+import type { BankAccount } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { useToast } from "@/hooks/use-toast";
@@ -100,7 +101,8 @@ export default function IncomePage() {
 
   const { data: transactions = [] } = useTransactions();
   const { data: categories   = [] } = useCategories();
-  const { data: bankAccounts = [] } = useBankAccounts();
+  const { data: bankAccountsRaw = [] } = useBankAccounts();
+  const bankAccounts = bankAccountsRaw as BankAccount[];
   const deleteTransaction = useDeleteTransaction();
 
   const [selectedYear,   setSelectedYear]   = useState(new Date().getFullYear());
@@ -532,7 +534,7 @@ export default function IncomePage() {
                               <p className="font-semibold text-gray-900 dark:text-white text-sm">{t.description || "—"}</p>
                               <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                                 <span className="text-xs text-gray-400">{curr}</span>
-                                {t.bankAccountId && (() => { const acc = (bankAccounts as any[]).find((a: any) => a.id === t.bankAccountId); return acc ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium">{acc.bankName}</span> : null; })()}
+                                {t.bankAccountId && (() => { const acc = bankAccounts.find((a: BankAccount) => a.id === t.bankAccountId); return acc ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium">{acc.bankName}</span> : null; })()}
                               </div>
                             </td>
                             <td className="py-3.5 px-4">

@@ -9,6 +9,7 @@ import {
   useTransactions, useCategories, useDeleteTransaction,
   useBudgets, useBankAccounts,
 } from "@/hooks/use-finance";
+import type { BankAccount } from "@shared/schema";
 import { TransactionDialog } from "@/components/transaction-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd } from "@/lib/currency";
@@ -75,7 +76,8 @@ export default function ExpensesPage() {
   [lang]);
 
   const { data: budgets = [] } = useBudgets();
-  const { data: bankAccounts = [] } = useBankAccounts();
+  const { data: bankAccountsRaw = [] } = useBankAccounts();
+  const bankAccounts = bankAccountsRaw as BankAccount[];
   const budgetMap = useMemo(() => new Map(budgets.map(b => [b.categoryId, Number(b.limit)])), [budgets]);
 
   /* filtered transactions */
@@ -408,7 +410,7 @@ export default function ExpensesPage() {
                             <p className="font-medium text-gray-900 dark:text-white text-xs">{t.description}</p>
                             <div className="flex items-center gap-1 mt-0.5 flex-wrap">
                               {isOverBudgetTx && <span className="text-[9px] text-red-500 font-bold uppercase tracking-tighter">Over Budget</span>}
-                              {t.bankAccountId && (() => { const acc = (bankAccounts as any[]).find(a => a.id === t.bankAccountId); return acc ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium">{acc.bankName}</span> : null; })()}
+                              {t.bankAccountId && (() => { const acc = bankAccounts.find((a: BankAccount) => a.id === t.bankAccountId); return acc ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-medium">{acc.bankName}</span> : null; })()}
                             </div>
                           </td>
                           <td className="py-3 px-3">

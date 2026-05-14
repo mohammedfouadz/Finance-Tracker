@@ -87,7 +87,8 @@ export async function registerRoutes(
 
   app.delete(api.transactions.delete.path, isAuthenticated, async (req, res) => {
     const id = parseInt(req.params.id);
-    await storage.deleteTransaction(id);
+    const userId = getUserId(req);
+    await storage.deleteTransaction(id, userId);
     res.status(204).send();
   });
 
