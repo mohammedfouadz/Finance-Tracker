@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useBankAccounts, useInvestments, useAssets, useDebts } from "@/hooks/use-finance";
 import { useCurrency, toUsd } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { summarizeWealth, isReceivable } from "@shared/wealth";
 import {
   TrendingUp, TrendingDown, Landmark, LineChart, Building2, HandCoins,
   Sparkles, ArrowUpRight, ArrowDownRight, Minus,
@@ -91,19 +92,20 @@ export default function NetWorthPage() {
   const dbts   = debts       as any[];
 
   /* component totals in USD */
-  const bankTotal   = accs.reduce((s, a) => s + toUsd(Number(a.balance), Number(a.exchangeRateToUsd)), 0);
-  const invTotal    = invs.filter(i => i.status === "active").reduce((s, i) => s + toUsd(Number(i.currentValue), Number(i.exchangeRateToUsd)), 0);
-  const assetTotal  = assts.reduce((s, a) => s + toUsd(Number(a.currentValue), Number(a.exchangeRateToUsd)), 0);
-  const debtTotal   = dbts.filter(d => d.status === "active").reduce((s, d) => s + toUsd(Number(d.remainingAmount), Number(d.exchangeRateToUsd)), 0);
-  const netWorth    = bankTotal + invTotal + assetTotal - debtTotal;
-  const totalAssets = bankTotal + invTotal + assetTotal;
+  const {
+    bankTotal, investmentTotal: invTotal, assetTotal, receivableTotal,
+    liabilityTotal: debtTotal, netWorth, totalAssets,
+  } = summarizeWealth({ accounts: accs, investments: invs, assets: assts, debts: dbts });
+  const activePayables    = dbts.filter(d => d.status === "active" && !isReceivable(d)).length;
+  const activeReceivables = dbts.filter(d => d.status === "active" && isReceivable(d)).length;
 
   /* components list */
   const components: ComponentItem[] = [
     { label: t("accounts.title"), value: bankTotal, color: BRAND,  icon: Landmark, sub: `${accs.length} ${t("accounts.title").toLowerCase()}` },
     { label: t("investments.title"),   value: invTotal,  color: MINT,   icon: LineChart, sub: `${invs.filter(i => i.status === "active").length} ${t("common.active").toLowerCase()} ${t("investments.title").toLowerCase()}` },
     { label: t("assets.title"),        value: assetTotal, color: AMBER, icon: Building2, sub: `${assts.length} ${t("assets.title").toLowerCase()}` },
-    { label: `${t("debts.title")} (−)`,     value: -debtTotal, color: DANGER,icon: HandCoins, sub: `${dbts.filter(d => d.status === "active").length} ${t("common.active").toLowerCase()} ${t("debts.title").toLowerCase()}` },
+    ...(receivableTotal > 0 ? [{ label: t("debts.owedToMe"), value: receivableTotal, color: PURPLE, icon: HandCoins, sub: `${activeReceivables} ${t("common.active").toLowerCase()}` }] : []),
+    { label: `${t("debts.title")} (−)`,     value: -debtTotal, color: DANGER,icon: HandCoins, sub: `${activePayables} ${t("common.active").toLowerCase()} ${t("debts.title").toLowerCase()}` },
   ];
 
   /* milestones */
@@ -127,6 +129,7 @@ export default function NetWorthPage() {
     { name: t("accounts.bankName"), value: bankTotal, color: BRAND },
     { name: t("investments.title"), value: invTotal, color: MINT },
     { name: t("assets.title"), value: assetTotal, color: AMBER },
+    { name: t("debts.owedToMe"), value: receivableTotal, color: PURPLE },
     { name: t("debts.title"), value: debtTotal, color: DANGER },
   ].filter(d => d.value > 0);
 
@@ -172,6 +175,12 @@ export default function NetWorthPage() {
                   <span className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: MINT }} dir="ltr">{formatAmount(invTotal)} {t("investments.title").toLowerCase()}</span>
                   <span className="text-gray-400">+</span>
                   <span className="bg-amber-50 dark:bg-amber-950/30 border border-amber-100 dark:border-amber-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: AMBER }} dir="ltr">{formatAmount(assetTotal)} {t("assets.title").toLowerCase()}</span>
+                  {receivableTotal > 0 && (
+                    <>
+                      <span className="text-gray-400">+</span>
+                      <span className="bg-violet-50 dark:bg-violet-950/30 border border-violet-100 dark:border-violet-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: PURPLE }} dir="ltr">{formatAmount(receivableTotal)} {t("debts.owedToMe").toLowerCase()}</span>
+                    </>
+                  )}
                   <span className="text-gray-400">−</span>
                   <span className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/30 rounded-xl px-3 py-1.5 font-medium tabular-nums" style={{ color: DANGER }} dir="ltr">{formatAmount(debtTotal)} {t("debts.title").toLowerCase()}</span>
                   <span className="text-gray-400">=</span>
@@ -214,7 +223,7 @@ export default function NetWorthPage() {
           <KpiCard label={t("accounts.title")} value={formatAmount(bankTotal)} sub={`${accs.length} ${t("accounts.title").toLowerCase()}`} icon={Landmark} color={BRAND} bg="#EEF4FF" />
           <KpiCard label={t("investments.title")} value={formatAmount(invTotal)} sub={`${invs.length} ${t("investments.entries").toLowerCase()}`} icon={LineChart} color={MINT} bg="#ECFDF5" />
           <KpiCard label={t("assets.title")} value={formatAmount(assetTotal)} sub={`${assts.length} ${t("assets.title").toLowerCase()}`} icon={Building2} color={AMBER} bg="#FFFBEB" />
-          <KpiCard label={t("netWorth.totalLiabilities")} value={formatAmount(debtTotal)} sub={`${dbts.filter(d => d.status === "active").length} ${t("common.active").toLowerCase()} ${t("debts.title").toLowerCase()}`} icon={HandCoins} color={DANGER} bg="#FEF2F2" />
+          <KpiCard label={t("netWorth.totalLiabilities")} value={formatAmount(debtTotal)} sub={`${activePayables} ${t("common.active").toLowerCase()} ${t("debts.title").toLowerCase()}`} icon={HandCoins} color={DANGER} bg="#FEF2F2" />
         </div>
 
         {/* chart + components layout */}

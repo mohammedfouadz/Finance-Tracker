@@ -5,6 +5,7 @@ import { db } from "../../db";
 import { transactions, categories, bankAccounts, investments, assets, debts, goals } from "@shared/schema";
 import { eq, desc, count } from "drizzle-orm";
 import { z } from "zod";
+import { summarizeWealth } from "@shared/wealth";
 
 const ADMIN_EMAIL = "mohammedfalzaq@gmail.com";
 
@@ -112,11 +113,8 @@ export function registerAdminRoutes(app: Express): void {
       ]);
 
       const incomeCatIds = new Set(userCats.filter(c => c.type === "income").map(c => c.id));
-      const bankTotal = userBanks.reduce((s, a) => s + Number(a.balance) * Number(a.exchangeRateToUsd), 0);
-      const invTotal = userInv.filter(i => i.status === "active").reduce((s, i) => s + Number(i.currentValue) * Number(i.exchangeRateToUsd), 0);
-      const assTotal = userAss.filter(a => a.status === "owned").reduce((s, a) => s + Number(a.currentValue) * Number(a.exchangeRateToUsd), 0);
-      const debtTotal = userDebts.filter(d => d.status === "active").reduce((s, d) => s + Number(d.remainingAmount) * Number(d.exchangeRateToUsd), 0);
-      const netWorth = bankTotal + invTotal + assTotal - debtTotal;
+      const wealth = summarizeWealth({ accounts: userBanks, investments: userInv, assets: userAss, debts: userDebts });
+      const { bankTotal, investmentTotal: invTotal, assetTotal: assTotal, liabilityTotal: debtTotal, netWorth } = wealth;
 
       const totalIncome = userTx.filter(t => t.categoryId && incomeCatIds.has(t.categoryId)).reduce((s, t) => s + Number(t.amount) * Number(t.exchangeRateToUsd), 0);
       const totalExpenses = userTx.filter(t => t.categoryId && !incomeCatIds.has(t.categoryId)).reduce((s, t) => s + Number(t.amount) * Number(t.exchangeRateToUsd), 0);

@@ -13,6 +13,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd } from "@/lib/currency";
 import { useI18n } from "@/lib/i18n";
+import { summarizeWealth, isReceivable } from "@shared/wealth";
 import {
   DollarSign, TrendingUp, TrendingDown, Gem, Building2,
   LineChart, HandCoins, Target, Plus, ArrowUpRight, ArrowDownRight,
@@ -128,12 +129,15 @@ export default function Dashboard() {
   const prevIncome = useMemo(() => sumTx(prevMonthTx, incomeCatIds), [prevMonthTx, incomeCatIds]);
   const prevExpenses = useMemo(() => sumTx(prevMonthTx, expenseCatIds), [prevMonthTx, expenseCatIds]);
 
-  const totalAssetsValue = useMemo(() => (assets as any[]).reduce((s: number, a: any) => s + toUsd(a.currentValue || 0, a.exchangeRateToUsd), 0), [assets]);
-  const totalBankBalance = useMemo(() => (bankAccounts as any[]).reduce((s: number, a: any) => s + toUsd(a.balance || 0, a.exchangeRateToUsd), 0), [bankAccounts]);
-  const totalInvestmentsValue = useMemo(() => (investments as any[]).reduce((s: number, i: any) => s + toUsd(i.currentValue || 0, i.exchangeRateToUsd), 0), [investments]);
-  const totalDebt = useMemo(() => (debts as any[]).filter((d: any) => d.status === "active").reduce((s: number, d: any) => s + toUsd(d.remainingAmount || 0, d.exchangeRateToUsd), 0), [debts]);
-
-  const totalWealth = totalAssetsValue + totalBankBalance + totalInvestmentsValue - totalDebt;
+  const wealth = useMemo(
+    () => summarizeWealth({ accounts: bankAccounts as any[], investments: investments as any[], assets: assets as any[], debts: debts as any[] }),
+    [bankAccounts, investments, assets, debts],
+  );
+  const totalAssetsValue = wealth.assetTotal;
+  const totalBankBalance = wealth.bankTotal;
+  const totalInvestmentsValue = wealth.investmentTotal;
+  const totalDebt = wealth.liabilityTotal;
+  const totalWealth = wealth.netWorth;
 
   const trendPct = (cur: number, prev: number) => prev === 0 ? null : ((cur - prev) / prev) * 100;
   const incomeTrend = trendPct(curIncome, prevIncome);
@@ -208,7 +212,7 @@ export default function Dashboard() {
 
   const upcomingBills = useMemo(() => {
     return (debts as any[])
-      .filter((d: any) => d.status === "active" && d.dueDate)
+      .filter((d: any) => d.status === "active" && d.dueDate && !isReceivable(d))
       .sort((a: any, b: any) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
       .slice(0, 3);
   }, [debts]);
@@ -369,7 +373,7 @@ export default function Dashboard() {
                 </div>
                 <p className="text-xl sm:text-2xl font-bold text-orange-600 dark:text-orange-400" data-testid="text-total-debt">{formatAmount(totalDebt)}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <p className="text-xs text-gray-400">{t("dashboard.activeDebts", { count: String((debts as any[]).filter((d: any) => d.status === "active").length) })}</p>
+                  <p className="text-xs text-gray-400">{t("dashboard.activeDebts", { count: String((debts as any[]).filter((d: any) => d.status === "active" && !isReceivable(d)).length) })}</p>
                   <TrendBadge trend={debtTrend} />
                 </div>
               </CardContent>
@@ -796,7 +800,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── MOBILE FAB ── */}
-      <div className="fixed bottom-6 end-6 z-50 lg:hidden">
+      <div className="fixed bottom-40 end-6 z-50 lg:hidden">
         <TransactionDialog />
       </div>
 
