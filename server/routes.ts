@@ -5,6 +5,7 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, registerAdminRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import { registerChatRoutes } from "./replit_integrations/chat";
+import { requireOwner, withoutOwnerFields, type OwnedKind } from "./ownership";
 import { insertTransferSchema } from "@shared/schema";
 import { createTransfer, getTransfers, TransferError } from "./transfers";
 import OpenAI from "openai";
@@ -13,6 +14,8 @@ const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
   baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
 });
+
+const owns = (kind: OwnedKind, param = "id") => requireOwner(kind, getUserId, param);
 
 function getUserId(req: Request): string {
   return (req.user as any)?.claims?.sub || (req.session as any)?.userId;
@@ -43,21 +46,21 @@ export async function registerRoutes(
     res.status(201).json(category);
   });
 
-  app.put(api.categories.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.categories.update.path, isAuthenticated, owns("category"), async (req, res) => {
     const id = parseInt(req.params.id);
-    const input = api.categories.update.input.parse(req.body);
+    const input = api.categories.update.input.parse(withoutOwnerFields(req.body));
     const updated = await storage.updateCategory(id, input);
     res.json(updated);
   });
 
-  app.delete(api.categories.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.categories.delete.path, isAuthenticated, owns("category"), async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.deleteCategory(id);
     res.status(204).send();
   });
 
   app.post("/api/categories/deduplicate", isAuthenticated, async (req, res) => {
-    const removed = await storage.deduplicateCategories();
+    const removed = await storage.deduplicateCategories(getUserId(req));
     res.json({ removed });
   });
 
@@ -85,16 +88,16 @@ export async function registerRoutes(
     }
   });
 
-  app.put(api.transactions.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.transactions.update.path, isAuthenticated, owns("transaction"), async (req, res) => {
     const id = parseInt(req.params.id);
-    const body = { ...req.body };
+    const body: any = withoutOwnerFields(req.body);
     if (body.date && typeof body.date === "string") body.date = new Date(body.date);
     const input = api.transactions.update.input.parse(body);
     const updated = await storage.updateTransaction(id, input);
     res.json(updated);
   });
 
-  app.delete(api.transactions.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.transactions.delete.path, isAuthenticated, owns("transaction"), async (req, res) => {
     const id = parseInt(req.params.id);
     const userId = getUserId(req);
     await storage.deleteTransaction(id, userId);
@@ -117,16 +120,16 @@ export async function registerRoutes(
     res.status(201).json(goal);
   });
 
-  app.put(api.goals.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.goals.update.path, isAuthenticated, owns("goal"), async (req, res) => {
     const id = parseInt(req.params.id);
-    const body = { ...req.body };
+    const body: any = withoutOwnerFields(req.body);
     if (body.deadline && typeof body.deadline === "string") body.deadline = new Date(body.deadline);
     const input = api.goals.update.input.parse(body);
     const updated = await storage.updateGoal(id, input);
     res.json(updated);
   });
 
-  app.delete(api.goals.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.goals.delete.path, isAuthenticated, owns("goal"), async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.deleteGoal(id);
     res.status(204).send();
@@ -144,13 +147,13 @@ export async function registerRoutes(
     const input = api.assets.create.input.parse(body);
     res.status(201).json(await storage.createAsset(input));
   });
-  app.put(api.assets.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.assets.update.path, isAuthenticated, owns("asset"), async (req, res) => {
     const id = parseInt(req.params.id);
-    const body = { ...req.body };
+    const body: any = withoutOwnerFields(req.body);
     if (body.purchaseDate && typeof body.purchaseDate === "string") body.purchaseDate = new Date(body.purchaseDate);
     res.json(await storage.updateAsset(id, api.assets.update.input.parse(body)));
   });
-  app.delete(api.assets.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.assets.delete.path, isAuthenticated, owns("asset"), async (req, res) => {
     await storage.deleteAsset(parseInt(req.params.id));
     res.status(204).send();
   });
@@ -165,15 +168,15 @@ export async function registerRoutes(
     const input = api.bankAccounts.create.input.parse({ ...req.body, userId });
     res.status(201).json(await storage.createBankAccount(input));
   });
-  app.put(api.bankAccounts.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.bankAccounts.update.path, isAuthenticated, owns("bankAccount"), async (req, res) => {
     const id = parseInt(req.params.id);
-    res.json(await storage.updateBankAccount(id, api.bankAccounts.update.input.parse(req.body)));
+    res.json(await storage.updateBankAccount(id, api.bankAccounts.update.input.parse(withoutOwnerFields(req.body))));
   });
-  app.delete(api.bankAccounts.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.bankAccounts.delete.path, isAuthenticated, owns("bankAccount"), async (req, res) => {
     await storage.deleteBankAccount(parseInt(req.params.id));
     res.status(204).send();
   });
-  app.get(api.bankAccounts.history.path, isAuthenticated, async (req, res) => {
+  app.get(api.bankAccounts.history.path, isAuthenticated, owns("bankAccount"), async (req, res) => {
     res.json(await storage.getBalanceHistory(parseInt(req.params.id)));
   });
 
@@ -205,14 +208,14 @@ export async function registerRoutes(
     const input = api.investments.create.input.parse(body);
     res.status(201).json(await storage.createInvestment(input));
   });
-  app.put(api.investments.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.investments.update.path, isAuthenticated, owns("investment"), async (req, res) => {
     const id = parseInt(req.params.id);
-    const body = { ...req.body };
+    const body: any = withoutOwnerFields(req.body);
     if (body.purchaseDate && typeof body.purchaseDate === "string") body.purchaseDate = new Date(body.purchaseDate);
     if (body.sellDate && typeof body.sellDate === "string") body.sellDate = new Date(body.sellDate);
     res.json(await storage.updateInvestment(id, api.investments.update.input.parse(body)));
   });
-  app.delete(api.investments.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.investments.delete.path, isAuthenticated, owns("investment"), async (req, res) => {
     await storage.deleteInvestment(parseInt(req.params.id));
     res.status(204).send();
   });
@@ -230,32 +233,33 @@ export async function registerRoutes(
     const input = api.debts.create.input.parse(body);
     res.status(201).json(await storage.createDebt(input));
   });
-  app.put(api.debts.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.debts.update.path, isAuthenticated, owns("debt"), async (req, res) => {
     const id = parseInt(req.params.id);
-    const body = { ...req.body };
+    const body: any = withoutOwnerFields(req.body);
     if (body.dateTaken && typeof body.dateTaken === "string") body.dateTaken = new Date(body.dateTaken);
     if (body.dueDate && typeof body.dueDate === "string") body.dueDate = new Date(body.dueDate);
     res.json(await storage.updateDebt(id, api.debts.update.input.parse(body)));
   });
-  app.delete(api.debts.delete.path, isAuthenticated, async (req, res) => {
+  app.delete(api.debts.delete.path, isAuthenticated, owns("debt"), async (req, res) => {
     await storage.deleteDebt(parseInt(req.params.id));
     res.status(204).send();
   });
-  app.get(api.debts.payments.path, isAuthenticated, async (req, res) => {
+  app.get(api.debts.payments.path, isAuthenticated, owns("debt"), async (req, res) => {
     res.json(await storage.getDebtPayments(parseInt(req.params.id)));
   });
-  app.post(api.debts.createPayment.path, isAuthenticated, async (req, res) => {
+  app.post(api.debts.createPayment.path, isAuthenticated, owns("debt"), async (req, res) => {
     const body = { ...req.body, debtId: parseInt(req.params.id) };
     if (body.paymentDate && typeof body.paymentDate === "string") body.paymentDate = new Date(body.paymentDate);
     const input = api.debts.createPayment.input.parse(body);
     res.status(201).json(await storage.createDebtPayment(input));
   });
-  app.put(api.debts.updatePayment.path, isAuthenticated, async (req, res) => {
-    const body = { ...req.body };
+  app.put(api.debts.updatePayment.path, isAuthenticated, owns("debtPayment", "paymentId"), async (req, res) => {
+    // debtId is fixed by the URL; a payment can't be moved onto another debt.
+    const { debtId: _d, ...body }: any = withoutOwnerFields(req.body);
     if (body.paymentDate && typeof body.paymentDate === "string") body.paymentDate = new Date(body.paymentDate);
     res.json(await storage.updateDebtPayment(parseInt(req.params.paymentId), body));
   });
-  app.delete(api.debts.deletePayment.path, isAuthenticated, async (req, res) => {
+  app.delete(api.debts.deletePayment.path, isAuthenticated, owns("debtPayment", "paymentId"), async (req, res) => {
     await storage.deleteDebtPayment(parseInt(req.params.paymentId));
     res.status(204).send();
   });
@@ -272,16 +276,16 @@ export async function registerRoutes(
     const input = api.budgets.create.input.parse({ ...req.body, userId });
     res.status(201).json(await storage.createBudget(input));
   });
-  app.put(api.budgets.update.path, isAuthenticated, async (req, res) => {
+  app.put(api.budgets.update.path, isAuthenticated, owns("budget"), async (req, res) => {
     const id = parseInt(req.params.id);
-    res.json(await storage.updateBudget(id, req.body));
+    res.json(await storage.updateBudget(id, withoutOwnerFields(req.body)));
   });
 
   // Goal Contributions
-  app.get(api.goalContributions.list.path, isAuthenticated, async (req, res) => {
+  app.get(api.goalContributions.list.path, isAuthenticated, owns("goal"), async (req, res) => {
     res.json(await storage.getGoalContributions(parseInt(req.params.id)));
   });
-  app.post(api.goalContributions.create.path, isAuthenticated, async (req, res) => {
+  app.post(api.goalContributions.create.path, isAuthenticated, owns("goal"), async (req, res) => {
     const body = { ...req.body, goalId: parseInt(req.params.id) };
     if (body.contributionDate && typeof body.contributionDate === "string") body.contributionDate = new Date(body.contributionDate);
     const input = api.goalContributions.create.input.parse(body);
@@ -312,17 +316,17 @@ export async function registerRoutes(
     res.status(201).json(snapshot);
   });
 
-  app.delete("/api/zakat/snapshots/:id", isAuthenticated, async (req, res) => {
+  app.delete("/api/zakat/snapshots/:id", isAuthenticated, owns("zakatSnapshot"), async (req, res) => {
     await storage.deleteZakatSnapshot(parseInt(req.params.id));
     res.status(204).send();
   });
 
-  app.patch("/api/investments/:id/zakat", isAuthenticated, async (req, res) => {
+  app.patch("/api/investments/:id/zakat", isAuthenticated, owns("investment"), async (req, res) => {
     await storage.updateInvestmentZakatMethod(parseInt(req.params.id), req.body.zakatMethod);
     res.json({ ok: true });
   });
 
-  app.patch("/api/bank-accounts/:id/zakat", isAuthenticated, async (req, res) => {
+  app.patch("/api/bank-accounts/:id/zakat", isAuthenticated, owns("bankAccount"), async (req, res) => {
     await storage.updateBankAccountZakatable(parseInt(req.params.id), req.body.isZakatable);
     res.json({ ok: true });
   });
