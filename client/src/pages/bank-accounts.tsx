@@ -9,13 +9,14 @@ import { useBankAccounts, useCreateBankAccount, useUpdateBankAccount, useDeleteB
 import { useAuth } from "@/hooks/use-auth";
 import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
+import { TransferDialog } from "@/components/transfer-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useI18n } from "@/lib/i18n";
 import {
   Plus, Trash2, Pencil, Landmark, Wallet, CreditCard, TrendingUp, Hash,
   Eye, EyeOff, Copy, Check, AlertTriangle, CheckCircle2, Lightbulb, Shield,
-  MoreVertical, ArrowUpRight, ArrowDownRight, Activity, RefreshCw, X,
+  MoreVertical, ArrowUpRight, ArrowDownRight, Activity, RefreshCw, X, ArrowLeftRight,
 } from "lucide-react";
 import {
   AreaChart, Area, ResponsiveContainer, Tooltip,
@@ -370,6 +371,7 @@ export default function BankAccountsPage() {
   const [dialogOpen,     setDialogOpen]     = useState(false);
   const [editingAccount, setEditingAccount] = useState<any | null>(null);
   const [masked,         setMasked]         = useState(false);
+  const [transferOpen,   setTransferOpen]   = useState(false);
 
   /* ── stats ── */
   const totalUsd = useMemo(() =>
@@ -473,6 +475,11 @@ export default function BankAccountsPage() {
               data-testid="button-toggle-mask">
               {masked ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
+            {allAccounts.length >= 2 && (
+              <Button variant="outline" onClick={() => setTransferOpen(true)} className="gap-2 rounded-xl" data-testid="button-transfer">
+                <ArrowLeftRight className="w-4 h-4" /> {t("transfer.button")}
+              </Button>
+            )}
             <Button onClick={openCreate} className="gap-2 rounded-xl shadow-sm" style={{ backgroundColor: BRAND }} data-testid="button-add-account">
               <Plus className="w-4 h-4" /> {t("accounts.addAccount")}
             </Button>
@@ -692,6 +699,7 @@ export default function BankAccountsPage() {
         onUpdate={handleUpdate}
         isPending={createAccount.isPending || updateAccount.isPending}
       />
+      <TransferDialog open={transferOpen} onOpenChange={setTransferOpen} accounts={allAccounts} />
     </Layout>
   );
 }

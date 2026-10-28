@@ -12,6 +12,8 @@ import { useCurrency, toUsd, getCurrencySymbol } from "@/lib/currency";
 import { CurrencyFields } from "@/components/currency-fields";
 import { useToast } from "@/hooks/use-toast";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { isReceivable, type DebtDirection } from "@shared/wealth";
 import { format, addMonths, differenceInMonths } from "date-fns";
 import {
   Plus, Trash2, Pencil, CreditCard, CheckCircle, AlertTriangle, Percent,
@@ -556,16 +558,43 @@ function ExtraPaymentCalculator({ debts }: { debts: any[] }) {
   );
 }
 
+/* ── "I owe" / "Owed to me" switch ── */
+function DirectionToggle({ value, onChange, counts }: {
+  value: DebtDirection; onChange: (v: DebtDirection) => void; counts?: Record<DebtDirection, number>;
+}) {
+  const { t } = useI18n();
+  const options: { v: DebtDirection; label: string }[] = [
+    { v: "payable", label: t("debts.iOwe") },
+    { v: "receivable", label: t("debts.owedToMe") },
+  ];
+  return (
+    <div className="inline-flex p-1 rounded-xl bg-gray-100 dark:bg-gray-800" role="tablist">
+      {options.map(o => (
+        <button key={o.v} type="button" role="tab" aria-selected={value === o.v}
+          onClick={() => onChange(o.v)}
+          className={cn(
+            "px-4 py-1.5 rounded-lg text-sm font-medium transition-colors",
+            value === o.v ? "bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm" : "text-gray-500 hover:text-gray-700 dark:text-gray-400"
+          )}
+          data-testid={`toggle-direction-${o.v}`}>
+          {o.label}{counts && <span className="ms-1.5 text-xs text-gray-400">{counts[o.v]}</span>}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /* ── add/edit debt dialog ── */
 const emptyDebtForm = {
+  direction: "payable",
   creditorName: "", originalAmount: "", remainingAmount: "", currency: "USD",
   exchangeRateToUsd: "1", reason: "", dateTaken: new Date().toISOString().split("T")[0],
   dueDate: "", interestRate: "", status: "active", paymentPlan: "Monthly",
   installmentAmount: "", notes: "",
 };
 
-function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdate, isPending }: {
-  open: boolean; onOpenChange: (v: boolean) => void;
+function DebtDialog({ open, onOpenChange, editingDebt, defaultDirection, userId, onCreate, onUpdate, isPending }: {
+  open: boolean; onOpenChange: (v: boolean) => void; defaultDirection: DebtDirection;
   editingDebt: any | null; userId: string;
   onCreate: (d: any) => void; onUpdate: (d: any) => void; isPending: boolean;
 }) {
@@ -575,6 +604,7 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
   useMemo(() => {
     if (editingDebt) {
       setForm({
+        direction:         editingDebt.direction || "payable",
         creditorName:      editingDebt.creditorName,
         originalAmount:    String(editingDebt.originalAmount),
         remainingAmount:   String(editingDebt.remainingAmount),
@@ -590,7 +620,7 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
         notes:             editingDebt.notes || "",
       });
     } else {
-      setForm(emptyDebtForm);
+      setForm({ ...emptyDebtForm, direction: defaultDirection });
     }
   }, [editingDebt, open]);
 
@@ -601,6 +631,7 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
     if (!valid) return;
     const data = {
       userId,
+      direction:         form.direction,
       creditorName:      form.creditorName,
       originalAmount:    form.originalAmount,
       remainingAmount:   form.remainingAmount,
@@ -625,13 +656,17 @@ function DebtDialog({ open, onOpenChange, editingDebt, userId, onCreate, onUpdat
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{editingDebt ? t("debts.editDebt") : t("debts.addDebt")}</DialogTitle>
+          <DialogTitle>{editingDebt ? t("debts.editDebt") : form.direction === "receivable" ? t("debts.addReceivable") : t("debts.addDebt")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
-              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.creditor")}</label>
-              <Input placeholder="e.g. Toyota Financial, Bank ABC" value={form.creditorName} onChange={f("creditorName")} data-testid="input-creditor-name" />
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.direction")}</label>
+              <DirectionToggle value={form.direction as DebtDirection} onChange={v => setForm(p => ({ ...p, direction: v }))} />
+            </div>
+            <div className="col-span-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{form.direction === "receivable" ? t("debts.borrowerName") : t("debts.creditor")}</label>
+              <Input placeholder={form.direction === "receivable" ? "e.g. Ahmed, Client X" : "e.g. Toyota Financial, Bank ABC"} value={form.creditorName} onChange={f("creditorName")} data-testid="input-creditor-name" />
             </div>
             <div>
               <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 block">{t("debts.principal")}</label>
@@ -720,7 +755,7 @@ function PaymentDialog({ open, onOpenChange, debt, onSubmit, isPending }: {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>{t("debts.makePayment")} — {debt?.creditorName}</DialogTitle>
+          <DialogTitle>{debt?.direction === "receivable" ? t("debts.recordCollection") : t("debts.makePayment")} — {debt?.creditorName}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -762,7 +797,14 @@ export default function DebtsPage() {
   const { formatAmount } = useCurrency();
   const { t, lang, isRtl } = useI18n();
 
-  const allDebts = debts as any[];
+  const everyDebt = debts as any[];
+  const [view, setView] = useState<DebtDirection>("payable");
+  const isOwedToMe = view === "receivable";
+  const allDebts = everyDebt.filter(d => (isReceivable(d) ? "receivable" : "payable") === view);
+  const directionCounts = {
+    payable: everyDebt.filter(d => !isReceivable(d) && d.status === "active").length,
+    receivable: everyDebt.filter(d => isReceivable(d) && d.status === "active").length,
+  };
 
   const [debtDialog,    setDebtDialog]    = useState(false);
   const [editingDebt,   setEditingDebt]   = useState<any | null>(null);
@@ -843,33 +885,35 @@ export default function DebtsPage() {
           </div>
           <div className="flex gap-2 items-center">
             <Button onClick={openCreate} className="gap-2 rounded-xl shadow-sm" style={{ backgroundColor: BRAND }} data-testid="button-add-debt">
-              <Plus className="w-4 h-4" /> {t("debts.addDebt")}
+              <Plus className="w-4 h-4" /> {isOwedToMe ? t("debts.addReceivable") : t("debts.addDebt")}
             </Button>
           </div>
         </div>
 
+        <DirectionToggle value={view} onChange={setView} counts={directionCounts} />
+
         {/* ── KPI STRIP ── */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
-            label={t("debts.totalDebt")}
+            label={isOwedToMe ? t("debts.totalOwedToMe") : t("debts.totalDebt")}
             value={formatAmount(totalDebt)}
             sub={t("dashboard.activeDebts", { count: String(activeDebts.length) })}
             icon={DollarSign}
-            color={DANGER}
-            bg="#FEF2F2"
+            color={isOwedToMe ? MINT : DANGER}
+            bg={isOwedToMe ? "#ECFDF5" : "#FEF2F2"}
             trend={totalPaid > 0 ? `${formatAmount(totalPaid)} ${t("debts.paidAmount").toLowerCase()}` : undefined}
             trendUp={false}
           />
           <KpiCard
             label={t("debts.activeDebts")}
             value={String(activeDebts.length)}
-            sub={paidDebts.length > 0 ? `${paidDebts.length} ${t("debts.paidAmount").toLowerCase()} 🎉` : "Keep going!"}
+            sub={paidDebts.length > 0 ? `${paidDebts.length} ${t("debts.paidAmount").toLowerCase()} 🎉` : isOwedToMe ? "" : "Keep going!"}
             icon={AlertTriangle}
             color={AMBER}
             bg="#FFFBEB"
           />
-          <KpiCard
-            label={t("debts.debtFreeEst") || "Debt-Free Date"}
+          {!isOwedToMe && <KpiCard
+            label={t("debts.debtFreeEst")}
             value={globalFreeDate ? format(globalFreeDate, "MMM yyyy") : "—"}
             sub={globalMonths ? `${globalMonths} ${t("debts.monthsLeft") || "months remaining"}` : "Set installment amounts"}
             icon={Flag}
@@ -877,19 +921,19 @@ export default function DebtsPage() {
             bg="#ECFDF5"
             trend={globalMonths ? `At current pace` : undefined}
             trendUp={true}
-          />
-          <KpiCard
-            label={t("debts.avgApr") || "Avg Interest Rate"}
+          />}
+          {!isOwedToMe && <KpiCard
+            label={t("debts.avgApr")}
             value={avgRate > 0 ? `${avgRate.toFixed(1)}%` : "0%"}
             sub={avgRate > 10 ? "⚠ High-interest debt — prioritize payoff" : avgRate > 0 ? "Moderate — manageable" : "Interest-free 🎉"}
             icon={Percent}
             color={PURPLE}
             bg="#F5F3FF"
-          />
+          />}
         </div>
 
         {/* ── JOURNEY BAR (only when there are debts) ── */}
-        {allDebts.length > 0 && <JourneyBar debts={allDebts} />}
+        {allDebts.length > 0 && !isOwedToMe && <JourneyBar debts={allDebts} />}
 
         {/* ── EMPTY STATE ── */}
         {allDebts.length === 0 ? (
@@ -899,11 +943,17 @@ export default function DebtsPage() {
                 <CheckCircle className="w-8 h-8" style={{ color: MINT }} />
               </div>
               <div>
-                <p className="font-bold text-gray-700 dark:text-gray-300 text-xl">{t("debts.debtFreeMessage") || "You're debt-free! 🎉"}</p>
-                <p className="text-sm text-gray-400 mt-1">{t("debts.noActiveDebts") || "Keep it that way. You can also track any debt to stay on top of it."}</p>
+                {isOwedToMe ? (
+                  <p className="text-sm text-gray-500 mt-1 max-w-sm">{t("debts.noReceivables")}</p>
+                ) : (
+                  <>
+                    <p className="font-bold text-gray-700 dark:text-gray-300 text-xl">{t("debts.debtFreeMessage") || "You're debt-free! 🎉"}</p>
+                    <p className="text-sm text-gray-400 mt-1">{t("debts.noActiveDebts") || "Keep it that way. You can also track any debt to stay on top of it."}</p>
+                  </>
+                )}
               </div>
               <Button onClick={openCreate} className="gap-2 rounded-xl mt-2" style={{ backgroundColor: BRAND }}>
-                <Plus className="w-4 h-4" /> {t("debts.addDebt")}
+                <Plus className="w-4 h-4" /> {isOwedToMe ? t("debts.addReceivable") : t("debts.addDebt")}
               </Button>
             </CardContent>
           </Card>
@@ -938,7 +988,7 @@ export default function DebtsPage() {
                 className="w-full rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-center gap-2 py-8 text-gray-400 hover:text-gray-500 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-all"
                 data-testid="button-add-ghost">
                 <Plus className="w-4 h-4" />
-                <span className="text-sm font-medium">{t("debts.addDebt")}</span>
+                <span className="text-sm font-medium">{isOwedToMe ? t("debts.addReceivable") : t("debts.addDebt")}</span>
               </button>
             </div>
 
@@ -946,7 +996,7 @@ export default function DebtsPage() {
             <div className="space-y-4">
 
               {/* payoff strategy card */}
-              <Card className="border border-blue-100 dark:border-blue-900/30 rounded-2xl overflow-hidden">
+              {!isOwedToMe && <Card className="border border-blue-100 dark:border-blue-900/30 rounded-2xl overflow-hidden">
                 <CardContent className="p-4 bg-gradient-to-br from-[#EEF4FF] to-[#F5F3FF] dark:from-[#0F1A30] dark:to-[#1A1630]">
                   <div className="flex items-center gap-2 mb-2">
                     <Flame className="w-4 h-4 text-orange-500" />
@@ -996,14 +1046,14 @@ export default function DebtsPage() {
                     );
                   })()}
                 </CardContent>
-              </Card>
+              </Card>}
 
               {/* upcoming payments */}
               <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Calendar className="w-4 h-4 text-gray-400" />
-                    <span className="font-semibold text-sm text-gray-900 dark:text-white">{t("debts.recentPayments") || "Upcoming Payments"}</span>
+                    <span className="font-semibold text-sm text-gray-900 dark:text-white">{isOwedToMe ? t("debts.expectedBack") : t("debts.recentPayments")}</span>
                   </div>
                   <div className="space-y-2">
                     {activeDebts.length === 0 ? (
@@ -1023,7 +1073,7 @@ export default function DebtsPage() {
                                 {d.dueDate && <p className="text-[10px] text-gray-400">{format(new Date(d.dueDate), "MMM d")}</p>}
                               </div>
                             </div>
-                            <span className="text-xs font-bold tabular-nums" style={{ color: DANGER }}>
+                            <span className="text-xs font-bold tabular-nums" style={{ color: isOwedToMe ? MINT : DANGER }}>
                               {install > 0 ? `${getCurrencySymbol(d.currency)}${install.toLocaleString()}` : "—"}
                             </span>
                           </div>
@@ -1034,7 +1084,7 @@ export default function DebtsPage() {
                   {activeDebts.length > 0 && (
                     <div className="mt-3 pt-3 border-t border-gray-50 dark:border-gray-800 flex justify-between text-xs">
                       <span className="text-gray-400">{t("common.total")} {t("common.thisMonth").toLowerCase()}</span>
-                      <span className="font-bold" style={{ color: DANGER }}>
+                      <span className="font-bold" style={{ color: isOwedToMe ? MINT : DANGER }}>
                         {formatAmount(activeDebts.reduce((s, d) => s + (Number(d.installmentAmount) || 0), 0))}
                       </span>
                     </div>
@@ -1043,14 +1093,14 @@ export default function DebtsPage() {
               </Card>
 
               {/* extra payment calculator */}
-              <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
+              {!isOwedToMe && <Card className="border border-gray-100 dark:border-gray-800 rounded-2xl">
                 <CardContent className="p-4">
                   <ExtraPaymentCalculator debts={activeDebts} />
                 </CardContent>
-              </Card>
+              </Card>}
 
               {/* AI debt coach teaser */}
-              <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
+              {!isOwedToMe && <Card className="border border-purple-100 dark:border-purple-900/30 rounded-2xl overflow-hidden">
                 <CardContent className="p-4 bg-gradient-to-br from-[#F5F3FF] to-[#EEF4FF] dark:from-[#1A1630] dark:to-[#0F1A30]">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="w-4 h-4" style={{ color: PURPLE }} />
@@ -1068,7 +1118,7 @@ export default function DebtsPage() {
                     {t("common.viewAll")} AI Reports <ChevronRight className="w-3 h-3" />
                   </Button>
                 </CardContent>
-              </Card>
+              </Card>}
 
             </div>
           </div>
@@ -1081,6 +1131,7 @@ export default function DebtsPage() {
         open={debtDialog}
         onOpenChange={setDebtDialog}
         editingDebt={editingDebt}
+        defaultDirection={view}
         userId={user?.id ?? ""}
         onCreate={handleCreate}
         onUpdate={handleUpdate}

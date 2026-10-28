@@ -690,3 +690,36 @@ export function useAIInsights() {
     },
   });
 }
+
+// --- Transfers between own accounts ---
+
+export function useTransfers() {
+  return useQuery({
+    queryKey: ["/api/transfers"],
+    queryFn: async () => {
+      const res = await fetch("/api/transfers", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch transfers");
+      return res.json();
+    },
+  });
+}
+
+export function useCreateTransfer() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { fromAccountId: number; toAccountId: number; amount: number; toAmount?: number; date: string; notes?: string }) => {
+      const res = await fetch("/api/transfers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => null))?.message || "Failed to create transfer");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/transfers"] });
+      queryClient.invalidateQueries({ queryKey: [api.bankAccounts.list.path] });
+    },
+  });
+}

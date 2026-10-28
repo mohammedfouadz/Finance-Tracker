@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { 
   categories, transactions, goals, budgets,
-  assets, bankAccounts, balanceHistory, investments, debts, debtPayments, goalContributions,
+  assets, bankAccounts, balanceHistory, transfers, investments, debts, debtPayments, goalContributions,
   zakatSettings, zakatSnapshots,
   type InsertCategory, type UpdateCategoryRequest,
   type InsertTransaction, type UpdateTransactionRequest,
@@ -364,6 +364,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteBankAccount(id: number) {
+    await db.delete(transfers).where(or(eq(transfers.fromAccountId, id), eq(transfers.toAccountId, id)));
     await db.delete(balanceHistory).where(eq(balanceHistory.bankAccountId, id));
     await db.delete(bankAccounts).where(eq(bankAccounts.id, id));
   }

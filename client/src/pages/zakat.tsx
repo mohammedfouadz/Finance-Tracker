@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useBankAccounts, useInvestments, useDebts, useAssets } from "@/hooks/use-finance";
 import { toUsd } from "@/lib/currency";
+import { activeDebtTotals, isReceivable } from "@shared/wealth";
 import { calculateZakat, type ZakatAssets, type ZakatCalculatorSettings, type ZakatPrices } from "@shared/zakatCalculator";
 import { useState, useEffect, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -680,15 +681,17 @@ export default function ZakatPage() {
 
   const realEstateAssets = useMemo(() => (assets as any[]).filter((a: any) => a.type === "Real Estate"), [assets]);
   const realEstateValue  = useMemo(() => realEstateAssets.reduce((s: number, a: any) => s + toUsd(a.currentValue, a.exchangeRateToUsd), 0), [realEstateAssets]);
-  const deductibleDebts  = useMemo(() =>
-    (debts as any[]).filter((d: any) => d.status === "active").reduce((s, d) => s + toUsd(d.remainingAmount, d.exchangeRateToUsd), 0),
+  // Money the user owes is deductible; money owed to the user ("Owed to me"
+  // in Debts) is a receivable and counts toward the zakat base.
+  const { payable: deductibleDebts, receivable: trackedReceivables } = useMemo(
+    () => activeDebtTotals(debts as any[]),
     [debts]);
 
   const zakatAssets: ZakatAssets = {
     cashFromBankAccounts, cashOnHand: Number(cashOnHand) || 0,
     goldGrams: Number(goldGrams) || 0, goldKarat: Number(goldKarat) || 24,
     silverGrams: Number(silverGrams) || 0, investmentsValue,
-    receivables: Number(receivables) || 0, realEstateValue,
+    receivables: (Number(receivables) || 0) + trackedReceivables, realEstateValue,
     rentalIncomeCash: Number(rentalIncomeCash) || 0,
   };
   const zakatLiabilities = { deductibleDebts: settings.includeDebts ? deductibleDebts : 0 };
@@ -1013,6 +1016,11 @@ export default function ZakatPage() {
               <label className="text-sm font-medium mb-1 block">{t("zakat.receivablesHelp")}</label>
               <Input type="number" min="0" step="1" value={receivables} onChange={e => setReceivables(e.target.value)} data-testid="input-receivables" placeholder="0" />
               <p className="text-xs text-gray-400 mt-1">{t("zakat.receivablesAdvice")}</p>
+              {trackedReceivables > 0 && (
+                <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-2" data-testid="text-tracked-receivables">
+                  {t("zakat.trackedReceivables", { amount: fmt(trackedReceivables) })}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -1050,7 +1058,7 @@ export default function ZakatPage() {
               <CardHeader><CardTitle>💳 {t("zakat.deductibleLiabilities")}</CardTitle></CardHeader>
               <CardContent>
                 <p className="text-xs text-gray-400 mb-3">{t("zakat.shortTermDebtsHelp")}</p>
-                {(debts as any[]).filter((d: any) => d.status === "active").map((d: any) => (
+                {(debts as any[]).filter((d: any) => d.status === "active" && !isReceivable(d)).map((d: any) => (
                   <div key={d.id} className="flex justify-between items-center py-2 border-b last:border-0 dark:border-gray-800">
                     <div>
                       <p className="text-sm font-medium">{d.creditorName}</p>
@@ -1059,7 +1067,7 @@ export default function ZakatPage() {
                     <span className="text-sm font-mono text-red-500">−{fmt(toUsd(d.remainingAmount, d.exchangeRateToUsd))}</span>
                   </div>
                 ))}
-                {(debts as any[]).filter((d: any) => d.status === "active").length === 0 && (
+                {(debts as any[]).filter((d: any) => d.status === "active" && !isReceivable(d)).length === 0 && (
                   <p className="text-sm text-gray-400">{t("zakat.noActiveDebts")}</p>
                 )}
                 <div className="flex justify-between items-center pt-2 font-semibold">
