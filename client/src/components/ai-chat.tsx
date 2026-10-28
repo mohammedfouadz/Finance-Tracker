@@ -99,7 +99,7 @@ export function FloatingAIChat() {
       <button
         onClick={() => setOpen(o => !o)}
         className={cn(
-          "fixed bottom-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 transition-all duration-200 hover:scale-105 active:scale-95",
+          "fixed bottom-24 lg:bottom-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/30 transition-all duration-200 hover:scale-105 active:scale-95",
           isRtl ? "left-6" : "right-6"
         )}
         style={{ background: `linear-gradient(135deg, ${BRAND}, ${PURPLE})` }}
@@ -110,7 +110,7 @@ export function FloatingAIChat() {
 
       {/* panel */}
       <div className={cn(
-        "fixed bottom-24 z-50 w-96 max-w-[calc(100vw-24px)] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden transition-all duration-300 bg-white dark:bg-gray-900",
+        "fixed bottom-[10.5rem] lg:bottom-24 z-50 w-96 max-w-[calc(100vw-24px)] rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 flex flex-col overflow-hidden transition-all duration-300 bg-white dark:bg-gray-900",
         isRtl ? "left-6" : "right-6",
         open ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-4 pointer-events-none"
       )} style={{ height: 520 }} dir={isRtl ? "rtl" : "ltr"}>
