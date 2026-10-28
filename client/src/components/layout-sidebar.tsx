@@ -348,6 +348,47 @@ export function MobileHeader() {
   );
 }
 
+// Phone-only bottom tab bar, following the spec's five-tab mobile layout.
+// The full menu stays reachable from the header's hamburger.
+const MOBILE_TABS = [
+  { labelKey: "nav.home", href: "/dashboard", icon: LayoutDashboard },
+  { labelKey: "nav.expenses", href: "/expenses", icon: Receipt },
+  { labelKey: "nav.netWorth", href: "/net-worth", icon: TrendingUp },
+  { labelKey: "nav.budget", href: "/budget", icon: PieChart },
+  { labelKey: "nav.zakat", href: "/zakat", icon: Star },
+];
+
+export function MobileTabBar() {
+  const [location] = useLocation();
+  const { t } = useI18n();
+  return (
+    <nav
+      className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-[#0A1628]/95 backdrop-blur border-t border-[#EEF4FF] dark:border-[#1E3A5F] pb-[env(safe-area-inset-bottom)]"
+      data-testid="nav-mobile-tabs"
+    >
+      <div className="grid grid-cols-5">
+        {MOBILE_TABS.map(tab => {
+          const active = location === tab.href || (tab.href === "/dashboard" && location === "/");
+          return (
+            <Link key={tab.href} href={tab.href}>
+              <div
+                className={cn(
+                  "flex flex-col items-center justify-center gap-0.5 h-16 cursor-pointer",
+                  active ? "text-[#1B4FE4] dark:text-[#4F8EF7]" : "text-[#94A3B8] dark:text-[#64748B]"
+                )}
+                aria-current={active ? "page" : undefined}
+              >
+                <tab.icon className="w-5 h-5" />
+                <span className="text-[11px] font-medium leading-tight">{t(tab.labelKey)}</span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const { lang, isRtl } = useI18n();
   return (
@@ -355,12 +396,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <Sidebar />
       <div className={cn("flex flex-col min-h-screen", isRtl ? "lg:pr-64" : "lg:pl-64")}>
         <MobileHeader />
-        <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 pb-24 lg:pb-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto w-full animate-in fade-in duration-500">
             {children}
           </div>
         </main>
       </div>
+      <MobileTabBar />
     </div>
   );
 }

@@ -796,7 +796,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── MOBILE FAB ── */}
-      <div className="fixed bottom-6 end-6 z-50 lg:hidden">
+      <div className="fixed bottom-40 end-6 z-50 lg:hidden">
         <TransactionDialog />
       </div>
 
