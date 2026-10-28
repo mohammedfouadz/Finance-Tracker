@@ -28,7 +28,7 @@ export interface IStorage extends IAuthStorage, IChatStorage {
   createCategory(category: InsertCategory): Promise<typeof categories.$inferSelect>;
   updateCategory(id: number, updates: UpdateCategoryRequest): Promise<typeof categories.$inferSelect>;
   deleteCategory(id: number): Promise<void>;
-  deduplicateCategories(): Promise<number>;
+  deduplicateCategories(userId: string): Promise<number>;
 
   // Transactions
   getTransactions(userId: string, params?: TransactionQueryParams): Promise<typeof transactions.$inferSelect[]>;
@@ -122,29 +122,33 @@ export class DatabaseStorage implements IStorage {
     return Array.from(seen.values()).sort((a, b) => a.id - b.id);
   }
 
-  async deduplicateCategories() {
-    const rows = await db.select().from(categories);
-    const seen = new Map<string, number>(); // key -> keep id
-    const toDelete: number[] = [];
+  // Removes the user's own categories that duplicate (same name and type) a
+  // system category or another of their categories. Only this user's rows are
+  // touched; their transactions and budgets are moved to the category kept.
+  async deduplicateCategories(userId: string) {
+    const rows = await db.select().from(categories)
+      .where(or(eq(categories.userId, userId), eq(categories.userId, "system")));
+    // system categories first, then oldest, so those are the ones kept
+    rows.sort((a, b) => Number(b.userId === "system") - Number(a.userId === "system") || a.id - b.id);
+    const keep = new Map<string, number>();
+    let removed = 0;
     for (const row of rows) {
       const key = `${row.name.toLowerCase()}|${row.type}`;
-      const keepId = seen.get(key);
-      if (keepId === undefined) {
-        seen.set(key, row.id);
-      } else {
-        // keep the lower id, delete the higher
-        if (row.id < keepId) {
-          toDelete.push(keepId);
-          seen.set(key, row.id);
-        } else {
-          toDelete.push(row.id);
-        }
-      }
+      const keepId = keep.get(key);
+      if (keepId === undefined) { keep.set(key, row.id); continue; }
+      if (row.userId !== userId) continue;
+      await db.transaction(async (tx) => {
+        await tx.update(transactions).set({ categoryId: keepId })
+          .where(and(eq(transactions.categoryId, row.id), eq(transactions.userId, userId)));
+        await tx.update(budgets).set({ categoryId: keepId })
+          .where(and(eq(budgets.categoryId, row.id), eq(budgets.userId, userId)));
+        await tx.update(categories).set({ parentId: keepId })
+          .where(and(eq(categories.parentId, row.id), eq(categories.userId, userId)));
+        await tx.delete(categories).where(and(eq(categories.id, row.id), eq(categories.userId, userId)));
+      });
+      removed++;
     }
-    for (const id of toDelete) {
-      await db.delete(categories).where(eq(categories.id, id));
-    }
-    return toDelete.length;
+    return removed;
   }
 
   async getCategory(id: number) {
