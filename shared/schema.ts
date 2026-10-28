@@ -138,6 +138,8 @@ export const investments = pgTable("investments", {
 export const debts = pgTable("debts", {
   id: serial("id").primaryKey(),
   userId: text("user_id").notNull(),
+  // "payable" = the user owes this money; "receivable" = someone owes the user
+  direction: text("direction").notNull().default("payable"),
   creditorName: text("creditor_name").notNull(),
   originalAmount: numeric("original_amount").notNull(),
   remainingAmount: numeric("remaining_amount").notNull(),
@@ -150,6 +152,20 @@ export const debts = pgTable("debts", {
   status: text("status").notNull().default("active"),
   paymentPlan: text("payment_plan"),
   installmentAmount: numeric("installment_amount"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Money moved between the user's own accounts. Not income or expense, so
+// transfers never change net worth (spec BR-04).
+export const transfers = pgTable("transfers", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  fromAccountId: integer("from_account_id").notNull().references(() => bankAccounts.id),
+  toAccountId: integer("to_account_id").notNull().references(() => bankAccounts.id),
+  amount: numeric("amount").notNull(),       // in the source account's currency
+  toAmount: numeric("to_amount").notNull(),  // in the destination account's currency
+  date: timestamp("date").notNull(),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -282,6 +298,14 @@ export const insertBankAccountSchema = createInsertSchema(bankAccounts).omit({ i
 export const insertInvestmentSchema = createInsertSchema(investments).omit({ id: true, createdAt: true });
 export const insertDebtSchema = createInsertSchema(debts).omit({ id: true, createdAt: true });
 export const insertDebtPaymentSchema = createInsertSchema(debtPayments).omit({ id: true });
+export const insertTransferSchema = z.object({
+  fromAccountId: z.coerce.number().int().positive(),
+  toAccountId: z.coerce.number().int().positive(),
+  amount: z.coerce.number().positive(),
+  toAmount: z.coerce.number().positive().optional(),
+  date: z.coerce.date(),
+  notes: z.string().max(500).optional(),
+}).refine((t) => t.fromAccountId !== t.toAccountId, { message: "Choose two different accounts", path: ["toAccountId"] });
 export const insertGoalContributionSchema = createInsertSchema(goalContributions).omit({ id: true });
 
 // === EXPLICIT API CONTRACT TYPES ===
@@ -305,6 +329,8 @@ export type Debt = typeof debts.$inferSelect;
 export type InsertDebt = z.infer<typeof insertDebtSchema>;
 export type DebtPayment = typeof debtPayments.$inferSelect;
 export type InsertDebtPayment = z.infer<typeof insertDebtPaymentSchema>;
+export type Transfer = typeof transfers.$inferSelect;
+export type InsertTransfer = z.infer<typeof insertTransferSchema>;
 export type GoalContribution = typeof goalContributions.$inferSelect;
 export type InsertGoalContribution = z.infer<typeof insertGoalContributionSchema>;
 

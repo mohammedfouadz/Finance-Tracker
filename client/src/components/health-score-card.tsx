@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
+import { isReceivable } from "@shared/wealth";
 import { useTransactions, useGoals } from "@/hooks/use-finance";
 import { useQuery } from "@tanstack/react-query";
 import { calculateFinancialHealth, type HealthScoreInput } from "@/lib/financial-health";
@@ -49,7 +50,7 @@ export function HealthScoreCard() {
       .reduce((s: number, b: any) => s + Number(b.balance || 0), 0);
 
     const totalActiveDebts = (debts as any[])
-      .filter((d: any) => d.status === "active")
+      .filter((d: any) => d.status === "active" && !isReceivable(d))
       .reduce((s: number, d: any) => s + Number(d.remainingAmount || 0), 0);
 
     const totalInvestmentValue = (investments as any[]).reduce(

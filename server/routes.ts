@@ -5,6 +5,8 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, registerAdminRoutes, isAuthenticated, authStorage } from "./replit_integrations/auth";
 import { registerChatRoutes } from "./replit_integrations/chat";
+import { insertTransferSchema } from "@shared/schema";
+import { createTransfer, getTransfers, TransferError } from "./transfers";
 import OpenAI from "openai";
 
 const openai = new OpenAI({
@@ -173,6 +175,21 @@ export async function registerRoutes(
   });
   app.get(api.bankAccounts.history.path, isAuthenticated, async (req, res) => {
     res.json(await storage.getBalanceHistory(parseInt(req.params.id)));
+  });
+
+  // Transfers between the user's own accounts
+  app.get("/api/transfers", isAuthenticated, async (req, res) => {
+    res.json(await getTransfers(getUserId(req)));
+  });
+  app.post("/api/transfers", isAuthenticated, async (req, res) => {
+    const parsed = insertTransferSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: parsed.error.errors[0]?.message ?? "Invalid transfer" });
+    try {
+      res.status(201).json(await createTransfer(getUserId(req), parsed.data));
+    } catch (err) {
+      if (err instanceof TransferError) return res.status(404).json({ message: err.message });
+      throw err;
+    }
   });
 
   // Investments
@@ -445,7 +462,7 @@ Goals: ${JSON.stringify(goals.map(g => ({ name: g.name, targetAmount: g.targetAm
 Investments: ${JSON.stringify(investments.map(i => ({ name: i.name, type: i.type, currentValue: i.currentValue, purchasePrice: i.purchasePrice })))}
 Assets: ${JSON.stringify(assets.map(a => ({ name: a.name, type: a.type, value: a.value })))}
 Bank Accounts: ${JSON.stringify(bankAccounts.map(b => ({ name: b.name, balance: b.balance, currency: b.currency })))}
-Debts: ${JSON.stringify(debts.map(d => ({ name: d.name, type: d.type, totalAmount: d.totalAmount, remainingAmount: d.remainingAmount })))}`;
+Debts: ${JSON.stringify(debts.map(d => ({ name: d.creditorName, direction: d.direction === "receivable" ? "owed to user" : "user owes", reason: d.reason, remainingAmount: d.remainingAmount, currency: d.currency, status: d.status })))}`;
 
       const response = await openai.chat.completions.create({
         model: "gpt-5.1",
